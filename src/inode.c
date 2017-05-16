@@ -28,69 +28,76 @@ MODULE_LICENSE("GPL");
 
 static struct kmem_cache *proxyfs_inode_cachep;
 
-static int proxyfs_create(struct inode *dir, struct dentry *entry, int mode,
-		       struct nameidata *nd)
+static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
+			bool want_excl)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
-struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry,
-				  struct nameidata *nd)
+struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
 	struct inode *inode;
-	struct dentry *newent;
-
-	inode = proxyfs_get_inode(dir->i_sb, S_IFREG | PROXYFS_DEFAULT_MODE, 0);
-	if(!inode)
-		return -ENOSPC;
-
-	newent = d_splice_alias(inode, entry);	
 	
+	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
 
+	inode = proxyfs_iget(dir->i_sb, dir, entry, S_IFREG | PROXYFS_DEFAULT_MODE);
+	if(!inode)
+		return ERR_PTR(-ENOSPC);
+
+	return d_splice_alias(inode, entry);
 }
 
 static int proxyfs_link(struct dentry *entry, struct inode *newdir,
 		     struct dentry *newent)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_unlink(struct inode *dir, struct dentry *entry)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
 			const char *link)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
-static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, int mode)
+static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
-static int proxyfs_mknod(struct inode *dir, struct dentry *entry, int mode,
+static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
 		      dev_t rdev)
 {
-
-	}
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
+}
 
 static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 		       struct inode *newdir, struct dentry *newent)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int buflen)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 /*
@@ -107,40 +114,47 @@ static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *
 
 static int proxyfs_permission(struct inode *inode, int mask)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 			struct kstat *stat)
 {
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
+}
 
+static int proxyfs_setxattr(struct dentry *entry, const char *name,
+			 const void *value, size_t size, int flags)
+{
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static ssize_t proxyfs_getxattr(struct dentry *entry, const char *name,
 			     void *value, size_t size)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static ssize_t proxyfs_listxattr(struct dentry *entry, char *list, size_t size)
 {
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static int proxyfs_removexattr(struct dentry *entry, const char *name)
 {
-
-}
-
-static long proxyfs_fallocate(struct inode *inode, int mode, loff_t offset,
-			   loff_t len)
-{
-
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return 0;
 }
 
 static const struct inode_operations proxyfs_inode_operations = {
@@ -163,7 +177,6 @@ static const struct inode_operations proxyfs_inode_operations = {
 	.getxattr	= proxyfs_getxattr,
 	.listxattr	= proxyfs_listxattr,
 	.removexattr	= proxyfs_removexattr,
-	.fallocate	= proxyfs_fallocate,
 };
 
 static struct inode *proxyfs_alloc_inode(struct super_block *sb)
@@ -171,7 +184,7 @@ static struct inode *proxyfs_alloc_inode(struct super_block *sb)
 	struct inode *inode;
 	struct proxyfs_inode *pi;
 
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	inode = kmem_cache_alloc(proxyfs_inode_cachep, GFP_KERNEL);
 	if (!inode)
@@ -193,7 +206,7 @@ static void proxyfs_i_callback(struct rcu_head *head)
 static void proxyfs_destroy_inode(struct inode *inode)
 {
 	struct proxyfs_inode *pi;
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	pi = get_proxyfs_inode(inode);
 	if(pi->b_inode) 
@@ -201,36 +214,60 @@ static void proxyfs_destroy_inode(struct inode *inode)
 	call_rcu(&inode->i_rcu, proxyfs_i_callback);
 }
 
-struct inode *proxyfs_get_inode(struct super_block *sb,
-				const struct inode *dir, umode_t mode, dev_t dev)
+static void proxyfs_init_inode(struct inode *inode, struct inode *dir, mode_t mode)
 {
-	struct inode * inode;
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 	
-	inode = new_inode(sb);
-
-	if (inode) {
-		inode->i_ino = get_next_ino();
-		inode_init_owner(inode, dir, mode);
-		//inode->i_mapping->a_ops = &ramfs_aops;
-		mapping_set_gfp_mask(inode->i_mapping, GFP_HIGHUSER);
-		mapping_set_unevictable(inode->i_mapping);
-		inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
-		switch (mode & S_IFMT) {
-		case S_IFDIR:
-			/* directory inodes start off with i_nlink == 2 (for "." entry) */
-			inc_nlink(inode);
-			// Fall through
-		case S_IFREG:
-		case S_IFLNK:
-			inode->i_op = &proxy_inode_operations;
-			inode->i_fop = &proxy_file_operations;
-			break;
-		default:
-			init_special_inode(inode, mode, dev);
-			break;
-		}
+	inode->i_ino = get_next_ino();
+	inode_init_owner(inode, dir, mode);
+	//inode->i_mapping->a_ops = &ramfs_aops;
+	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
+	if(special_file(inode->i_mode)) {
+		init_special_inode(inode, inode->i_mode, inode->i_rdev);
+	} else {
+		inode->i_op = &proxyfs_inode_operations;
+		//inode->i_fop = &proxy_file_operations;
 	}
+}
+
+static int proxyfs_inode_eq(struct inode *inode, void *data)
+{
+	struct dentry* entry = (struct dentry*)data;
+	struct proxyfs_inode *pi = get_proxyfs_inode(inode);
+
+	if(!entry) {
+		return 0;
+	}
+
+	if(pi->p_dentry->d_name.len != entry->d_name.len)
+		return 0;
+
+	return (memcmp(pi->p_dentry->d_name.name, entry->d_name.name, pi->p_dentry->d_name.len) == 0);
+}
+
+static int proxyfs_inode_set(struct inode *inode, void *data)
+{
+	struct dentry* entry = (struct dentry*)data;
+	get_proxyfs_inode(inode)->p_dentry = entry;
+	return 0;
+}
+
+struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode)
+{
+	struct inode *inode;
+	
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	
+	inode = iget5_locked(sb, (unsigned long)entry, proxyfs_inode_eq, proxyfs_inode_set, entry);
+	if (!inode)
+		return NULL;
+
+	if ((inode->i_state & I_NEW)) {
+		inode->i_flags |= S_NOATIME;
+		proxyfs_init_inode(inode, dir, mode);
+		unlock_new_inode(inode);
+	}
+
 	return inode;
 }
 
@@ -253,7 +290,7 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 	int token;
 	int option_backend = 0;
 	char *p;
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	opts->mode = PROXYFS_DEFAULT_MODE;
 
@@ -298,7 +335,7 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct proxyfs_fs_info *fsi;
 	struct inode *inode;
 	int err;
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	save_mount_options(sb, data);
 
@@ -318,7 +355,7 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op		= &proxyfs_ops;
 	sb->s_time_gran		= 1;
 
-	inode = proxyfs_get_inode(sb, NULL, S_IFDIR | fsi->mount_opts.mode, 0);
+	inode = proxyfs_iget(sb, NULL, NULL, S_IFDIR | fsi->mount_opts.mode);
 	sb->s_root = d_make_root(inode);
 	if (!sb->s_root)
 		return -ENOMEM;
