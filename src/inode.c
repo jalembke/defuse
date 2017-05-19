@@ -11,6 +11,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/fs.h>
+#include <linux/namei.h>
 #include <linux/pagemap.h>
 #include <linux/time.h>
 #include <linux/init.h>
@@ -28,6 +29,37 @@ MODULE_LICENSE("GPL");
 
 static struct kmem_cache *proxyfs_inode_cachep;
 
+static int proxy_relookup(struct inode* inode)
+{
+	struct dentry *parent;
+	struct proxyfs_inode* pi;
+	int err = 0;
+
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	pi = get_proxyfs_inode(inode);
+	if(!pi->p_dentry)
+		return -EIO;
+
+	parent = dget_parent(pi->p_dentry);
+	if(!proxyfs_resolved_inode(parent->d_inode)) {
+		err = proxy_relookup(parent->d_inode);
+		if(err) {
+			dput(parent);
+			return err;
+		}
+	}
+
+	if(!parent->d_inode->i_op->lookup) {
+		dput(parent);
+		return -EIO;
+	}
+
+	dput(parent);
+	
+	return 0;
+}
+
 static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
 			bool want_excl)
 {
@@ -39,7 +71,7 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 {
 	struct inode *inode;
 	
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s %s", __PRETTY_FUNCTION__, entry->d_name.name);
 
 	inode = proxyfs_iget(dir->i_sb, dir, entry, S_IFREG | PROXYFS_DEFAULT_MODE);
 	if(!inode)
@@ -172,7 +204,7 @@ static const struct inode_operations proxyfs_inode_operations = {
 	//.put_link	= proxyfs_put_link,
 	.permission	= proxyfs_permission,
 	.setattr	= proxyfs_setattr,
-	.getattr	= proxyfs_getattr,
+	//.getattr	= proxyfs_getattr,
 	.setxattr	= proxyfs_setxattr,
 	.getxattr	= proxyfs_getxattr,
 	.listxattr	= proxyfs_listxattr,
@@ -191,7 +223,6 @@ static struct inode *proxyfs_alloc_inode(struct super_block *sb)
 		return NULL;
 
 	pi = get_proxyfs_inode(inode);
-	pi->b_inode = NULL;
 	pi->b_dentry = NULL;
 
 	return inode;
@@ -205,12 +236,7 @@ static void proxyfs_i_callback(struct rcu_head *head)
 
 static void proxyfs_destroy_inode(struct inode *inode)
 {
-	struct proxyfs_inode *pi;
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-
-	pi = get_proxyfs_inode(inode);
-	if(pi->b_inode) 
-		iput(pi->b_inode);
 	call_rcu(&inode->i_rcu, proxyfs_i_callback);
 }
 
@@ -255,10 +281,16 @@ static int proxyfs_inode_set(struct inode *inode, void *data)
 struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode)
 {
 	struct inode *inode;
-	
+	unsigned long dhash;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	if(entry)
+		dhash = full_name_hash(entry->d_name.name, entry->d_name.len);
+	else
+		dhash = full_name_hash("/", 1);
 	
-	inode = iget5_locked(sb, (unsigned long)entry, proxyfs_inode_eq, proxyfs_inode_set, entry);
+	inode = iget5_locked(sb, dhash, proxyfs_inode_eq, proxyfs_inode_set, entry);
 	if (!inode)
 		return NULL;
 
@@ -315,7 +347,7 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 
 	/* Backend option is required */
 	if(!option_backend) {
-		printk(KERN_ERR "ProxyFS: backend option is required");
+		printk(KERN_ERR "ProxyFS: backend option is required\n");
 		return -EINVAL;
 	}
 
@@ -332,9 +364,11 @@ static const struct super_operations proxyfs_ops = {
 
 static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 {
-	struct proxyfs_fs_info *fsi;
 	struct inode *inode;
+	struct proxyfs_inode *pi;
+	struct proxyfs_fs_info *fsi;
 	int err;
+	struct path path;
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	save_mount_options(sb, data);
@@ -355,10 +389,29 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op		= &proxyfs_ops;
 	sb->s_time_gran		= 1;
 
+	err = kern_path(fsi->mount_opts.backend, LOOKUP_FOLLOW, &path);
+	if(err)
+		return err;
+	
+	if(!S_ISDIR(path.dentry->d_inode->i_mode)) {
+		printk(KERN_ERR "ProxyFS: backend path: %s must be a directory\n", fsi->mount_opts.backend);
+		path_put(&path);
+		return -EINVAL;
+	}
+
+
 	inode = proxyfs_iget(sb, NULL, NULL, S_IFDIR | fsi->mount_opts.mode);
 	sb->s_root = d_make_root(inode);
-	if (!sb->s_root)
+	if (!sb->s_root) {
+		path_put(&path);
 		return -ENOMEM;
+	}
+
+	pi = get_proxyfs_inode(inode);
+	pi->p_dentry = sb->s_root;
+	pi->b_dentry = path.dentry;
+	
+	path_put(&path);
 
 	return 0;
 }

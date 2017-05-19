@@ -16,11 +16,11 @@ struct proxyfs_inode {
 	/** Inode data */
 	struct inode inode;
 
+	/** Proxy dentry */
+	struct dentry *p_dentry;
+
 	/** Backend dentry */
 	struct dentry *b_dentry;
-
-	/** Backend inode */
-	struct inode *b_inode;
 };
 
 /** PROXYFS mount options */
@@ -34,12 +34,16 @@ struct proxyfs_fs_info {
 	struct proxyfs_mount_opts mount_opts;
 };
 
-struct inode *proxyfs_get_inode(struct super_block *sb,
-				const struct inode *dir, umode_t mode, dev_t dev);
+struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
 
 static inline struct proxyfs_inode *get_proxyfs_inode(struct inode *inode)
 {
 	return container_of(inode, struct proxyfs_inode, inode);
+}
+
+static inline bool proxyfs_resolved_inode(struct inode *inode)
+{
+	return (get_proxyfs_inode(inode)->b_dentry != NULL);
 }
 
 extern const struct inode_operations proxy_inode_operations;
