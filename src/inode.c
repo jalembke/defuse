@@ -29,14 +29,36 @@ MODULE_LICENSE("GPL");
 
 static struct kmem_cache *proxyfs_inode_cachep;
 
-static int proxy_relookup(struct inode* inode)
+static int proxyfs_resolve_inode(struct inode* inode)
 {
 	struct dentry *parent;
 	struct proxyfs_inode* pi;
 	int err = 0;
+	char buf[64];
+	char * cp;
+	
+	//struct inode* proxy_root = inode->i_sb->s_root->d_inode;
+	//struct inode* itr_inode = inode;
 
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
+	pi = get_proxyfs_inode(inode);
+	cp = dentry_path_raw(pi->p_dentry, buf, sizeof(buf));
+	printk(KERN_INFO "%s\n", cp);
+
+	/*
+	while(itr_inode != proxy_root) {
+		pi = get_proxyfs_inode(itr_inode);
+
+		printk(KERN_INFO "%s %d\n", pi->p_dentry->d_name.name, pi->p_dentry->d_name.len);
+
+		parent = dget_parent(pi->p_dentry);
+		itr_inode = parent->d_inode;
+		dput(parent);
+	}
+	*/
+
+	/*
 	pi = get_proxyfs_inode(inode);
 	if(!pi->p_dentry)
 		return -EIO;
@@ -56,6 +78,7 @@ static int proxy_relookup(struct inode* inode)
 	}
 
 	dput(parent);
+	*/
 	
 	return 0;
 }
@@ -71,7 +94,7 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 {
 	struct inode *inode;
 	
-	printk(KERN_INFO "%s %s", __PRETTY_FUNCTION__, entry->d_name.name);
+	printk(KERN_INFO "%s %s %08X", __PRETTY_FUNCTION__, entry->d_name.name, flags);
 
 	inode = proxyfs_iget(dir->i_sb, dir, entry, S_IFREG | PROXYFS_DEFAULT_MODE);
 	if(!inode)
@@ -147,6 +170,7 @@ static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *
 static int proxyfs_permission(struct inode *inode, int mask)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	dump_stack();
 	return 0;
 }
 
@@ -159,7 +183,36 @@ static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 			struct kstat *stat)
 {
+	struct proxyfs_inode* pi;
+	struct super_block *sb;
+	struct proxyfs_fs_info *fsi;
+
+	struct dentry* b_dentry;
+	struct inode* b_inode;
+
+	int err;
+	
+	struct inode* inode = entry->d_inode;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	if(!proxyfs_resolved_inode(inode)) {
+		err = proxyfs_resolve_inode(inode);
+		if(err)
+			return err;
+	}
+
+	pi = get_proxyfs_inode(inode);
+	b_dentry = pi->b_dentry;
+	b_inode = b_dentry->d_inode;
+	
+	if(b_inode->i_op->getattr) {
+		sb = inode->i_sb;
+		fsi = (struct proxyfs_fs_info*) sb->s_fs_info;
+		return b_inode->i_op->getattr(fsi->b_mount, b_dentry, stat);
+	}
+
+	generic_fillattr(b_inode, stat);
 	return 0;
 }
 
@@ -204,7 +257,7 @@ static const struct inode_operations proxyfs_inode_operations = {
 	//.put_link	= proxyfs_put_link,
 	.permission	= proxyfs_permission,
 	.setattr	= proxyfs_setattr,
-	//.getattr	= proxyfs_getattr,
+	.getattr	= proxyfs_getattr,
 	.setxattr	= proxyfs_setxattr,
 	.getxattr	= proxyfs_getxattr,
 	.listxattr	= proxyfs_listxattr,
@@ -338,7 +391,8 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 			opts->mode = option & S_IALLUGO;
 			break;
 		case OPT_BACKEND:
-			if (!match_strlcpy(opts->backend, &args[0], PATH_MAX))
+			opts->backend = match_strdup(&args[0]);
+			if(!opts->backend)
 				return -EINVAL;
 			option_backend = 1;
 			break;
@@ -389,7 +443,7 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op		= &proxyfs_ops;
 	sb->s_time_gran		= 1;
 
-	err = kern_path(fsi->mount_opts.backend, LOOKUP_FOLLOW, &path);
+	err = kern_path(fsi->mount_opts.backend, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
 	if(err)
 		return err;
 	
@@ -427,6 +481,7 @@ static struct dentry *proxyfs_mount(struct file_system_type *fs_type,
 static void proxyfs_kill_sb(struct super_block *sb)
 {
 	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	kfree(((struct proxyfs_fs_info *)sb->s_fs_info)->mount_opts.backend);
 	kfree(sb->s_fs_info);
 	kill_anon_super(sb);
 }

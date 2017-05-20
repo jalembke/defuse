@@ -11,6 +11,8 @@
 
 #include <linux/fs.h>
 
+struct vfsmount;
+
 /** PROXYFS inode */
 struct proxyfs_inode {
 	/** Inode data */
@@ -26,12 +28,13 @@ struct proxyfs_inode {
 /** PROXYFS mount options */
 struct proxyfs_mount_opts {
 	umode_t mode;
-	char backend[PATH_MAX];
+	char* backend;
 };
 
 /** PROXYFS file system info */
 struct proxyfs_fs_info {
 	struct proxyfs_mount_opts mount_opts;
+	struct vfsmount* b_mount;
 };
 
 struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
