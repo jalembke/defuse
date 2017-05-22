@@ -50,6 +50,11 @@ static inline struct proxyfs_inode *get_proxyfs_inode(struct inode *inode)
 	return container_of(inode, struct proxyfs_inode, inode);
 }
 
+static inline struct dentry* proxyfs_get_p_dentry(struct inode* inode)
+{
+	return get_proxyfs_inode(inode)->p_dentry;
+}
+
 static inline struct dentry* proxyfs_get_b_dentry(struct inode* inode)
 {
 	return get_proxyfs_inode(inode)->b_dentry;
@@ -62,10 +67,10 @@ static inline struct inode* proxyfs_get_b_inode(struct inode* inode)
 
 static inline bool proxyfs_resolved_inode(struct inode *inode)
 {
-	return (get_proxyfs_inode(inode)->b_dentry != NULL);
+	return (inode ? (get_proxyfs_inode(inode)->b_dentry != NULL) : true);
 }
 
-int proxyfs_resolve_inode(struct inode* inode);
+struct dentry* proxyfs_resolve_dentry(struct dentry* entry);
 
 extern const struct inode_operations proxy_inode_operations;
 extern const struct file_operations proxy_file_operations;

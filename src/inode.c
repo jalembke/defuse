@@ -18,6 +18,7 @@
 #include <linux/string.h>
 #include <linux/parser.h>
 #include <linux/slab.h>
+#include <linux/mount.h>
 #include <asm/uaccess.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
@@ -31,70 +32,71 @@ static struct kmem_cache *proxyfs_inode_cachep;
 
 static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
 
-int proxyfs_resolve_inode(struct inode* inode)
+struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 {
-	struct dentry *p_dentry;
 	struct dentry *p_parent;
-	struct proxyfs_inode* pi;
 	struct dentry *b_parent;
 	struct dentry *b_dentry;
 
-	int err = 0;
-
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
-	if(!inode)
-		return -EIO;
+	if(!entry)
+		return NULL;
 
-	/* Retreive the parent inode */
-	pi = get_proxyfs_inode(inode);
-	if(!pi->p_dentry)
-		return -EIO;
-
-	p_dentry = pi->p_dentry;
-	p_parent = dget_parent(p_dentry);
+	/* Retreive the parent dentry */
+	p_parent = dget_parent(entry);
 	if(!p_parent)
-		return -EIO;
+		return NULL;
 
 	/* Resolve the parent if it hasn't been already */
 	if(!proxyfs_resolved_inode(p_parent->d_inode)) {
-		err = proxyfs_resolve_inode(p_parent->d_inode);
-		if(err) {
+		b_parent = proxyfs_resolve_dentry(p_parent);
+		if(!b_parent) {
 			dput(p_parent);
-			return err;
+			return NULL;
 		}
+		get_proxyfs_inode(p_parent->d_inode)->b_dentry = b_parent;
+	} else {
+		b_parent = proxyfs_get_b_dentry(p_parent->d_inode);
+	}
+
+	/* Parent's backend dentry is negative, the proxy parent and child should also be negative */
+	if(!b_parent->d_inode) {
+		if(entry->d_inode)
+			d_delete(entry);
+		dput(p_parent);
+		if(p_parent->d_inode)
+			d_delete(p_parent);
+		return entry;
 	}
 
 	/* Resolve the child based on the proxy path and the backend parent dentry */
-	b_parent = proxyfs_get_b_dentry(p_parent->d_inode);
 	inode_lock(b_parent->d_inode);
-	b_dentry = lookup_one_len(p_dentry->d_name.name, b_parent, p_dentry->d_name.len);
+	b_dentry = lookup_one_len(entry->d_name.name, b_parent, entry->d_name.len);
 	inode_unlock(b_parent->d_inode);
 	
-	/* Set the resolved dentry */
-	err = PTR_ERR(b_dentry);
-	if(!IS_ERR(b_dentry)) {
-		if(!b_dentry->d_inode) {
-			dput(b_dentry);
-			err = -ENOENT;
-		}
-		else 
-			pi->b_dentry = b_dentry;
+	if(IS_ERR(b_dentry)) {
+		dput(p_parent);
+		return NULL;
+	}
+
+	/* Backend dentry is negative, reflect this in the proxy inode */
+	if(!b_dentry->d_inode) {
+		d_delete(entry);
 	}
 
 	dput(p_parent);
 	
-	return err;
+	return b_dentry;
 }
 
 static inline struct dentry* proxyfs_get_b_dentry_resolved(struct inode* inode)
 {
-	int err;
+	if(!inode)
+		return ERR_PTR(-ENOENT);
 
 	if(!proxyfs_resolved_inode(inode)) {
-		err = proxyfs_resolve_inode(inode);
-		if(err)
-			return ERR_PTR(err);
+		get_proxyfs_inode(inode)->b_dentry = proxyfs_resolve_dentry(proxyfs_get_p_dentry(inode));
 	}
 
 	return proxyfs_get_b_dentry(inode);
@@ -104,9 +106,8 @@ static inline struct inode* proxyfs_get_b_inode_resolved(struct inode* inode)
 {
 	struct dentry* b_dentry = proxyfs_get_b_dentry_resolved(inode);
 
-	int err = PTR_ERR(b_dentry);
-	if(IS_ERR(b_dentry)) 
-		return ERR_PTR(err);
+	if(!b_dentry) 
+		return ERR_PTR(-ENOENT);
 
 	return d_inode(b_dentry);
 }
@@ -114,25 +115,46 @@ static inline struct inode* proxyfs_get_b_inode_resolved(struct inode* inode)
 static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
 			bool want_excl)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	struct dentry* b_dentry;
+	int err;
+
+	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
+
+	//err = proxyfs_resolve_dentry(entry);
+
+	dump_stack();
 	return 0;
 }
 
 struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
 	struct inode *inode;
+	struct dentry *newent;
+	struct dentry *b_dentry = NULL;
 	mode_t base_mode = S_IFREG;
 	
-	printk(KERN_INFO "%s %s %08X", __PRETTY_FUNCTION__, entry->d_name.name, flags);
+	printk(KERN_INFO "%s %s %08X\n", __PRETTY_FUNCTION__, entry->d_name.name, flags);
 
 	if(flags & LOOKUP_DIRECTORY)
 		base_mode = S_IFDIR;
+	
+	if(flags & LOOKUP_CREATE) {
+		b_dentry = proxyfs_resolve_dentry(entry);
+		if(!b_dentry->d_inode) {
+			return entry;
+		}
+	}
 
 	inode = proxyfs_iget(dir->i_sb, dir, entry, base_mode | PROXYFS_DEFAULT_MODE);
 	if(!inode)
 		return ERR_PTR(-ENOSPC);
 
-	return d_splice_alias(inode, entry);
+	if(b_dentry)
+		get_proxyfs_inode(inode)->b_dentry = b_dentry;
+
+	newent = d_splice_alias(inode, entry);
+
+	return newent;
 }
 
 static int proxyfs_link(struct dentry *entry, struct inode *newdir,
@@ -202,13 +224,39 @@ static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *
 static int proxyfs_permission(struct inode *inode, int mask)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	dump_stack();
+
+	/* Permission always granted for ProxyFS */
+
 	return 0;
 }
 
 static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 {
+	struct inode *inode;
+	struct dentry * b_dentry;
+	struct vfsmount* b_mnt;
+	int err;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	inode = d_inode(entry);
+
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	if(IS_ERR(b_dentry))
+		return PTR_ERR(b_dentry);
+	
+	b_mnt = proxyfs_get_b_mount(inode);
+
+	err = mnt_want_write(b_mnt);
+	if(err)
+		return err;
+
+	mutex_lock(&b_dentry->d_inode->i_mutex);
+	err = notify_change(b_dentry, attr, NULL);
+	mutex_unlock(&b_dentry->d_inode->i_mutex);
+
+	mnt_drop_write(b_mnt);
+
 	return 0;
 }
 
