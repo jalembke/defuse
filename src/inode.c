@@ -213,8 +213,39 @@ static int proxyfs_link(struct dentry *entry, struct inode *newdir,
 
 static int proxyfs_unlink(struct inode *dir, struct dentry *entry)
 {
+	struct inode *inode;
+	struct dentry *b_dir;
+	struct dentry * b_dentry;
+	struct vfsmount* b_mnt;
+	int err;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+
+	b_dir = proxyfs_get_b_dentry_resolved(dir);
+	err = PTR_ERR(b_dir);
+	if(IS_ERR(b_dir)) {
+		return err;
+	}
+
+	inode = d_inode(entry);
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	err = PTR_ERR(b_dentry);
+	if(IS_ERR(b_dentry)) {
+		return err;
+	}
+	
+	b_mnt = proxyfs_get_b_mount(inode);
+
+	err = mnt_want_write(b_mnt);
+	if(err)
+		return err;
+
+	mutex_lock(&b_dir->d_inode->i_mutex);
+	err = vfs_unlink(d_inode(b_dir), b_dentry, NULL);
+	mutex_unlock(&b_dir->d_inode->i_mutex);
+	mnt_drop_write(b_mnt);
+
+	return err;
 }
 
 static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
@@ -232,8 +263,37 @@ static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 
 static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
 {
+	struct inode *inode;
+	struct dentry *b_dir;
+	struct dentry * b_dentry;
+	struct vfsmount* b_mnt;
+	int err;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+
+	b_dir = proxyfs_get_b_dentry_resolved(dir);
+	err = PTR_ERR(b_dir);
+	if(IS_ERR(b_dir)) {
+		return err;
+	}
+
+	inode = d_inode(entry);
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	err = PTR_ERR(b_dentry);
+	if(IS_ERR(b_dentry)) {
+		return err;
+	}
+	
+	b_mnt = proxyfs_get_b_mount(inode);
+
+	err = mnt_want_write(b_mnt);
+	if(err)
+		return err;
+
+	err = vfs_rmdir(d_inode(b_dir), b_dentry);
+	mnt_drop_write(b_mnt);
+
+	return err;
 }
 
 static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
