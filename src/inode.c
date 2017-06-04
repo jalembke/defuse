@@ -21,6 +21,7 @@
 #include <linux/mount.h>
 #include <asm/uaccess.h>
 #include <linux/xattr.h>
+#include <linux/fs_stack.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
 MODULE_DESCRIPTION("Proxy File System");
@@ -347,20 +348,96 @@ static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 	return proxyfs_create_object(dir, entry, mode, rdev, NULL, NULL);
-	return 0;
 }
 
 static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 		       struct inode *newdir, struct dentry *newent)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+	struct dentry *b_olddir;
+	struct dentry *b_oldent;
+	struct dentry *b_newdir;
+	struct dentry *b_newent;
+	int err;
+
+	struct dentry *trap = NULL;
+	struct inode *inode = d_inode(newent);
+
+	b_olddir = proxyfs_get_b_dentry_resolved(olddir);
+	err = PTR_ERR(b_olddir);
+	if(IS_ERR(b_olddir)) {
+		return err;
+	}
+	b_oldent = proxyfs_get_b_dentry_resolved(d_inode(oldent));
+	err = PTR_ERR(b_oldent);
+	if(IS_ERR(b_oldent)) {
+		return err;
+	}
+	b_newdir = proxyfs_get_b_dentry_resolved(newdir);
+	err = PTR_ERR(b_newdir);
+	if(IS_ERR(b_newdir)) {
+		return err;
+	}
+	b_newent = proxyfs_resolve_dentry(newent);
+	if(!b_newent)
+		return -EIO;
+
+	trap = lock_rename(b_olddir, b_newdir);
+	if(trap == b_oldent) {
+		unlock_rename(b_olddir, b_newdir);
+		dput(b_newent);
+		return -EINVAL;
+	}
+	if(trap == b_newent) {
+		unlock_rename(b_olddir, b_newdir);
+		dput(b_newent);
+		return -ENOTEMPTY;
+	}
+	err = vfs_rename(d_inode(b_olddir), b_oldent, d_inode(b_newdir), b_newent, NULL, 0);
+	if(err) {
+		unlock_rename(b_olddir, b_newdir);
+		dput(b_newent);
+		return err;
+	}
+	if(inode)
+		fsstack_copy_attr_all(inode, d_inode(b_newent));
+	fsstack_copy_attr_all(newdir, d_inode(b_newdir));
+	if (newdir != olddir)
+		fsstack_copy_attr_all(olddir, d_inode(b_olddir));
+
+	unlock_rename(b_olddir, b_newdir);
+	dput(b_newent);
+	return err;
 }
 
 static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int buflen)
 {
+	struct inode *inode;
+	struct path b_path;
+	struct dentry* b_dentry;
+	struct inode *b_inode;
+	int err;
+
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+
+	inode = d_inode(entry);
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	err = PTR_ERR(b_dentry);
+	if(IS_ERR(b_dentry)) {
+		return err;
+	}
+
+	b_inode = d_inode(b_dentry);
+	if(!b_inode)
+		return -ENOENT;
+
+	if (!b_inode->i_op->readlink)
+		return -EINVAL;
+
+	b_path.mnt = proxyfs_get_b_mount(inode);
+	b_path.dentry = b_dentry;
+	touch_atime(&b_path);
+
+	return b_inode->i_op->readlink(b_dentry, buffer, buflen);
 }
 
 /*
