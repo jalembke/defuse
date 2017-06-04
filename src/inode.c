@@ -133,41 +133,147 @@ static inline struct inode* proxyfs_get_b_inode_resolved(struct inode* inode)
 	return d_inode(b_dentry);
 }
 
-static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
-			bool want_excl)
+static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umode_t mode, 
+	dev_t dev, const char* link, struct dentry *hardlink)
 {
 	struct inode *inode;
 	struct dentry *b_dir;
 	struct dentry *b_dentry;
+	struct dentry *b_hardlink;
 	int err;
-
-	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
 
 	b_dir = proxyfs_get_b_dentry_resolved(dir);
 	err = PTR_ERR(b_dir);
 	if(IS_ERR(b_dir)) {
 		return err;
 	}
+	if(hardlink) {
+		b_hardlink = proxyfs_get_b_dentry_resolved(d_inode(hardlink));
+		err = PTR_ERR(b_hardlink);
+		if(IS_ERR(b_hardlink)) {
+			return err;
+		}
+	}
 	b_dentry = proxyfs_resolve_dentry(entry);
 	if(!b_dentry)
 		return -EIO;
-	
+	if(d_inode(b_dentry)) {
+		dput(b_dentry);
+		return -ESTALE;
+	}
+
 	inode = proxyfs_iget(dir->i_sb, dir, entry, mode);
 	if(!inode) {
 		dput(b_dentry);
 		return -ENOSPC;
 	}
-	
-	err = vfs_create(d_inode(b_dir), b_dentry, mode, want_excl);
+
+	mutex_lock_nested(&b_dir->d_inode->i_mutex, I_MUTEX_PARENT);
+	if(hardlink) {
+		err = vfs_link(b_hardlink, d_inode(b_dir), b_dentry, NULL);
+	} else {
+		switch (mode & S_IFMT) {
+			case S_IFREG:
+				err = vfs_create(d_inode(b_dir), b_dentry, mode, true);
+				break;
+			case S_IFDIR:
+				err = vfs_mkdir(d_inode(b_dir), b_dentry, mode);
+				break;
+			case S_IFCHR:
+			case S_IFBLK:
+			case S_IFIFO:
+			case S_IFSOCK:
+				err = vfs_mknod(d_inode(b_dir), b_dentry, mode, dev);
+				break;
+			case S_IFLNK:
+				err = vfs_symlink(d_inode(b_dir), b_dentry, link);
+				break;
+			default:
+				err = -EPERM;
+		}
+	}
+	mutex_unlock(&b_dir->d_inode->i_mutex);
+
 	if(err) {
 		dput(b_dentry);
-		return err;
 	}
 
 	d_instantiate(entry, inode);
 	get_proxyfs_inode(inode)->b_dentry = b_dentry;
-
 	return 0;
+}
+
+static inline int proxyfs_create_object(struct inode *dir, struct dentry *entry, umode_t mode, 
+	dev_t dev, const char* link, struct dentry* hardlink)
+{
+	struct vfsmount* b_mnt;
+	int err;
+
+	b_mnt = proxyfs_get_b_mount(dir);
+	err = mnt_want_write(b_mnt);
+	if(err) {
+		return err;
+	}
+	err = proxyfs_do_create(dir, entry, mode, dev, link, hardlink);
+	mnt_drop_write(b_mnt);
+	
+	return err;
+}
+
+static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
+{
+	struct inode *inode;
+	struct dentry *b_dir;
+	struct dentry * b_dentry;
+	int err;
+
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	b_dir = proxyfs_get_b_dentry_resolved(dir);
+	err = PTR_ERR(b_dir);
+	if(IS_ERR(b_dir)) {
+		return err;
+	}
+
+	inode = d_inode(entry);
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	err = PTR_ERR(b_dentry);
+	if(IS_ERR(b_dentry)) {
+		return err;
+	}
+
+	mutex_lock_nested(&b_dir->d_inode->i_mutex, I_MUTEX_PARENT);
+	if(!S_ISDIR(b_dentry->d_inode->i_mode)) {
+		err = vfs_rmdir(d_inode(b_dir), b_dentry);
+	} else {
+		err = vfs_unlink(d_inode(b_dir), b_dentry, NULL);
+	}
+	mutex_unlock(&b_dir->d_inode->i_mutex);
+
+	return err;
+}
+
+static inline int proxyfs_delete_object(struct inode *dir, struct dentry *entry)
+{
+	struct vfsmount* b_mnt;
+	int err;
+
+	b_mnt = proxyfs_get_b_mount(dir);
+	err = mnt_want_write(b_mnt);
+	if(err) {
+		return err;
+	}
+	err = proxyfs_do_delete(dir, entry);
+	mnt_drop_write(b_mnt);
+	
+	return err;
+}
+
+static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
+			bool want_excl)
+{
+	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
+	return proxyfs_create_object(dir, entry, mode, 0, NULL, NULL);
 }
 
 struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
@@ -208,98 +314,39 @@ static int proxyfs_link(struct dentry *entry, struct inode *newdir,
 		     struct dentry *newent)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+	return proxyfs_create_object(newdir, newent, entry->d_inode->i_mode, 0, NULL, entry);
 }
 
 static int proxyfs_unlink(struct inode *dir, struct dentry *entry)
 {
-	struct inode *inode;
-	struct dentry *b_dir;
-	struct dentry * b_dentry;
-	struct vfsmount* b_mnt;
-	int err;
-
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-
-	b_dir = proxyfs_get_b_dentry_resolved(dir);
-	err = PTR_ERR(b_dir);
-	if(IS_ERR(b_dir)) {
-		return err;
-	}
-
-	inode = d_inode(entry);
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
-	err = PTR_ERR(b_dentry);
-	if(IS_ERR(b_dentry)) {
-		return err;
-	}
-	
-	b_mnt = proxyfs_get_b_mount(inode);
-
-	err = mnt_want_write(b_mnt);
-	if(err)
-		return err;
-
-	mutex_lock(&b_dir->d_inode->i_mutex);
-	err = vfs_unlink(d_inode(b_dir), b_dentry, NULL);
-	mutex_unlock(&b_dir->d_inode->i_mutex);
-	mnt_drop_write(b_mnt);
-
-	return err;
+	return proxyfs_delete_object(dir, entry);
 }
 
 static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
 			const char *link)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+	return proxyfs_create_object(dir, entry, S_IFLNK, 0, link, NULL);
 }
 
 static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return 0;
+	return proxyfs_create_object(dir, entry, mode, 0, NULL, NULL);
 }
 
 static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
 {
-	struct inode *inode;
-	struct dentry *b_dir;
-	struct dentry * b_dentry;
-	struct vfsmount* b_mnt;
-	int err;
-
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-
-	b_dir = proxyfs_get_b_dentry_resolved(dir);
-	err = PTR_ERR(b_dir);
-	if(IS_ERR(b_dir)) {
-		return err;
-	}
-
-	inode = d_inode(entry);
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
-	err = PTR_ERR(b_dentry);
-	if(IS_ERR(b_dentry)) {
-		return err;
-	}
-	
-	b_mnt = proxyfs_get_b_mount(inode);
-
-	err = mnt_want_write(b_mnt);
-	if(err)
-		return err;
-
-	err = vfs_rmdir(d_inode(b_dir), b_dentry);
-	mnt_drop_write(b_mnt);
-
-	return err;
+	return proxyfs_delete_object(dir, entry);
 }
 
 static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
 		      dev_t rdev)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return proxyfs_create_object(dir, entry, mode, rdev, NULL, NULL);
 	return 0;
 }
 
@@ -355,8 +402,6 @@ static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 	}
 	
 	b_mnt = proxyfs_get_b_mount(inode);
-
-
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
@@ -413,7 +458,6 @@ static int proxyfs_setxattr(struct dentry *entry, const char *name,
 	}
 	
 	b_mnt = proxyfs_get_b_mount(inode);
-
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
@@ -481,7 +525,6 @@ static int proxyfs_removexattr(struct dentry *entry, const char *name)
 	}
 	
 	b_mnt = proxyfs_get_b_mount(inode);
-
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
