@@ -2,7 +2,7 @@
 # Makefile for the Proxy filesystem.
 #
 obj-m += proxyfs.o
-proxyfs-objs := inode.o
+proxyfs-objs := inode.o file.o
 
 CFLAGS_inode.o := -DDEBUG
 

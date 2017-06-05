@@ -21,7 +21,6 @@
 #include <linux/mount.h>
 #include <asm/uaccess.h>
 #include <linux/xattr.h>
-#include <linux/fs_stack.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
 MODULE_DESCRIPTION("Proxy File System");
@@ -209,6 +208,8 @@ static inline int proxyfs_create_object(struct inode *dir, struct dentry *entry,
 {
 	struct vfsmount* b_mnt;
 	int err;
+	
+	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
 
 	b_mnt = proxyfs_get_b_mount(dir);
 	err = mnt_want_write(b_mnt);
@@ -244,7 +245,7 @@ static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
 	}
 
 	mutex_lock_nested(&b_dir->d_inode->i_mutex, I_MUTEX_PARENT);
-	if(!S_ISDIR(b_dentry->d_inode->i_mode)) {
+	if(S_ISDIR(b_dentry->d_inode->i_mode)) {
 		err = vfs_rmdir(d_inode(b_dir), b_dentry);
 	} else {
 		err = vfs_unlink(d_inode(b_dir), b_dentry, NULL);
@@ -273,8 +274,8 @@ static inline int proxyfs_delete_object(struct inode *dir, struct dentry *entry)
 static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
 			bool want_excl)
 {
-	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
-	return proxyfs_create_object(dir, entry, mode, 0, NULL, NULL);
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFREG, 0, NULL, NULL);
 }
 
 struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
@@ -334,7 +335,7 @@ static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
 static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	return proxyfs_create_object(dir, entry, mode, 0, NULL, NULL);
+	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFDIR, 0, NULL, NULL);
 }
 
 static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
@@ -360,7 +361,8 @@ static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 	int err;
 
 	struct dentry *trap = NULL;
-	struct inode *inode = d_inode(newent);
+	
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	b_olddir = proxyfs_get_b_dentry_resolved(olddir);
 	err = PTR_ERR(b_olddir);
@@ -398,11 +400,6 @@ static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 		dput(b_newent);
 		return err;
 	}
-	if(inode)
-		fsstack_copy_attr_all(inode, d_inode(b_newent));
-	fsstack_copy_attr_all(newdir, d_inode(b_newdir));
-	if (newdir != olddir)
-		fsstack_copy_attr_all(olddir, d_inode(b_olddir));
 
 	unlock_rename(b_olddir, b_newdir);
 	dput(b_newent);
