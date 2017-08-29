@@ -14,7 +14,6 @@
 #include <linux/namei.h>
 #include <linux/pagemap.h>
 #include <linux/time.h>
-#include <linux/init.h>
 #include <linux/string.h>
 #include <linux/parser.h>
 #include <linux/slab.h>
@@ -94,43 +93,6 @@ struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 	dput(p_parent);
 	
 	return b_dentry;
-}
-
-static inline struct dentry* proxyfs_get_b_dentry_resolved(struct inode* inode)
-{
-	struct dentry* b_dentry;
-
-	if(!inode)
-		return ERR_PTR(-ENOENT);
-
-	/* 
-	 * Get the backend dentry either through a resolve
-	 * or directly from the inode
-	 */
-	if(!proxyfs_resolved_inode(inode)) {
-		b_dentry = proxyfs_resolve_dentry(proxyfs_get_p_dentry(inode));
-	} else {
-		b_dentry = proxyfs_get_b_dentry(inode);
-	}
-
-	/* If the backend is negative return ENOENT */
-	if(!b_dentry || !b_dentry->d_inode)
-		return ERR_PTR(-ENOENT);
-
-	return b_dentry;
-}
-
-static inline struct inode* proxyfs_get_b_inode_resolved(struct inode* inode)
-{
-	struct dentry* b_dentry = proxyfs_get_b_dentry_resolved(inode);
-	int err = PTR_ERR(b_dentry);
-	if(!b_dentry) 
-		return ERR_PTR(-ENOENT);
-
-	if(err)
-		return ERR_PTR(err);
-	
-	return d_inode(b_dentry);
 }
 
 static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umode_t mode, 
@@ -452,6 +414,7 @@ static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *
 static int proxyfs_permission(struct inode *inode, int mask)
 {
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	dump_stack();
 
 	/* Permission always granted for ProxyFS */
 
@@ -677,7 +640,7 @@ static void proxyfs_init_inode(struct inode *inode, struct inode *dir, mode_t mo
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
 	} else {
 		inode->i_op = &proxyfs_inode_operations;
-		//inode->i_fop = &proxy_file_operations;
+		inode->i_fop = &proxy_file_operations;
 	}
 }
 

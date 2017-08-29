@@ -8,12 +8,49 @@
 
 #include "proxyfs.h"
 
+#include <linux/module.h>
 #include <linux/fs.h>
 #include <linux/namei.h>
 
-static ssize_t proxyfs_read(struct file *file, char __user *buf, size_t count, loff_t *offset) {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+static inline int proxyfs_resolve_reopen(struct file* file)
+{
+	struct dentry* b_dentry;
+	struct inode* b_inode;
+	struct dentry *entry = file->f_path.dentry;
+	struct inode* inode = entry->d_inode;
+	int opened = 0;
+	int err;
+
+	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	if(IS_ERR(b_dentry))
+		return PTR_ERR(b_dentry);
+
+	b_inode = d_inode(b_dentry);
+	if(!b_inode)
+		return -ENOENT;
+
+	file->f_path.mnt = proxyfs_get_b_mount(inode);
+	file->f_path.dentry = b_dentry;
+
+	err = finish_open(file, b_dentry, NULL, &opened);
+	if(err)
+		return err;
+
+	fops_put(file->f_op);
+
 	return 0;
+}
+
+static ssize_t proxyfs_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
+{
+	int err;
+	
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	err = proxyfs_resolve_reopen(file);
+	if(err)
+		return err;
+	
+	return vfs_read(file, buf, count, offset);
 }
 
 static ssize_t proxyfs_write(struct file *file, const char __user *buf, size_t count, loff_t *offset) {
@@ -21,8 +58,16 @@ static ssize_t proxyfs_write(struct file *file, const char __user *buf, size_t c
 	return 0;
 }
 
-static int proxyfs_open(struct inode *inode, struct file *file) {
+static int proxyfs_open(struct inode *inode, struct file *file)
+{
+	int err;
+	
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	err = generic_file_open(inode, file);
+	if (err)
+		return err;
+
 	return 0;
 }
 

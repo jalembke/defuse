@@ -72,6 +72,43 @@ static inline bool proxyfs_resolved_inode(struct inode *inode)
 
 struct dentry* proxyfs_resolve_dentry(struct dentry* entry);
 
+static inline struct dentry* proxyfs_get_b_dentry_resolved(struct inode* inode)
+{
+	struct dentry* b_dentry;
+
+	if(!inode)
+		return ERR_PTR(-ENOENT);
+
+	/* 
+	 * Get the backend dentry either through a resolve
+	 * or directly from the inode
+	 */
+	if(!proxyfs_resolved_inode(inode)) {
+		b_dentry = proxyfs_resolve_dentry(proxyfs_get_p_dentry(inode));
+	} else {
+		b_dentry = proxyfs_get_b_dentry(inode);
+	}
+
+	/* If the backend is negative return ENOENT */
+	if(!b_dentry || !b_dentry->d_inode)
+		return ERR_PTR(-ENOENT);
+
+	return b_dentry;
+}
+
+static inline struct inode* proxyfs_get_b_inode_resolved(struct inode* inode)
+{
+	struct dentry* b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	int err = PTR_ERR(b_dentry);
+	if(!b_dentry) 
+		return ERR_PTR(-ENOENT);
+
+	if(err)
+		return ERR_PTR(err);
+	
+	return d_inode(b_dentry);
+}
+
 extern const struct inode_operations proxy_inode_operations;
 extern const struct file_operations proxy_file_operations;
 
