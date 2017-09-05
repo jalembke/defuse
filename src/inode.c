@@ -461,6 +461,7 @@ static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 	struct inode* inode = entry->d_inode;
 
 	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	printk(KERN_INFO "%s\n", entry->d_name.name);
 
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
