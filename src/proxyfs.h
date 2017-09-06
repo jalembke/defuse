@@ -14,6 +14,12 @@
 
 struct vfsmount;
 
+#ifdef DEBUG_PROXYFS
+#define PRINTFN printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+#else
+#define PRINTFN
+#endif
+
 /** PROXYFS inode */
 struct proxyfs_inode {
 	/** Inode data */

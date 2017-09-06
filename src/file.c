@@ -83,11 +83,48 @@ static inline struct file* proxyfs_get_b_file_resolved(struct file* file)
 	return b_file;
 }
 
+static loff_t proxyfs_llseek(struct file *file, loff_t offset, int whence)
+{
+	loff_t retval;
+	struct inode *inode;
+	struct inode *b_inode;
+
+	PRINTFN;
+
+	inode = file->f_path.dentry->d_inode;
+	mutex_lock(&inode->i_mutex);
+	switch (whence) {
+		// If seeking from the end, retrieve the backend inode
+		//    to know the file size
+		case SEEK_END:
+			b_inode = proxyfs_get_b_inode_resolved(inode);
+			if(IS_ERR(b_inode)) {
+			   mutex_unlock(&inode->i_mutex);
+			   return PTR_ERR(b_inode);
+			}
+			offset += i_size_read(b_inode);
+			break;
+		// If seeking from the current position
+		case SEEK_CUR:
+			offset += file->f_pos;
+			break;
+	}
+	retval = -EINVAL;
+	if (offset >= 0) {
+		if (offset != file->f_pos) {
+			file->f_pos = offset;
+		}
+		retval = offset;
+	}
+	mutex_unlock(&inode->i_mutex);
+	return retval;
+}
+
 static ssize_t proxyfs_read(struct file *file, char __user *buf, size_t count, loff_t *offset)
 {
 	struct file* b_file;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_file = proxyfs_get_b_file_resolved(file);
 	if(IS_ERR(b_file))
@@ -100,7 +137,7 @@ static ssize_t proxyfs_write(struct file *file, const char __user *buf, size_t c
 {
 	struct file* b_file;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_file = proxyfs_get_b_file_resolved(file);
 	if(IS_ERR(b_file))
@@ -128,7 +165,7 @@ static int proxyfs_flush(struct file *file, fl_owner_t id)
 {
 	struct file* b_file;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_file = proxyfs_get_b_file_resolved(file);
 	if(IS_ERR(b_file))
@@ -142,7 +179,7 @@ static int proxyfs_flush(struct file *file, fl_owner_t id)
 
 static int proxyfs_release(struct inode *inode, struct file *file)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	if(proxyfs_resolved_file(file)) {
 		fput(get_proxyfs_b_file(file));
@@ -155,7 +192,7 @@ static int proxyfs_fsync(struct file *file, loff_t start, loff_t end, int datasy
 {
 	struct file* b_file;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_file = proxyfs_get_b_file_resolved(file);
 	if(IS_ERR(b_file))
@@ -164,17 +201,43 @@ static int proxyfs_fsync(struct file *file, loff_t start, loff_t end, int datasy
 	return vfs_fsync_range(b_file, start, end, datasync);
 }
 
-static long proxyfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len) {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+static int proxyfs_fasync(int fd, struct file *file, int flags)
+{
+	struct file* b_file;
+	
+	PRINTFN;
+
+	b_file = proxyfs_get_b_file_resolved(file);
+	if(IS_ERR(b_file))
+		return PTR_ERR(b_file);
+
+	if(b_file->f_op->fasync)
+		return b_file->f_op->fasync(fd, b_file, flags);
+	
 	return 0;
 }
 
+static long proxyfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+{
+	struct file* b_file;
+	
+	PRINTFN;
+
+	b_file = proxyfs_get_b_file_resolved(file);
+	if(IS_ERR(b_file))
+		return PTR_ERR(b_file);
+
+	return vfs_fallocate(b_file, mode, offset, len);
+}
+
 const struct file_operations proxy_file_operations = {
+	.llseek		= proxyfs_llseek,
 	.read		= proxyfs_read,
 	.write		= proxyfs_write,
 	.open		= proxyfs_open,
 	.flush		= proxyfs_flush,
 	.release	= proxyfs_release,
 	.fsync		= proxyfs_fsync,
+	.fasync		= proxyfs_fasync,
 	.fallocate	= proxyfs_fallocate,
 };

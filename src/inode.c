@@ -48,7 +48,7 @@ struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 	struct dentry *b_parent;
 	struct dentry *b_dentry;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	if(!entry)
 		return NULL;
@@ -103,6 +103,8 @@ static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umo
 	struct dentry *b_dentry;
 	struct dentry *b_hardlink;
 	int err;
+	
+	PRINTFN;
 
 	b_dir = proxyfs_get_b_dentry_resolved(dir);
 	err = PTR_ERR(b_dir);
@@ -171,7 +173,7 @@ static inline int proxyfs_create_object(struct inode *dir, struct dentry *entry,
 	struct vfsmount* b_mnt;
 	int err;
 	
-	printk(KERN_INFO "%s %08X\n", __PRETTY_FUNCTION__, mode);
+	PRINTFN;
 
 	b_mnt = proxyfs_get_b_mount(dir);
 	err = mnt_want_write(b_mnt);
@@ -191,7 +193,7 @@ static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
 	struct dentry * b_dentry;
 	int err;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_dir = proxyfs_get_b_dentry_resolved(dir);
 	err = PTR_ERR(b_dir);
@@ -236,7 +238,7 @@ static inline int proxyfs_delete_object(struct inode *dir, struct dentry *entry)
 static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
 			bool want_excl)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFREG, 0, NULL, NULL);
 }
 
@@ -246,7 +248,7 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 	struct dentry *b_dentry = NULL;
 	mode_t base_mode = S_IFREG;
 	
-	printk(KERN_INFO "%s %s %08X %016llX\n", __PRETTY_FUNCTION__, entry->d_name.name, flags, (unsigned long long)entry->d_inode);
+	PRINTFN;
 
 	if(flags & LOOKUP_DIRECTORY)
 		base_mode = S_IFDIR;
@@ -277,39 +279,39 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 static int proxyfs_link(struct dentry *entry, struct inode *newdir,
 		     struct dentry *newent)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_create_object(newdir, newent, entry->d_inode->i_mode, 0, NULL, entry);
 }
 
 static int proxyfs_unlink(struct inode *dir, struct dentry *entry)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_delete_object(dir, entry);
 }
 
 static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
 			const char *link)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_create_object(dir, entry, S_IFLNK, 0, link, NULL);
 }
 
 static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFDIR, 0, NULL, NULL);
 }
 
 static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_delete_object(dir, entry);
 }
 
 static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
 		      dev_t rdev)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return proxyfs_create_object(dir, entry, mode, rdev, NULL, NULL);
 }
 
@@ -324,7 +326,7 @@ static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 
 	struct dentry *trap = NULL;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_olddir = proxyfs_get_b_dentry_resolved(olddir);
 	err = PTR_ERR(b_olddir);
@@ -376,7 +378,7 @@ static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int bufle
 	struct inode *b_inode;
 	int err;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	inode = d_inode(entry);
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
@@ -413,8 +415,7 @@ static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *
 
 static int proxyfs_permission(struct inode *inode, int mask)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	dump_stack();
+	PRINTFN;
 
 	/* Permission always granted for ProxyFS */
 
@@ -428,7 +429,7 @@ static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 	struct vfsmount* b_mnt;
 	int err;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	inode = d_inode(entry);
 
@@ -460,16 +461,17 @@ static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 	struct inode* b_inode;
 	struct inode* inode = entry->d_inode;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-	printk(KERN_INFO "%s\n", entry->d_name.name);
+	PRINTFN;
 
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
 		return PTR_ERR(b_dentry);
 
 	b_inode = d_inode(b_dentry);
-	if(!b_inode)
+	if(!b_inode) {
+		printk(KERN_INFO "HERE\n");
 		return -ENOENT;
+	}
 
 	b_path.mnt = proxyfs_get_b_mount(inode);
 	b_path.dentry = b_dentry;
@@ -485,7 +487,7 @@ static int proxyfs_setxattr(struct dentry *entry, const char *name,
 	struct vfsmount* b_mnt;
 	int err;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	inode = d_inode(entry);
 
@@ -513,7 +515,7 @@ static ssize_t proxyfs_getxattr(struct dentry *entry, const char *name,
 	struct inode* b_inode;
 	struct inode* inode = entry->d_inode;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
@@ -532,7 +534,7 @@ static ssize_t proxyfs_listxattr(struct dentry *entry, char *list, size_t size)
 	struct inode* b_inode;
 	struct inode* inode = entry->d_inode;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
@@ -552,7 +554,7 @@ static int proxyfs_removexattr(struct dentry *entry, const char *name)
 	struct vfsmount* b_mnt;
 	int err;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	inode = d_inode(entry);
 
@@ -599,12 +601,12 @@ static struct inode *proxyfs_alloc_inode(struct super_block *sb)
 {
 	struct inode *inode;
 	struct proxyfs_inode *pi;
+	
+	PRINTFN;
 
 	inode = kmem_cache_alloc(proxyfs_inode_cachep, GFP_KERNEL);
 	if (!inode)
 		return NULL;
-
-	printk(KERN_INFO "%s %016llX\n", __PRETTY_FUNCTION__, (unsigned long long)inode);
 
 	pi = get_proxyfs_inode(inode);
 	pi->b_dentry = NULL;
@@ -624,18 +626,16 @@ static void proxyfs_i_callback(struct rcu_head *head)
 
 static void proxyfs_destroy_inode(struct inode *inode)
 {
-	dump_stack();
-	printk(KERN_INFO "%s %016llX\n", __PRETTY_FUNCTION__, (unsigned long long)inode);
+	PRINTFN;
 	call_rcu(&inode->i_rcu, proxyfs_i_callback);
 }
 
 static void proxyfs_init_inode(struct inode *inode, struct inode *dir, mode_t mode)
 {
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 	
 	inode->i_ino = get_next_ino();
 	inode_init_owner(inode, dir, mode);
-	//inode->i_mapping->a_ops = &ramfs_aops;
 	inode->i_atime = inode->i_mtime = inode->i_ctime = CURRENT_TIME;
 	if(special_file(inode->i_mode)) {
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
@@ -672,7 +672,7 @@ static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, str
 	struct inode *inode;
 	unsigned long dhash;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	PRINTFN;
 
 	if(entry)
 		dhash = full_name_hash(entry->d_name.name, entry->d_name.len);
@@ -711,7 +711,8 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 	int token;
 	int option_backend = 0;
 	char *p;
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	
+	PRINTFN;
 
 	opts->mode = PROXYFS_DEFAULT_MODE;
 
@@ -759,7 +760,8 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct proxyfs_fs_info *fsi;
 	int err;
 	struct path path;
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+
+	PRINTFN;
 
 	save_mount_options(sb, data);
 
@@ -811,13 +813,13 @@ static struct dentry *proxyfs_mount(struct file_system_type *fs_type,
 		       int flags, const char *dev_name,
 		       void *raw_data)
 {
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	PRINTFN;
 	return mount_nodev(fs_type, flags, raw_data, proxyfs_fill_super);
 }
 
 static void proxyfs_kill_sb(struct super_block *sb)
 {
-	printk(KERN_INFO "%s", __PRETTY_FUNCTION__);
+	PRINTFN;
 	kfree(((struct proxyfs_fs_info *)sb->s_fs_info)->mount_opts.backend);
 	kfree(sb->s_fs_info);
 	kill_anon_super(sb);
