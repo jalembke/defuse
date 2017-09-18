@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "glibc_ops.h"
 
 struct glibc_ops real_ops;
@@ -141,14 +141,14 @@ load_glibc_ops(void)
 		real_ops.fremovexattr = (int (*)(int, const char*))dlsym_exit_on_error(RTLD_NEXT, "fremovexattr");
 		real_ops.munmap = (int (*)(void*, size_t))dlsym_exit_on_error(RTLD_NEXT, "munmap");
 		real_ops.msync = (int (*)(void*, size_t, int))dlsym_exit_on_error(RTLD_NEXT, "msync");
-		real_ops.getfscreatecon = (int (*)(security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "getfscreatecon");
+		/*real_ops.getfscreatecon = (int (*)(security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "getfscreatecon");
 		real_ops.getfilecon = (int (*)(const char*, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "getfilecon");
 		real_ops.lgetfilecon = (int (*)(const char*, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "lgetfilecon");
 		real_ops.fgetfilecon = (int (*)(int, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "fgetfilecon");
 		real_ops.setfscreatecon = (int (*)(security_context_t))dlsym_exit_on_error(RTLD_NEXT, "setfscreatecon");
 		real_ops.setfilecon = (int (*)(const char*, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "setfilecon");
 		real_ops.lsetfilecon = (int (*)(const char*, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "lsetfilecon");
-		real_ops.fsetfilecon = (int (*)(int, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "fsetfilecon");
+		real_ops.fsetfilecon = (int (*)(int, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "fsetfilecon");*/
 
 		load_glibc_ops_flag = true;
 	}

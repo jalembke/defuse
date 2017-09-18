@@ -7,11 +7,11 @@
 
 #include <sstream>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "glibc_ops.h"
 #include "file_handle_data.h"
 #include "dir_handle_data.h"
-#include "HybridFS.h"
+#include "FileSystemWrapper.h"
 
 #pragma GCC visibility push(default)
 
@@ -69,6 +69,7 @@ struct dirent *readdir(DIR *dirp)
 	struct dirent* ret = NULL;
 
 	DIR_OP_ENTER;
+	/*
 	if(dhd->dir_pointer != dhd->dir_entries.end()) {
 		static struct dirent local_dirent;
 		struct stat local_stat;
@@ -94,6 +95,7 @@ struct dirent *readdir(DIR *dirp)
 			errno = local_rv;
 		}
 	}
+	*/
 	OP_EXIT(readdir, (dirp));
 
 	return ret;

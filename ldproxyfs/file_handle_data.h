@@ -6,12 +6,12 @@
 
 #include "sptr.h"
 
-class HybridFileSystem;
+class FileSystemWrapper;
 
 class file_handle_data {
 
 	public:
-		HybridFileSystem* file_system;
+		FileSystemWrapper* file_system;
 		uint64_t file_handle;
 		int file_descriptor;
 
@@ -21,7 +21,7 @@ class file_handle_data {
 		file_handle_data(const file_handle_data& other) :
 			file_system(other.file_system), file_handle(other.file_handle), file_descriptor(other.file_descriptor) {}
 
-		file_handle_data(HybridFileSystem* fs, uint64_t fh, int fd) :
+		file_handle_data(FileSystemWrapper* fs, uint64_t fh, int fd) :
 			file_system(fs), file_handle(fh), file_descriptor(fd) {}
 
 		~file_handle_data();

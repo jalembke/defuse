@@ -1,8 +1,10 @@
 #ifndef _GLIBC_OPS_H
 #define _GLIBC_OPS_H
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
-#include <selinux/selinux.h>
+//#include <selinux/selinux.h>
 
 struct glibc_ops {
 
@@ -104,14 +106,14 @@ struct glibc_ops {
 	/* stdio functions */
 
     /* selinux operations */
-    int (*getfscreatecon)(security_context_t *con);
+    /*int (*getfscreatecon)(security_context_t *con);
     int (*getfilecon)(const char *path, security_context_t *con);
     int (*lgetfilecon)(const char *path, security_context_t *con);
     int (*fgetfilecon)(int fd, security_context_t *con);
     int (*setfscreatecon)(security_context_t con);
     int (*setfilecon)(const char *path, security_context_t con);
     int (*lsetfilecon)(const char *path, security_context_t con);
-    int (*fsetfilecon)(int fd, security_context_t con);
+    int (*fsetfilecon)(int fd, security_context_t con);*/
 };
 
 extern struct glibc_ops real_ops;

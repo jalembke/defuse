@@ -8,7 +8,7 @@
 #include "file_handle_data.h"
 #include "dir_handle_data.h"
 
-class HybridFileSystem;
+class FileSystemWrapper;
 
 #if !defined(PROXYFS_DO_REAL_OPEN) && !defined(PROXYFS_DO_NULL_OPEN)
 #error "-DPROXYFS_DO_REAL_OPEN or -DPROXYFS_DO_NULL_OPEN required"
@@ -18,8 +18,8 @@ class HybridFileSystem;
 #error "-DPROXYFS_MOUNT is required"
 #endif
 
-#ifndef PROXYFS_BACKEND_STRING
-#error "-DPROXYFS_BACKEND_STRING is required"
+#ifndef PROXYFS_BACKEND
+#error "-DPROXYFS_BACKEND is required"
 #endif
 
 #ifdef DEBUG_LDPROXYFS
@@ -32,14 +32,14 @@ class HybridFileSystem;
 #endif
 
 #define OP_ENTER \
-	HybridFileSystem* fs = NULL; \
+	FileSystemWrapper* fs = NULL; \
     std::string cpath; \
     resolve_path(path, cpath); \
     if((fs = find_mount_and_strip_path(cpath)) != NULL) { \
         DEBUG_ENTER;
 
 #define AT_OP_ENTER \
-	HybridFileSystem* fs = NULL; \
+	FileSystemWrapper* fs = NULL; \
     std::string cpath; \
     resolve_path_at(dirfd, path, cpath); \
     if((fs = find_mount_and_strip_path(cpath)) != NULL) { \
@@ -63,7 +63,7 @@ class HybridFileSystem;
 
 // Mount Point Functions
 void load_mounts(void);
-HybridFileSystem* find_mount_and_strip_path(std::string& path);
+FileSystemWrapper* find_mount_and_strip_path(std::string& path);
 
 // File Handle Functions
 int insert_file_handle(int fd, file_handle_data_ptr& fhd);

@@ -3,9 +3,9 @@
 #include <map>
 #include <memory>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "dir_handle_data.h"
-#include "HybridFS.h"
+#include "FileSystemWrapper.h"
 
 static std::map<DIR*, dir_handle_data_ptr> dir_handles;
 

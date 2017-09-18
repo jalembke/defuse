@@ -1,9 +1,9 @@
 #include <errno.h>
 #include <map>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "file_handle_data.h"
-#include "HybridFS.h"
+#include "FileSystemWrapper.h"
 
 static std::map<int, file_handle_data_ptr> file_handles;
 
@@ -11,9 +11,9 @@ file_handle_data::~file_handle_data()
 {
 	DEBUG_ENTER;
 
-	const std::string* path = NULL;
-	file_system->getLogicalPath(file_handle, path);
-	DEBUG_PRINT(*path);	
+	//const std::string* path = NULL;
+	//file_system->getLogicalPath(file_handle, path);
+	//DEBUG_PRINT(*path);	
 
 	int rv = file_system->close(file_handle);
 	DEBUG_EXIT(rv);

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <string>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 
 /* given a relative path, calculate complete path assuming current directory */
 void resolve_path(const char *p, std::string& path)

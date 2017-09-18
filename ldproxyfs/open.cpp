@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "glibc_ops.h"
 #include "file_handle_data.h"
 #include "dir_handle_data.h"
-#include "HybridFS.h"
+#include "FileSystemWrapper.h"
 
 #pragma GCC visibility push(default)
 
@@ -18,7 +18,7 @@
     extern "C" {
 #endif
 
-static inline file_handle_data_ptr open_internal(const std::string& cpath, HybridFileSystem* fs, int flags, int mode)
+static inline file_handle_data_ptr open_internal(const std::string& cpath, const char* path, FileSystemWrapper* fs, int flags, int mode)
 {
 	int ret;
 	uint64_t fh = 0;
@@ -30,9 +30,9 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, Hybri
 		// Open the file au naturel
 		//   If the file was to be created or truncated, it would have already
 		//     been done by the file system open
-#if defined(HYKEFS_DO_REAL_OPEN)
+#if defined(PROXYFS_DO_REAL_OPEN)
 		int real_fd = syscall(SYS_open, path, flags & (~O_CREAT) & (~O_TRUNC), mode);
-#elif defined(HYKEFS_DO_NULL_OPEN)
+#elif defined(PROXYFS_DO_NULL_OPEN)
 		int real_fd = (flags & O_DIRECTORY) ?
 			syscall(SYS_open, "/", flags & (~O_CREAT) & (~O_TRUNC), mode) :
 			syscall(SYS_open, "/dev/null", flags & (~O_CREAT) & (~O_TRUNC), mode);
@@ -60,7 +60,7 @@ static inline int open_common(const char *path, int flags, mode_t mode)
 
 	OP_ENTER;
 
-	file_handle_data_ptr fhd = open_internal(cpath, fs, flags, mode);
+	file_handle_data_ptr fhd = open_internal(cpath, path, fs, flags, mode);
 	if(fhd) {
 		ret = fhd->file_descriptor;
 
@@ -123,7 +123,7 @@ DIR* opendir(const char *path)
 
 	OP_ENTER;
 
-	file_handle_data_ptr fhd = open_internal(cpath, fs, O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
+	file_handle_data_ptr fhd = open_internal(cpath, path, fs, O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
 	if(fhd) {
 		dir_handle_data_ptr dhd = dir_handle_data_ptr(new dir_handle_data);
 		dhd->fh_data = fhd;

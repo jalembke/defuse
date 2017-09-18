@@ -1,11 +1,11 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "ldhykefs.h"
+#include "ldproxyfs.h"
 #include "glibc_ops.h"
 #include "file_handle_data.h"
 #include "dir_handle_data.h"
-#include "HybridFS.h"
+#include "FileSystemWrapper.h"
 
 #pragma GCC visibility push(default)
 
