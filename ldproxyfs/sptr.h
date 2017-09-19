@@ -8,7 +8,7 @@ template < typename T > class sptr
 		int* count;
 
 		inline void check_and_delete() {
-			if(__sync_sub_and_fetch(count, 1) == 0) {
+			if(count != NULL && __sync_sub_and_fetch(count, 1) == 0) {
 				delete ptr;
 				delete count;
 			}

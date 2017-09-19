@@ -18,7 +18,7 @@ PROXYFSCONFIGFLAGS= -DPROXYFS_DO_REAL_OPEN -DPROXYFS_MOUNT=\"${PROXYFS_MOUNT}\" 
 
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c))
 
-all: libldhykefs.so
+all: libldproxyfs.so
 
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: CXXFLAGS += $(DEBUGFLAGS)
@@ -28,7 +28,7 @@ clean:
 	rm -f $(OBJS)
 	rm -f libldhykefs.so
 
-libldhykefs.so: $(OBJS)
+libldproxyfs.so: $(OBJS)
 	$(CXX) -o $@ $(OBJS) $(LFLAGS)
 
 %.o: %.c

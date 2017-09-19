@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static inline create_files(int count)
+static inline void create_files(int count)
 {
 	int fd = 0;
 	char open_path[64];
