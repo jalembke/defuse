@@ -37,7 +37,9 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			syscall(SYS_open, "/", flags & (~O_CREAT) & (~O_TRUNC), mode) :
 			syscall(SYS_open, "/dev/null", flags & (~O_CREAT) & (~O_TRUNC), mode);
 #endif
-		
+	
+		printf("%d\n", real_fd);
+
 		// Store the file info in the map
 		if(real_fd != -1) {
 			DEBUG_PRINT(real_fd << " " << fh);
@@ -47,6 +49,8 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			fs->close(fh);
 			errno = ret;
 		}
+		
+		printf("%d\n", fhd);
 	} else {
 		errno = ret;
 	}

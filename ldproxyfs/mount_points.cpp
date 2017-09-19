@@ -22,7 +22,7 @@ typedef sptr<mount_point_map> mount_point_map_ptr;
 
 
 static inline int 
-load_mount(const std::string& path, mount_point_map_ptr& mount_points)
+load_mount(const std::string& path, mount_point_map_ptr& mount_points, const struct FileSystemWrapper::ConfigOpts& opts)
 {
 	DEBUG_ENTER;
 	int rv = 0;
@@ -34,7 +34,10 @@ load_mount(const std::string& path, mount_point_map_ptr& mount_points)
 		rv = EEXIST;
 	} else {
 		FileSystemWrapperPtr fs = FileSystemWrapperPtr(new FileSystemWrapper);
-		mount_points->insert(std::make_pair(std::string(path), fs));
+		rv = fs->init(opts);
+		if(rv == 0) {
+			mount_points->insert(std::make_pair(std::string(path), fs));
+		}
 	}
 
 	DEBUG_EXIT(rv);
@@ -50,7 +53,13 @@ load_mounts(mount_point_map_ptr& mount_points)
 		DEBUG_ENTER;
 		int rv = 0;
 		mount_points = mount_point_map_ptr(new mount_point_map);
-		rv = load_mount(std::string(PROXYFS_MOUNT), mount_points);
+
+		struct FileSystemWrapper::ConfigOpts fs_opts;
+		bzero(&fs_opts, sizeof(struct FileSystemWrapper::ConfigOpts));
+		fs_opts.backend = (char*)PROXYFS_BACKEND;
+		fs_opts.mount_point = (char*)PROXYFS_MOUNT;
+
+		rv = load_mount(std::string(PROXYFS_MOUNT), mount_points, fs_opts);
 
 		if(rv != 0) {
 			DEBUG_EXIT(rv);
