@@ -20,13 +20,14 @@ typedef sptr<FileSystemWrapper> FileSystemWrapperPtr;
 typedef std::map<std::string, FileSystemWrapperPtr> mount_point_map;
 typedef sptr<mount_point_map> mount_point_map_ptr;
 
-static mount_point_map_ptr mount_points;
 
 static inline int 
-load_mount(const std::string& path)
+load_mount(const std::string& path, mount_point_map_ptr& mount_points)
 {
 	DEBUG_ENTER;
 	int rv = 0;
+
+	DEBUG_PRINT(path);
 
 	std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->find(path);
 	if(itr != mount_points->end()) {
@@ -40,17 +41,16 @@ load_mount(const std::string& path)
     return rv;
 }
 
-__attribute__ ((constructor)) void 
-load_mounts(void)
+static inline void
+load_mounts(mount_point_map_ptr& mount_points)
 {
 	static bool load_mounts_flag = false;
 
 	if(!load_mounts_flag) {
 		DEBUG_ENTER;
 		int rv = 0;
-		
 		mount_points = mount_point_map_ptr(new mount_point_map);
-		rv = load_mount(std::string(PROXYFS_MOUNT));
+		rv = load_mount(std::string(PROXYFS_MOUNT), mount_points);
 
 		if(rv != 0) {
 			DEBUG_EXIT(rv);
@@ -66,12 +66,18 @@ load_mounts(void)
 FileSystemWrapper*
 find_mount_and_strip_path(std::string& path)
 {
+	static mount_point_map_ptr mount_points;
+	
 	DEBUG_ENTER;
 	FileSystemWrapper* rv = NULL;
 
 	DEBUG_PRINT(path);
 
 	load_glibc_ops();
+
+	if(!mount_points) {
+		load_mounts(mount_points);
+	}
 
 	if(mount_points && mount_points->size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {

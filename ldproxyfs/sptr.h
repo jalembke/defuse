@@ -1,6 +1,8 @@
 #ifndef _SPTR_H
 #define _SPTR_H
 
+#include "stdio.h"
+
 template < typename T > class sptr 
 {
 	private:
