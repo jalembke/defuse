@@ -4,7 +4,10 @@
 obj-m += proxyfs.o
 proxyfs-objs := inode.o file.o
 
-CFLAGS_inode.o := -DDEBUG -DDEBUG_PROXYFS
+LOCAL_CFLAGS := -DDEBUG -DDEBUG_PROXYFS
+
+CFLAGS_inode.o := $(LOCAL_CFLAGS)
+CFLAGS_file.o := $(LOCAL_CFLAGS)
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

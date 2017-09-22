@@ -150,8 +150,8 @@ static int proxyfs_open(struct inode *inode, struct file *file)
 {
 	int err;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
-
+	PRINTFN;
+	
 	err = generic_file_open(inode, file);
 	if (err)
 		return err;
@@ -167,12 +167,11 @@ static int proxyfs_flush(struct file *file, fl_owner_t id)
 	
 	PRINTFN;
 
-	b_file = proxyfs_get_b_file_resolved(file);
-	if(IS_ERR(b_file))
-		return PTR_ERR(b_file);
-
-	if(b_file->f_op->flush)
-		return b_file->f_op->flush(b_file, id);
+	if(proxyfs_resolved_file(file)) {
+		b_file = get_proxyfs_b_file(file);
+		if(b_file->f_op->flush)
+			return b_file->f_op->flush(b_file, id);
+	}
 
 	return 0;
 }

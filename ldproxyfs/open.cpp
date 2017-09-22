@@ -37,9 +37,6 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			syscall(SYS_open, "/", flags & (~O_CREAT) & (~O_TRUNC), mode) :
 			syscall(SYS_open, "/dev/null", flags & (~O_CREAT) & (~O_TRUNC), mode);
 #endif
-	
-		printf("%d\n", real_fd);
-
 		// Store the file info in the map
 		if(real_fd != -1) {
 			DEBUG_PRINT(real_fd << " " << fh);
@@ -50,7 +47,6 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			errno = ret;
 		}
 		
-		printf("%d\n", fhd);
 	} else {
 		errno = ret;
 	}
@@ -76,6 +72,12 @@ static inline int open_common(const char *path, int flags, mode_t mode)
 	return ret;
 }
 
+static inline mode_t get_umask()
+{
+	mode_t current_umask = umask(0);
+	umask(current_umask);
+	return current_umask;
+}
 
 int open(const char *path, int flags, ...) 
 {	

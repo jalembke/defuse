@@ -26,7 +26,7 @@ debug: clean all
 
 clean:
 	rm -f $(OBJS)
-	rm -f libldhykefs.so
+	rm -f libldproxyfs.so
 
 libldproxyfs.so: $(OBJS)
 	$(CXX) -o $@ $(OBJS) $(LFLAGS)

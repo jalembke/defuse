@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[])
 {
-	int fd = open("/tmp/tmpdir/blah", O_RDWR|O_CREAT);
+	int fd = open("/tmp/tmpdir/blah", O_RDWR|O_CREAT, 0);
 	if(fd != -1) {
 		close(fd);
 	}

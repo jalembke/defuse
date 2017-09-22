@@ -14,7 +14,7 @@
 #endif
 
 int close(int fd) 
-{	
+{
 	int ret = 0;
     int fsret = remove_file_handle(fd);
 	if(fsret != ENOENT) {
