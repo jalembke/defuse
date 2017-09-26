@@ -15,6 +15,7 @@ my $fusermount = "/bin/fusermount";
 my $trials = 20;
 my $threads = 20;
 my $files = 400;
+my $nsec_per_sec = 1000000000;
 
 sub doSystem {
 	my $continue_on_error = shift;
@@ -41,12 +42,16 @@ sub runTrials {
 	return sum(@results)/$trials;
 }
 
+my $total_files = $threads * $files;
+
 # Unmount the fuse mount
 doSystem(1, "$fusermount -u $fuse_mount_path");
 my $direct_avg = runTrials($direct_path);
+my $direct_files_sec = $total_files / ($direct_avg / $nsec_per_sec);
 
 doSystem(0, "$fusemount $fuse_mount_path");
 my $fuse_avg = runTrials($fuse_path);
+my $fuse_files_sec = $total_files / ($fuse_avg / $nsec_per_sec);
 system("$fusermount -u $fuse_mount_path");
 
-print "$direct_avg $fuse_avg\n";
+print "$direct_files_sec $fuse_files_sec\n";
