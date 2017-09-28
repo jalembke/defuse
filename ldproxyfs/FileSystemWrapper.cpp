@@ -4,20 +4,22 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "debug.h"
 #include "fs_syscall.h"
 #include "FileSystemWrapper.h"
 
 int
 FileSystemWrapper::open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
+	DEBUG_PRINT((xBackend + path));
 	int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
 	if(-1 == ret) {
 		ret = errno;
-
 	} else {
 		*ret_fh = ret;
 		ret = 0;
 	}
+	DEBUG_EXIT(ret);
 	return ret;
 }
 

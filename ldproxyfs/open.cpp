@@ -24,6 +24,7 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 	uint64_t fh = 0;
 	file_handle_data_ptr fhd;
 
+	DEBUG_PRINT(cpath);
 	ret = fs->open(cpath.c_str(), flags, mode, &fh);
 	if(ret == 0) {
 
@@ -43,12 +44,12 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			fhd = file_handle_data_ptr(new file_handle_data(fs, fh, real_fd));
 			insert_file_handle(real_fd, fhd);
 		} else {
+			ret = errno;
 			fs->close(fh);
-			errno = ret;
 		}
 		
 	} else {
-		errno = ret;
+		ret = errno;
 	}
 
 	return fhd;

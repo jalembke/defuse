@@ -25,10 +25,12 @@ dlsym_exit_on_error(void* handle, const char* name)
 
 	// Check for error
 	if(sym == NULL) {
+		/*
 		std::stringstream err_out;
 		err_out << "Warning: Failed to link symbol " << name << ": Symbol not found" << std::endl;
 		std::string err_str = err_out.str();
 		syscall(SYS_write, STDERR_FILENO, err_str.data(), err_str.length());
+		*/
 	} else if((error = dlerror()) != NULL) {
 		std::stringstream err_out;
 		err_out << "Error: Failed to link symbol " << name << ": " << error << std::endl;
@@ -37,7 +39,7 @@ dlsym_exit_on_error(void* handle, const char* name)
 		exit(EXIT_FAILURE);
 	}
 	
-	DEBUG_EXIT(sym);
+	//DEBUG_EXIT(sym);
 	return sym;
 }
 

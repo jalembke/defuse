@@ -20,6 +20,7 @@ typedef sptr<FileSystemWrapper> FileSystemWrapperPtr;
 typedef std::map<std::string, FileSystemWrapperPtr> mount_point_map;
 typedef sptr<mount_point_map> mount_point_map_ptr;
 
+pthread_mutex_t load_mounts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static inline int 
 load_mount(const std::string& path, mount_point_map_ptr& mount_points, const struct FileSystemWrapper::ConfigOpts& opts)
@@ -51,6 +52,18 @@ load_mounts(mount_point_map_ptr& mount_points)
 
 	if(!load_mounts_flag) {
 		DEBUG_ENTER;
+
+		// Only one thread should load the mounts
+		pthread_mutex_lock(&load_mounts_mutex);
+
+		// Aquired mutex, if some other thread got in first
+		//   and set the mounts flag, then this thread
+		//   should NOT try to do it again
+		if(load_mounts_flag) {
+			pthread_mutex_unlock(&load_mounts_mutex);
+			return;
+		}
+
 		int rv = 0;
 		mount_points = mount_point_map_ptr(new mount_point_map);
 
@@ -66,10 +79,14 @@ load_mounts(mount_point_map_ptr& mount_points)
 			exit(rv);
 		}
 
+		// Set the mounts flag and return
+		//    Ensure mutex is released
 		load_mounts_flag = true;
+		pthread_mutex_unlock(&load_mounts_mutex);
 
 		DEBUG_EXIT(rv);
 	}
+
 }
 
 FileSystemWrapper*
@@ -83,10 +100,7 @@ find_mount_and_strip_path(std::string& path)
 	DEBUG_PRINT(path);
 
 	load_glibc_ops();
-
-	if(!mount_points) {
-		load_mounts(mount_points);
-	}
+	load_mounts(mount_points);
 
 	if(mount_points && mount_points->size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {
