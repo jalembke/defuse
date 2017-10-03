@@ -4,7 +4,8 @@
 obj-m += proxyfs.o
 proxyfs-objs := inode.o file.o
 
-LOCAL_CFLAGS := -DDEBUG -DDEBUG_PROXYFS
+#LOCAL_CFLAGS := -DDEBUG -DDEBUG_PROXYFS
+LOCAL_CFLAGS :=
 
 CFLAGS_inode.o := $(LOCAL_CFLAGS)
 CFLAGS_file.o := $(LOCAL_CFLAGS)

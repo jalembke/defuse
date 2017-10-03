@@ -24,8 +24,8 @@ OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c
 
 all: libldproxyfs.so
 
-ext4: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\" $(DEBUGFLAGS)
-ext4: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\" $(DEBUGFLAGS)
+ext4: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"
+ext4: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"
 ext4: clean libldproxyfs.ext4.so
 
 jfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_JFS_BACKEND}\"

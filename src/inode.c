@@ -48,7 +48,7 @@ struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 	struct dentry *b_parent;
 	struct dentry *b_dentry;
 
-	PRINTFN;
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	if(!entry)
 		return NULL;

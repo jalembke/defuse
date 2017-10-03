@@ -38,6 +38,8 @@ static inline int proxyfs_resolve_reopen(struct file* file)
 	struct dentry *entry = file->f_path.dentry;
 	struct inode* inode = entry->d_inode;
 	struct path b_path;
+	
+	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
 
 	// Resolve backend inodes
 	b_dentry = proxyfs_get_b_dentry_resolved(inode);
