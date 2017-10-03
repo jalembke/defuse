@@ -11,13 +11,15 @@
 
 #include <string>
 
+#define BUFFER_SIZE (512 * 1024)
+
 char* target_dir = NULL;
 int thread_count = 0;
 int file_count = 0;
 
 void* write_main(void* arg)
 {
-	char write_buffer[128];
+	char write_buffer[BUFFER_SIZE];
 	std::string filepath = target_dir;
 	filepath += "/testfile";
 	filepath += std::to_string(*(int*)(arg));
@@ -44,7 +46,7 @@ void* write_main(void* arg)
 
 void* read_main(void* arg)
 {
-	char read_buffer[128];
+	char read_buffer[BUFFER_SIZE];
 	std::string filepath = target_dir;
 	filepath += "/testfile";
 	filepath += std::to_string(*(int*)(arg));
