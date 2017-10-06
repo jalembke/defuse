@@ -1,30 +1,42 @@
-EVALDATS=sm_w.dat sm_r.dat lg_w.dat lg_r.dat mx_w.dat mx_r.dat
-EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS))
+EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
+EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
 
-all: fuse_compare.svg eval
+all: fuseCompare.svg eval
 
 eval: ${EVALSVGS}
 
-sm_w.svg: sm_w.dat eval.plt
+evalkey.svg: evalkey.dat evalkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
+	convert evalkey.svg evalkey.png
+
+smw.svg: smw.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Write'" eval.plt
+	convert smw.svg smw.png
 
-sm_r.svg: sm_r.dat eval.plt
+smr.svg: smr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Read'" eval.plt
+	convert smr.svg smr.png
 
-lg_w.svg: lg_w.dat eval.plt
+lgw.svg: lgw.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File Write'" eval.plt
+	convert lgw.svg lgw.png
 
-lg_r.svg: lg_r.dat eval.plt
+lgr.svg: lgr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File Read'" eval.plt
+	convert lgr.svg lgr.png
 
-mx_w.svg: mx_w.dat eval.plt
+mxw.svg: mxw.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Write'" eval.plt
+	convert mxw.svg mxw.png
 
-mx_r.svg: mx_r.dat eval.plt
+mxr.svg: mxr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" eval.plt
+	convert mxr.svg mxr.png
 
-fuse_compare.svg: fuse_compare.dat fuse_compare.plt
-	gnuplot -e "dat_file='$<'; out_file='$@';" fuse_compare.plt
+fuseCompare.svg: fuseCompare.dat fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" fuseCompare.plt
+	convert fuseCompare.svg fuseCompare.png
 
 clean:
 	rm -f *.svg
+	rm -f *.png
