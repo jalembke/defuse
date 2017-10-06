@@ -9,7 +9,7 @@ DEBUGFLAGS= -DDEBUG_LDPROXYFS
 
 CFLAGS=-c -g -fPIC
 CXXFLAGS=-c -g -fPIC
-LFLAGS=-ldl -shared
+LFLAGS=../../avfs-1.0.5/lib/.libs/libavfs_static.a -ldl -shared
 
 PROXYFS_MOUNT=/tmp/tmpdir
 PROXYFS_BACKEND=/mnt/tmpbackend
@@ -17,6 +17,7 @@ PROXYFS_EXT4_BACKEND=/mnt/ext4
 PROXYFS_JFS_BACKEND=/mnt/jfs
 PROXYFS_FAT_BACKEND=/mnt/fat
 PROXYFS_TMPFS_BACKEND=/mnt/tmpfs
+PROXYFS_AVFS_BACKEND=/mnt/tmpfs/test.tar.gz\#
 
 #PROXYFSCONFIGFLAGS= -DPROXYFS_DO_REAL_OPEN -DPROXYFS_MOUNT=\"${PROXYFS_MOUNT}\" -DPROXYFS_BACKEND=\"${PROXYFS_BACKEND}\"
 PROXYFSCONFIGFLAGS= -DPROXYFS_DO_REAL_OPEN -DPROXYFS_MOUNT=\"${PROXYFS_MOUNT}\"
@@ -40,6 +41,10 @@ fat: clean libldproxyfs.fat.so
 tmpfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_TMPFS_BACKEND}\"
 tmpfs: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_TMPFS_BACKEND}\"
 tmpfs: clean libldproxyfs.tmpfs.so
+
+avfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_AVFS_BACKEND}\"
+avfs: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_AVFS_BACKEND}\"
+avfs: clean libldproxyfs.avfs.so
 
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: CXXFLAGS += $(DEBUGFLAGS)

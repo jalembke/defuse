@@ -11,28 +11,31 @@
 
 #include <string>
 
-#define BUFFER_SIZE (512 * 1024)
+#define BUFFER_SIZE (12 * 1024 * 1024)
 
 char* target_dir = NULL;
 int thread_count = 0;
 int file_count = 0;
+char buffer[BUFFER_SIZE];
 
 void* write_main(void* arg)
 {
-	char write_buffer[BUFFER_SIZE];
 	std::string filepath = target_dir;
 	filepath += "/testfile";
 	filepath += std::to_string(*(int*)(arg));
 	for(int i = 0; i < file_count; i++) {
 		int fd = open((filepath + std::to_string(i)).c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
 		if(fd > 0) {
-			int ret = write(fd, write_buffer, sizeof(write_buffer));
+			//int expected_size = (i+1)*128;
+			//int expected_size = BUFFER_SIZE;
+			int expected_size = 128;
+			int ret = write(fd, buffer, expected_size);
 			if(ret == -1) {
 				fprintf(stderr, "Unable to write to %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
 				exit(1);
 			}
-			if(ret != sizeof(write_buffer)) {
-				fprintf(stderr, "Write to file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, (int)sizeof(write_buffer));
+			if(ret != expected_size) {
+				fprintf(stderr, "Write to file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, expected_size);
 				exit(1);
 			}
 		} else {
@@ -46,20 +49,22 @@ void* write_main(void* arg)
 
 void* read_main(void* arg)
 {
-	char read_buffer[BUFFER_SIZE];
 	std::string filepath = target_dir;
 	filepath += "/testfile";
 	filepath += std::to_string(*(int*)(arg));
 	for(int i = 0; i < file_count; i++) {
 		int fd = open((filepath + std::to_string(i)).c_str(), O_RDONLY);
 		if(fd > 0) {
-			int ret = read(fd, read_buffer, sizeof(read_buffer));
+			//int expected_size = (i+1)*128;
+			//int expected_size = BUFFER_SIZE;
+			int expected_size = 128;
+			int ret = read(fd, buffer, expected_size);
 			if(ret == -1) {
 				fprintf(stderr, "Unable to read to %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
 				exit(1);
 			}
-			if(ret != sizeof(read_buffer)) {
-				fprintf(stderr, "Read from file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, (int)sizeof(read_buffer));
+			if(ret != expected_size) {
+				fprintf(stderr, "Read from file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, expected_size);
 				exit(1);
 			}
 		} else {

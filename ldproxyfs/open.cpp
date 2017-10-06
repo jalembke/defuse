@@ -24,7 +24,7 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 	uint64_t fh = 0;
 	file_handle_data_ptr fhd;
 
-	DEBUG_PRINT(cpath);
+	DEBUG_PRINT(cpath << " " << path);
 	ret = fs->open(cpath.c_str(), flags, mode, &fh);
 	if(ret == 0) {
 
