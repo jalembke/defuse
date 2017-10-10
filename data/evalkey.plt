@@ -2,7 +2,7 @@
 set output out_file         # Set the output path
 
 # Set the font to something pleasing
-set term svg fname "Times,19" size 1000, 75
+set term svg fname "Times,19" size 700, 75
 set key outside center horizontal left   # Place the key in an appropriate place
 
 set style data histogram
@@ -21,4 +21,5 @@ set noylabel
 
 plot dat_file using 2:xtic(1) ti col, \
            '' using 3 ti col, \
-           '' using 4 ti col
+           '' using 4 ti col, \
+           '' using 5 ti col

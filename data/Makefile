@@ -1,9 +1,14 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
 EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
 
-all: fuseCompare.svg eval
+CMPDATS=cmr.dat csr.dat clr.dat
+CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) evalkey.svg
+
+all: fuseCompare.svg eval cmp
 
 eval: ${EVALSVGS}
+
+cmp: ${CMPSVGS}
 
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
@@ -32,6 +37,18 @@ mxw.svg: mxw.dat eval.plt
 mxr.svg: mxr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" eval.plt
 	convert mxr.svg mxr.png
+
+cmr.svg: cmr.dat cmp.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" cmp.plt
+	convert cmr.svg cmr.png
+
+csr.svg: csr.dat cmp.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Read'" cmp.plt
+	convert csr.svg csr.png
+
+clr.svg: clr.dat cmp.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File Read'" cmp.plt
+	convert clr.svg clr.png
 
 fuseCompare.svg: fuseCompare.dat fuseCompare.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" fuseCompare.plt
