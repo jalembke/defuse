@@ -2,7 +2,7 @@ EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
 EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
 
 CMPDATS=cmr.dat csr.dat clr.dat
-CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) evalkey.svg
+CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) cmpkey.svg
 
 all: fuseCompare.svg eval cmp
 
@@ -13,6 +13,10 @@ cmp: ${CMPSVGS}
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
 	convert evalkey.svg evalkey.png
+
+cmpkey.svg: cmpkey.dat cmpkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" cmpkey.plt
+	convert cmpkey.svg cmpkey.png
 
 smw.svg: smw.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Write'" eval.plt
