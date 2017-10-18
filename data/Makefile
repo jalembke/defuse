@@ -46,8 +46,8 @@ cmr.svg: cmr.dat cmp.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" cmp.plt
 	convert cmr.svg cmr.png
 
-csr.svg: csr.dat cmp.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Read'" cmp.plt
+csr.svg: csr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File Read'" cmpl.plt
 	convert csr.svg csr.png
 
 clr.svg: clr.dat cmp.plt

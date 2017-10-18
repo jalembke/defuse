@@ -1,2 +1,2 @@
-Title           "DEFUSE AVFS" "DEFUSE AVFS Child" "FUSE AVFS" "FUSE AVFS Direct I/O"
-key             0 0 0 0
+Title           "DEFUSE AVFS" "DEFUSE AVFS Child" "DEFUSE AVFS Child Direct I/O" "FUSE AVFS" "FUSE AVFS Direct I/O"
+key             0 0 0 0 0
