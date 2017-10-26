@@ -13,6 +13,7 @@ LFLAGS=../../avfs-1.0.5/lib/.libs/libavfs_static.a -ldl -shared
 
 PROXYFS_MOUNT=/tmp/tmpdir
 PROXYFS_BACKEND=/mnt/tmpbackend
+PROXYFS_MNT_BACKEND=/mnt
 PROXYFS_EXT4_BACKEND=/mnt/ext4
 PROXYFS_JFS_BACKEND=/mnt/jfs
 PROXYFS_FAT_BACKEND=/mnt/fat
@@ -25,6 +26,10 @@ PROXYFSCONFIGFLAGS= -DPROXYFS_DO_REAL_OPEN -DPROXYFS_MOUNT=\"${PROXYFS_MOUNT}\"
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c))
 
 all: libldproxyfs.so
+
+mnt: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_MNT_BACKEND}\"
+mnt: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_MNT_BACKEND}\"
+mnt: clean libldproxyfs.mnt.so
 
 ext4: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"
 ext4: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"

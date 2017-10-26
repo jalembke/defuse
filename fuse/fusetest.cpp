@@ -11,60 +11,65 @@
 
 #include <string>
 
+#define RANDOM_SEED 12345678
+#define RANDOM_MAX  (12126 * 2)
+
 #define BUFFER_SIZE (12 * 1024 * 1024)
 
 char* target_dir = NULL;
 int thread_count = 0;
 int file_count = 0;
+int do_read = 0;
 char buffer[BUFFER_SIZE];
 
-void* write_main(void* arg)
-{
-	std::string filepath = target_dir;
-	filepath += "/testfile";
-	filepath += std::to_string(*(int*)(arg));
-	for(int i = 0; i < file_count; i++) {
-		int fd = open((filepath + std::to_string(i)).c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
-		if(fd > 0) {
-			//int expected_size = (i+1)*128;
-			//int expected_size = BUFFER_SIZE;
-			int expected_size = 128;
-			int ret = write(fd, buffer, expected_size);
-			if(ret == -1) {
-				fprintf(stderr, "Unable to write to %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
-				exit(1);
-			}
-			if(ret != expected_size) {
-				fprintf(stderr, "Write to file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, expected_size);
-				exit(1);
-			}
-		} else {
-			fprintf(stderr, "Unable to open %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
-			exit(1);
-		}
-		close(fd);
-	}
-	return NULL;
-}
+int test_behavior = 0;
+#define LARGE  0
+#define SMALL  1
+#define MIXED  2
+#define RANDOM 3
 
-void* read_main(void* arg)
+void* thread_main(void* arg)
 {
 	std::string filepath = target_dir;
-	filepath += "/testfile";
+	filepath += "/";
 	filepath += std::to_string(*(int*)(arg));
 	for(int i = 0; i < file_count; i++) {
-		int fd = open((filepath + std::to_string(i)).c_str(), O_RDONLY);
+		int fd = -1;
+		if(do_read != 0) {
+			fd = open((filepath + std::to_string(i)).c_str(), O_RDONLY);
+		} else {
+			fd = open((filepath + std::to_string(i)).c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR);
+		}
 		if(fd > 0) {
-			//int expected_size = (i+1)*128;
-			//int expected_size = BUFFER_SIZE;
-			int expected_size = 128;
-			int ret = read(fd, buffer, expected_size);
+			int expected_size = 0;
+			switch(test_behavior) {
+				case MIXED:
+					expected_size = (i+1)*128;
+					break;
+				case LARGE:
+					expected_size = (12 * 1024 * 1024);
+					break;
+				case SMALL:
+					expected_size = 128;
+					break;
+				case RANDOM:
+					expected_size = (rand() % (RANDOM_MAX - 1)) + 1;
+					//printf("%d\n", expected_size);
+					//continue;
+					break;
+			}
+			int ret = -1;
+			if(do_read != 0) {
+				ret = read(fd, buffer, expected_size);
+			} else {
+				ret = write(fd, buffer, expected_size);
+			}
 			if(ret == -1) {
-				fprintf(stderr, "Unable to read to %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
+				fprintf(stderr, "Unable to perform op to %s: %s\n", (filepath + std::to_string(i)).c_str(), strerror(errno));
 				exit(1);
 			}
 			if(ret != expected_size) {
-				fprintf(stderr, "Read from file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, expected_size);
+				fprintf(stderr, "Op to file %s size: %d expected %d\n", (filepath + std::to_string(i)).c_str(), ret, expected_size);
 				exit(1);
 			}
 		} else {
@@ -94,14 +99,40 @@ int main(int argc, char* argv[])
 	int* thread_args = NULL;
 	uint64_t start_time = 0;
 	uint64_t end_time = 0;
+	int argi = 1;
 
-	if(argc != 5) {
-		printf("Usage: fusetest r|w target_dir threads files\n");
+	if(argc != 6) {
+		printf("Usage: fusetest r|w|k l|s|m|r target_dir threads files\n");
 		exit(1);
 	}
-	target_dir = (char*)argv[2];
-	thread_count = atoi(argv[3]);
-	file_count = atoi(argv[4]);
+
+	if(argv[argi][0] == 'r') {
+		do_read = 1;
+	} else if(argv[argi][0] == 'w') {
+		do_read = 0;
+	} else {
+		printf("invalid test type: %s\n", argv[argi]);
+		exit(1);
+	}
+	argi++;
+
+	if(argv[argi][0] == 'l') {
+		test_behavior = LARGE;
+	} else if(argv[argi][0] == 'm') {
+		test_behavior = MIXED;
+	} else if(argv[argi][0] == 's') {
+		test_behavior = SMALL;
+	}  else if(argv[argi][0] == 'r') {
+		test_behavior = RANDOM;
+	} else {
+		printf("invalid test behavior: %s\n", argv[argi]);
+		exit(1);
+	}
+	argi++;
+
+	target_dir = (char*)argv[argi++];
+	thread_count = atoi(argv[argi++]);
+	file_count = atoi(argv[argi++]);
 
 	if(thread_count <= 0) {
 		printf("threads must be > 0\n");
@@ -111,24 +142,18 @@ int main(int argc, char* argv[])
 		printf("files must be > 0\n");
 		exit(1);
 	}
-	void *(*thread_func)(void*) = NULL;
-	if(argv[1][0] == 'r') {
-		thread_func = read_main;
-	}
-	else if(argv[1][0] == 'w') {
-		thread_func = write_main;
-	} else {
-		printf("invalid test type: %s\n", argv[1]);
-		exit(1);
-	}
 
 	thread_ids = new pthread_t[thread_count];
 	thread_args = new int[thread_count];
 
+	if(test_behavior == RANDOM) {
+		srand(RANDOM_SEED);
+	}
+
 	start_time = getTime();
 	for(int i = 0; i < thread_count; i++) {
 		thread_args[i] = i;
-		if(pthread_create(&thread_ids[i], NULL, thread_func, &(thread_args[i])) != 0) {
+		if(pthread_create(&thread_ids[i], NULL, thread_main, &(thread_args[i])) != 0) {
 			printf("Create thread %d failed\n", i);
 			exit(1);
 		}
