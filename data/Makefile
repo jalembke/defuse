@@ -7,13 +7,18 @@ CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) cmpkey.svg
 PRACDATS=untar.dat cp.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 
-all: fuseCompare.svg eval cmp prac
+CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
+CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg
+
+all: fuseCompare.svg eval cmp prac ctx
 
 eval: ${EVALSVGS}
 
 cmp: ${CMPSVGS}
 
 prac: ${PRACSVGS}
+
+ctx: ${CTXSVGS}
 
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
@@ -70,6 +75,22 @@ untar.svg: untar.dat prac.plt
 cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFiile Systems\"" prac.plt
 	convert cp.svg cp.png
+
+ctxsws.svg: ctxsws.dat ctxsw.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt
+	convert ctxsws.svg ctxsws.png
+
+ctxswl.svg: ctxswl.dat ctxsw.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Large File Context Switches\"" ctxsw.plt
+	convert ctxswl.svg ctxswl.png
+
+ctxswm.svg: ctxswm.dat ctxsw.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Mixed File Context Switches\"" ctxsw.plt
+	convert ctxswm.svg ctxswm.png
+
+ctxswkey.svg: ctxswkey.dat ctxswkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" ctxswkey.plt
+	convert ctxswkey.svg ctxswkey.png
 
 fuseCompare.svg: fuseCompare.dat fuseCompare.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" fuseCompare.plt
