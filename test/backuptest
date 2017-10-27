@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+
+use strict;
+$| = 1;
+
+use Data::Dumper;
+
+my $stype = shift or die "Usage: backup stype ttype\n";
+my $ttype = shift or die "Usage: backup stype ttype\n";
+
+my $source_path = "$stype/test";
+my $target_path = "$ttype/test";
+
+my $direct_base = "/mnt";
+my $direct_source = "$direct_base/$source_path";
+my $direct_target = "$direct_base/$target_path";
+
+my $proxy_base = "/tmp/tmpdir";
+my $proxy_source = "$proxy_base/$source_path";
+my $proxy_target= "$proxy_base/$target_path";
+
+my $fuse_base = "/tmp/tmpfuse";
+my $fuse_source_mount = "/tmp/tmpfuseS";
+my $fuse_target_mount = "/tmp/tmpfuseT";
+my $fuse_source_base = "$fuse_source_mount/$direct_base";
+my $fuse_target_base = "$fuse_target_mount/$direct_base";
+#my $fuse_source_base = "$fuse_base/$direct_base";
+#my $fuse_target_base = "$fuse_base/$direct_base";
+my $fuse_source = "$fuse_source_base/$source_path";
+my $fuse_target = "$fuse_target_base/$target_path";
+my $fusemount = $ENV{'HOME'} . "/ProxyFS/fuse/fusexmp";
+
+#my $fuse_path = "$proxy_path/$direct_path";
+#my $fuse_backend_target = $direct_path;
+#my $fuse_avfs_path = "/tmp/tmpdir/";
+#my $fuse_avfs_target = "$fuse_avfs_path/mnt/tmpfs/test.tar.gz#/test";
+#my $child_test_proxy_path = "/tmp/testdir/test";
+#my $fuse_child_test_proxy_path = "$child_test_proxy_path/$direct_path";
+
+
+my $ldproxyfs = $ENV{'HOME'} . "/ProxyFS/ldproxyfs/libldproxyfs.mnt.so";
+my $copyCmd = $ENV{'HOME'} . "/ProxyFS/fuse/doCopy";
+my $iterations = 20;
+
+sub doSystem {
+	my $continue_on_error = shift;
+	my $do_print = shift;
+	if($do_print == 1) {
+		print "@_\n";
+	}
+	unless(system(@_) == 0) {
+		if($continue_on_error) {
+			print STDERR "system @_ failed: $?\n";
+		} else {
+			die "system @_ failed: $?\n";
+		}
+	}
+}
+
+sub runTest {
+	my $query_src = shift;
+	my $cpy_src = shift;
+	my $cpy_tgt = shift;
+	my $prefix = shift;
+
+	my @results;
+	for(1 .. $iterations) {
+		doSystem(0, 1, "rm -f $direct_target/*");
+		my $testCmd = "$prefix $copyCmd $cpy_src $cpy_tgt 60000";
+		print "$testCmd\n";
+		my $result = `$testCmd`;
+		chomp $result;
+		push @results, $result;
+	}
+	return @results;
+}
+
+doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_source");
+doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_target");
+doSystem(0, 1, "rm -rf $proxy_base");
+doSystem(1, 1, "/bin/fusermount -u $fuse_base");
+doSystem(1, 1, "/bin/fusermount -u $fuse_source_mount");
+doSystem(1, 1, "/bin/fusermount -u $fuse_target_mount");
+doSystem(0, 1, "rm -rf $fuse_base");
+doSystem(0, 1, "rm -rf $fuse_source_mount");
+doSystem(0, 1, "rm -rf $fuse_target_mount");
+
+# DIRECT
+#my @direct = runTest($direct_source, $direct_source, $direct_target);
+#printf "direct, %s\n", join(', ', @direct);
+
+# DEFUSE
+#doSystem(0, 1, "rm -rf $proxy_base");
+#doSystem(0, 1, "mkdir -p $proxy_source");
+#doSystem(0, 1, "mkdir -p $proxy_target");
+#doSystem(0, 1, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $proxy_source");
+#doSystem(0, 1, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $proxy_target");
+#my @defuse = runTest($direct_source, $proxy_source, $proxy_target, "LD_PRELOAD=$ldproxyfs");
+#doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_source");
+#doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_target");
+#printf "defuse, %s\n", join(', ', @defuse);
+
+#FUSE
+doSystem(0, 1, "mkdir -p $fuse_base");
+doSystem(0, 1, "mkdir -p $fuse_source_mount");
+doSystem(0, 1, "mkdir -p $fuse_target_mount");
+doSystem(0, 1, "$fusemount -o direct_io $fuse_base");
+doSystem(0, 1, "$fusemount -o direct_io $fuse_source_mount");
+doSystem(0, 1, "$fusemount -o direct_io $fuse_target_mount");
+my @fuse = runTest($direct_source, $fuse_source, $fuse_target);
+doSystem(1, 1, "/bin/fusermount -u $fuse_source_mount");
+doSystem(1, 1, "/bin/fusermount -u $fuse_target_mount");
+doSystem(1, 1, "/bin/fusermount -u $fuse_base");
+printf "fuse, %s\n", join(', ', @fuse);

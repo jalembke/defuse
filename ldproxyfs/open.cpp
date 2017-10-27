@@ -24,15 +24,16 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 	uint64_t fh = 0;
 	file_handle_data_ptr fhd;
 
-	DEBUG_PRINT(cpath << " " << path);
+	DEBUG_PRINT(cpath << " " << path << " " << flags);
 	ret = fs->open(cpath.c_str(), flags, mode, &fh);
 	if(ret == 0) {
 
+		DEBUG_PRINT(cpath << " " << path << " " << (flags & (~O_CREAT) & (~O_EXCL) & (~O_TRUNC)));
 		// Open the file au naturel
 		//   If the file was to be created or truncated, it would have already
 		//     been done by the file system open
 #if defined(PROXYFS_DO_REAL_OPEN)
-		int real_fd = syscall(SYS_open, path, flags & (~O_CREAT) & (~O_TRUNC), mode);
+		int real_fd = syscall(SYS_open, path, flags & (~O_CREAT) & (~O_EXCL) & (~O_TRUNC), mode);
 #elif defined(PROXYFS_DO_NULL_OPEN)
 		int real_fd = (flags & O_DIRECTORY) ?
 			syscall(SYS_open, "/", flags & (~O_CREAT) & (~O_TRUNC), mode) :
@@ -44,11 +45,13 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			fhd = file_handle_data_ptr(new file_handle_data(fs, fh, real_fd));
 			insert_file_handle(real_fd, fhd);
 		} else {
+			DEBUG_PRINT("ERROR 2 " << errno);
 			ret = errno;
 			fs->close(fh);
 		}
 		
 	} else {
+		DEBUG_PRINT("ERROR 1 " << errno);
 		ret = errno;
 	}
 
@@ -78,6 +81,19 @@ static inline mode_t get_umask()
 	mode_t current_umask = umask(0);
 	umask(current_umask);
 	return current_umask;
+}
+
+int openat(int dirfd, const char* path, int flags, ...)
+{
+	mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list argf;
+        va_start(argf, flags);
+        mode = va_arg(argf, mode_t);
+        va_end(argf);
+    }
+
+	return open_common(path, flags, mode);
 }
 
 int open(const char *path, int flags, ...) 

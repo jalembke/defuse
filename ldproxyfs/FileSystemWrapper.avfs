@@ -8,11 +8,18 @@
 #include "fs_syscall.h"
 #include "FileSystemWrapper.h"
 
+extern "C" {
+	int            virt_open      (const char *path, int flags, mode_t mode);
+	int            virt_close     (int fh);
+	ssize_t        virt_read      (int fh, void *buf, size_t nbyte);
+};
+
 int
 FileSystemWrapper::open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
 	//DEBUG_PRINT((xBackend + path));
-	int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
+	//int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
+	int ret = virt_open((xBackend + path).c_str(), flags, mode);
 	if(-1 == ret) {
 		ret = errno;
 	} else {
@@ -163,7 +170,8 @@ FileSystemWrapper::sync()
 int
 FileSystemWrapper::close(uint64_t fh)
 {
-	int ret = FileSystemSyscall::close(fh);
+	//int ret = FileSystemSyscall::close(fh);
+	int ret = virt_close(fh);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -173,7 +181,8 @@ FileSystemWrapper::close(uint64_t fh)
 int
 FileSystemWrapper::read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_read)
 {
-	int ret = FileSystemSyscall::pread(fh, buf, size, offset);
+	//int ret = FileSystemSyscall::pread(fh, buf, size, offset);
+	int ret = virt_read(fh, buf, size);
 	if(-1 == ret) {
 		ret = errno;
 		*bytes_read = 0;
