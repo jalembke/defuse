@@ -1,0 +1,36 @@
+#!/usr/bin/perl
+
+my $query_source = shift;
+my $source = shift;
+my $target = shift;
+my $prefix = shift;
+
+sub doSystem {
+	my $continue_on_error = shift;
+	my $do_print = shift;
+	if($do_print == 1) {
+		print "@_\n";
+	}
+	unless(system(@_) == 0) {
+		if($continue_on_error) {
+			print STDERR "system @_ failed: $?\n";
+		} else {
+			die "system @_ failed: $?\n";
+		}
+	}
+}
+
+my $count = 0;
+
+while(<$query_source/*>) {
+	if(/([^\/]+)$/) {
+		my $cmd = "$prefix time cp $source/$1 $target/$1";
+		#print "$cmd\n";
+		doSystem(0, 0, $cmd);
+		exit;
+		$count += 1;
+		if($count > 1000) {
+			exit;
+		}
+	}
+}

@@ -1,0 +1,170 @@
+#!/usr/bin/perl
+
+use strict;
+$| = 1;
+
+use List::Util qw(sum);
+use Data::Dumper;
+
+my $type = shift or die "Usage: compare test size\n";
+my $size = shift or die "Usage: compare test size\n";
+
+my $direct_path = "/mnt/$type/test";
+my $proxy_path = "/tmp/tmpdir/test";
+my $fuse_path = "$proxy_path/$direct_path";
+my $fuse_backend_target = $direct_path;
+my $fuse_avfs_path = "/tmp/tmpdir/";
+my $fuse_avfs_target = "$fuse_avfs_path/mnt/tmpfs/test.tar.gz#/test";
+my $child_test_proxy_path = "/tmp/testdir/test";
+my $fuse_child_test_proxy_path = "$child_test_proxy_path/$direct_path";
+
+my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
+
+my $benchmark = $time_command . " " . $ENV{HOME} . "/ProxyFS/fuse/fusetest";
+my $files = 0;
+if($size eq 's') {
+	$files = 4096;
+} elsif($size eq 'm') {
+	$files = 2048;
+} elsif($size eq 'l') {
+	$files = 1;
+}  elsif($size eq 'r') {
+	$files = 60000;
+} else {
+	die "Invalid benchmark size: $size\n";
+}
+
+my $fusemount = $ENV{'HOME'} . "/ProxyFS/fuse/fusexmp";
+my $fusermount = "/bin/fusermount";
+my $fuseavfsmount = "/usr/bin/avfsd";
+
+my $ldproxyfs = $ENV{'HOME'} . "/ProxyFS/ldproxyfs/libldproxyfs.$type.so";
+my $proxyfs_path = "/tmp/tmpdir/test";
+my $proxyfs_backend = "/mnt/$type/test";
+my $proxyfs_backend_target = "$proxyfs_backend";
+
+my $trials = 10;
+my $threads = 1;
+
+sub doSystem {
+	my $continue_on_error = shift;
+	print "@_\n";
+	unless(system(@_) == 0) {
+		if($continue_on_error) {
+			print STDERR "system @_ failed: $?\n";
+		} else {
+			die "system @_ failed: $?\n";
+		}
+	}
+}
+
+sub resetMounts {
+	# Unmount FUSE
+	doSystem(1, "$fusermount -u $proxy_path");
+
+	# Unmount ProxyFS
+	doSystem(1, "/usr/bin/sudo /bin/umount $proxy_path");
+
+	# Reset mount point contents
+	doSystem(1, "rm -rf $proxy_path");
+	doSystem(1, "mkdir -p $proxy_path");
+}
+
+sub doRunTrial {
+	my $command = shift;
+	doSystem(0, "sudo sync");
+	print "$command\n";
+	my @result = split(/\n/, `$command`);
+	chomp $result[0];
+	chomp $result[1];
+	return $result[1];
+}
+
+sub runTrials {
+	my $benchmark_command = shift;
+	my $target_path = shift;
+	my $backend_target_path = shift;
+	my $remove_target = $target_path;
+	$remove_target = $backend_target_path if($backend_target_path);
+		
+	my $write_cmd = "$benchmark_command w $size $target_path $threads $files";
+	my $read_cmd = "$benchmark_command r $size $target_path $threads $files";
+	
+	my @write_results;
+	my @read_results;
+	for(1..$trials) {
+		doSystem(0, "rm -f $remove_target/*");
+		push @write_results, doRunTrial($write_cmd);
+		push @read_results, doRunTrial($read_cmd);
+	}
+	#doSystem(0, "rm -f $remove_target/*");
+	return [[@write_results], [@read_results]];
+}
+
+resetMounts();
+
+my $results;
+
+=pub
+if($type eq "avfs") {
+	doSystem(1, "$fusermount -u $fuse_avfs_path");
+	my @read_results;
+	for(1..$trials) {
+		doSystem(0, "$fuseavfsmount $fuse_avfs_path");
+		print "$benchmark r $fuse_avfs_target $threads $files\n";
+		my $trial_result = `$benchmark r $fuse_avfs_target $threads $files`;
+		chomp $trial_result;
+		push @read_results, $trial_result;
+		doSystem(1, "$fusermount -u $fuse_avfs_path");
+	}
+	printf "R: avfs, %s\n", join(', ', @read_results);
+	exit;
+	doSystem(0, "mkdir $proxyfs_path");
+	doSystem(1, "mkdir /tmp/blah");
+	doSystem(0, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=/tmp/blah /dev/null $proxyfs_path");
+	my @read_results;
+	for(1..$trials) {
+		print "LD_PRELOAD=$ldproxyfs $benchmark r $proxyfs_path $threads $files\n";
+		my $trial_result = `LD_PRELOAD=$ldproxyfs $benchmark r $proxyfs_path $threads $files`;
+		chomp $trial_result;
+		push @read_results, $trial_result;
+	}
+	doSystem(1, "/usr/bin/sudo /bin/umount $proxyfs_path");
+	doSystem(1, "rmdir $proxyfs_path");
+	printf "R: proxy_avfs, %s\n", join(', ', @read_results);
+	exit;
+}
+=cut
+
+# Direct Mount Test
+#$results->{'direct'} = runTrials($benchmark, $direct_path);
+
+# FUSE Test
+#doSystem(0, "$fusemount $proxy_path");
+##$results->{'fuse'} = runTrials($benchmark, $fuse_path, $fuse_backend_target);
+#$results->{'fuse'} = runTrials($benchmark, $fuse_path);
+#doSystem(1, "$fusermount -u $proxy_path");
+# FUSE Test Direct I/O
+#doSystem(0, "$fusemount -o direct_io $proxy_path");
+##$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path, $fuse_backend_target);
+#$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path);
+#doSystem(1, "$fusermount -u $proxy_path");
+
+# ProxyFS Test
+#doSystem(0, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$proxyfs_backend /dev/null $proxy_path");
+#$results->{'proxyfs'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $proxyfs_path, $proxyfs_backend_target);
+#doSystem(1, "/usr/bin/sudo /bin/umount $proxy_path");
+
+# Child Proc Simulation
+doSystem(0, "$fusemount $child_test_proxy_path");
+$results->{'proxyfs_child'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $fuse_child_test_proxy_path);
+doSystem(1, "$fusermount -u $child_test_proxy_path");
+#doSystem(0, "$fusemount -o direct_io $child_test_proxy_path");
+#$results->{'proxyfs_child'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $fuse_child_test_proxy_path);
+#doSystem(1, "$fusermount -u $child_test_proxy_path");
+
+# Print results
+for(keys %{$results}) {
+	printf "W: %s, %s\n", $_, join(', ', @{$results->{$_}->[0]});
+	printf "R: %s, %s\n", $_, join(', ', @{$results->{$_}->[1]});
+}
