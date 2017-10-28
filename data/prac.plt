@@ -25,7 +25,7 @@ set bmargin at screen 0.04
 set ylabel "Runtime (sec)" offset 2.8 font "Times,22"
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
-plot dat_file using 2 ti col, \
-           '' using 3 ti col, \
-           '' using 4 ti col, \
-           '' using 5 ti col 
+plot dat_file using 2 ti col fc 6, \
+           '' using 3 ti col fc 1, \
+           '' using 4 ti col fc 4, \
+           '' using 5 ti col fc 5
