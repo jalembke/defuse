@@ -9,10 +9,9 @@ DEBUGFLAGS= -DDEBUG_LDPROXYFS
 
 CFLAGS=-c -g -fPIC
 CXXFLAGS=-c -g -fPIC
-LFLAGS=../../avfs-1.0.5/lib/.libs/libavfs_static.a -ldl -shared
+LFLAGS=-ldl -shared
 
 PROXYFS_MOUNT=/tmp/tmpdir
-PROXYFS_BACKEND=/mnt/tmpbackend
 PROXYFS_MNT_BACKEND=/mnt
 PROXYFS_EXT4_BACKEND=/mnt/ext4
 PROXYFS_JFS_BACKEND=/mnt/jfs
@@ -25,42 +24,44 @@ PROXYFSCONFIGFLAGS= -DPROXYFS_DO_REAL_OPEN -DPROXYFS_MOUNT=\"${PROXYFS_MOUNT}\"
 
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c))
 
-all: libldproxyfs.so
+all:
+	@echo "No all target, use: mnt, ext4, jfs, fat, tmpfs, or avfs"
 
 mnt: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_MNT_BACKEND}\"
 mnt: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_MNT_BACKEND}\"
-mnt: clean libldproxyfs.mnt.so
+mnt: cleanobjs libldproxyfs.mnt.so
 
 ext4: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"
 ext4: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_EXT4_BACKEND}\"
-ext4: clean libldproxyfs.ext4.so
+ext4: cleanobjs libldproxyfs.ext4.so
 
 jfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_JFS_BACKEND}\"
 jfs: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_JFS_BACKEND}\"
-jfs: clean libldproxyfs.jfs.so
+jfs: cleanobjs libldproxyfs.jfs.so
 
 fat: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_FAT_BACKEND}\"
 fat: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_FAT_BACKEND}\"
-fat: clean libldproxyfs.fat.so
+fat: cleanobjs libldproxyfs.fat.so
 
 tmpfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_TMPFS_BACKEND}\"
 tmpfs: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_TMPFS_BACKEND}\"
-tmpfs: clean libldproxyfs.tmpfs.so
+tmpfs: cleanobjs libldproxyfs.tmpfs.so
 
 avfs: CFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_AVFS_BACKEND}\"
 avfs: CXXFLAGS += -DPROXYFS_BACKEND=\"${PROXYFS_AVFS_BACKEND}\"
-avfs: clean libldproxyfs.avfs.so
+avfs: LFLAGS += ../../avfs-1.0.5/lib/.libs/libavfs_static.a
+avfs: cleanobjs libldproxyfs.avfs.so
 
 debug: CFLAGS += $(DEBUGFLAGS)
 debug: CXXFLAGS += $(DEBUGFLAGS)
-debug: clean all
+debug: cleanobjs $(word 2, ${MAKECMDGOALS}) 
+
+cleanobjs:
+	rm -f $(OBJS)
 
 clean:
 	rm -f $(OBJS)
-	rm -f libldproxyfs.so
-
-libldproxyfs.so: $(OBJS)
-	$(CXX) -o $@ $(OBJS) $(LFLAGS)
+	rm -f libldproxyfs.*.so
 
 libldproxyfs.%.so: $(OBJS)
 	$(CXX) -o $@ $(OBJS) $(LFLAGS)
