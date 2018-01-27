@@ -19,6 +19,7 @@ my $child_test_proxy_path = "/tmp/testdir/test";
 my $fuse_child_test_proxy_path = "$child_test_proxy_path/$direct_path";
 
 my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
+#my $time_command = "";
 
 my $benchmark = $time_command . " " . $ENV{HOME} . "/ProxyFS/fuse/fusetest";
 my $files = 0;
@@ -43,7 +44,7 @@ my $proxyfs_path = "/tmp/tmpdir/test";
 my $proxyfs_backend = "/mnt/$type/test";
 my $proxyfs_backend_target = "$proxyfs_backend";
 
-my $trials = 10;
+my $trials = 20;
 my $threads = 1;
 
 sub doSystem {
@@ -151,14 +152,14 @@ if($type eq "avfs") {
 #doSystem(1, "$fusermount -u $proxy_path");
 
 # ProxyFS Test
-#doSystem(0, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$proxyfs_backend /dev/null $proxy_path");
-#$results->{'proxyfs'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $proxyfs_path, $proxyfs_backend_target);
-#doSystem(1, "/usr/bin/sudo /bin/umount $proxy_path");
+doSystem(0, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$proxyfs_backend /dev/null $proxy_path");
+$results->{'proxyfs'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $proxyfs_path, $proxyfs_backend_target);
+doSystem(1, "/usr/bin/sudo /bin/umount $proxy_path");
 
 # Child Proc Simulation
-doSystem(0, "$fusemount $child_test_proxy_path");
-$results->{'proxyfs_child'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $fuse_child_test_proxy_path);
-doSystem(1, "$fusermount -u $child_test_proxy_path");
+#doSystem(0, "$fusemount $child_test_proxy_path");
+#$results->{'proxyfs_child'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $fuse_child_test_proxy_path);
+#doSystem(1, "$fusermount -u $child_test_proxy_path");
 #doSystem(0, "$fusemount -o direct_io $child_test_proxy_path");
 #$results->{'proxyfs_child'} = runTrials("LD_PRELOAD=$ldproxyfs $benchmark", $fuse_child_test_proxy_path);
 #doSystem(1, "$fusermount -u $child_test_proxy_path");

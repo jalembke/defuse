@@ -5,20 +5,22 @@
 #include <string>
 #include <map>
 
-//#include <memory>
-#include "sptr.h"
+#include <memory>
+//#include "sptr.h"
 
 #include "ldproxyfs.h"
 #include "glibc_ops.h"
 #include "FileSystemWrapper.h"
 
-//typedef std::shared_ptr<FileSystemWrapper> FileSystemWrapperPtr;
-//typedef std::map<std::string, FileSystemWrapperPtr> mount_point_map;
-//typedef std::shared_ptr<mount_point_map> mount_point_map_ptr;
-
-typedef sptr<FileSystemWrapper> FileSystemWrapperPtr;
+typedef std::shared_ptr<FileSystemWrapper> FileSystemWrapperPtr;
 typedef std::map<std::string, FileSystemWrapperPtr> mount_point_map;
-typedef sptr<mount_point_map> mount_point_map_ptr;
+typedef std::shared_ptr<mount_point_map> mount_point_map_ptr;
+
+//typedef sptr<FileSystemWrapper> FileSystemWrapperPtr;
+//typedef std::map<std::string, FileSystemWrapperPtr> mount_point_map;
+//typedef sptr<mount_point_map> mount_point_map_ptr;
+
+static mount_point_map_ptr mount_points;
 
 static inline int 
 load_mount(const std::string& path, mount_point_map_ptr& mount_points, const struct FileSystemWrapper::ConfigOpts& opts)
@@ -71,21 +73,22 @@ load_mounts(mount_point_map_ptr& mount_points)
 
 		DEBUG_EXIT(rv);
 	}
+}
 
+__attribute__((constructor))
+static void init()
+{
+	load_glibc_ops();
+	load_mounts(mount_points);
 }
 
 FileSystemWrapper*
 find_mount_and_strip_path(std::string& path)
 {
-	static mount_point_map_ptr mount_points;
-	
 	DEBUG_ENTER;
 	FileSystemWrapper* rv = NULL;
 
 	DEBUG_PRINT(path);
-
-	load_glibc_ops();
-	load_mounts(mount_points);
 
 	if(mount_points && mount_points->size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {

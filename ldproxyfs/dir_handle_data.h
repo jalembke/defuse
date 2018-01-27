@@ -3,9 +3,9 @@
 
 #include <string>
 #include <set>
-//#include <memory>
+#include <memory>
 
-#include "sptr.h"
+//#include "sptr.h"
 #include "file_handle_data.h"
 
 class dir_handle_data {
@@ -23,7 +23,7 @@ class dir_handle_data {
 			fh_data(other.fh_data), dir_entries(other.dir_entries), dir_pointer(other.dir_pointer) {}
 };
 
-typedef sptr<dir_handle_data> dir_handle_data_ptr;
-//typedef std::shared_ptr<dir_handle_data> dir_handle_data_ptr;
+//typedef sptr<dir_handle_data> dir_handle_data_ptr;
+typedef std::shared_ptr<dir_handle_data> dir_handle_data_ptr;
 
 #endif // _DIR_HANDLE_DATA_H

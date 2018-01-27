@@ -23,4 +23,5 @@ set noylabel
 plot dat_file using 2:xtic(1) ti col fc 6, \
            '' using 3 ti col fc 1, \
            '' using 4 ti col fc 4, \
-           '' using 5 ti col fc 5
+           '' using 5 ti col fc 5, \
+           '' using 6 ti col fc 8
