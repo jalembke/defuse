@@ -18,8 +18,12 @@ ssize_t write(int fd, const void *buf, size_t count)
     ssize_t ret = -1;
 
 	FD_OP_ENTER;
-        
+
+#if defined(PROXYFS_DO_NO_OPEN)
+	off_t offset = 0;
+#else
 	off_t offset = lseek(fd, 0, SEEK_CUR);
+#endif
 	if(offset != (off_t)-1) {
 		size_t bytes_written = 0;
 
@@ -31,7 +35,10 @@ ssize_t write(int fd, const void *buf, size_t count)
 			ret = -1;
 		} else {
 			ret = (ssize_t)bytes_written;
+#if defined(PROXYFS_DO_NO_OPEN)
+#else
 			lseek(fd, offset + ret, SEEK_SET);
+#endif
 		}
 	}
 

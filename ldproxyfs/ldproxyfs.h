@@ -10,7 +10,7 @@
 
 class FileSystemWrapper;
 
-#if !defined(PROXYFS_DO_REAL_OPEN) && !defined(PROXYFS_DO_NULL_OPEN)
+#if !defined(PROXYFS_DO_REAL_OPEN) && !defined(PROXYFS_DO_NULL_OPEN) && !defined(PROXYFS_DO_NO_OPEN)
 #error "-DPROXYFS_DO_REAL_OPEN or -DPROXYFS_DO_NULL_OPEN required"
 #endif
 

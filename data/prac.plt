@@ -28,4 +28,5 @@ set ylabel "Runtime (sec)" offset 2.8 font "Times,22"
 plot dat_file using 2 ti col fc 6, \
            '' using 3 ti col fc 1, \
            '' using 4 ti col fc 4, \
-           '' using 5 ti col fc 5
+           '' using 5 ti col fc 5, \
+           '' using 6 ti col fc 8

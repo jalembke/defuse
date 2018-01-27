@@ -24,6 +24,8 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 	uint64_t fh = 0;
 	file_handle_data_ptr fhd;
 
+	static int real_fd_counter = 10;
+
 	DEBUG_PRINT(cpath << " " << path << " " << flags);
 	ret = fs->open(cpath.c_str(), flags, mode, &fh);
 	if(ret == 0) {
@@ -38,6 +40,8 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 		int real_fd = (flags & O_DIRECTORY) ?
 			syscall(SYS_open, "/", flags & (~O_CREAT) & (~O_TRUNC), mode) :
 			syscall(SYS_open, "/dev/null", flags & (~O_CREAT) & (~O_TRUNC), mode);
+#elif defined(PROXYFS_DO_NO_OPEN)
+		int real_fd = real_fd_counter++;
 #endif
 		// Store the file info in the map
 		if(real_fd != -1) {

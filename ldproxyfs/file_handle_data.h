@@ -2,9 +2,9 @@
 #define _FILE_HANDLE_DATA_H
 
 #include <string>
-//#include <memory>
+#include <memory>
 
-#include "sptr.h"
+//#include "sptr.h"
 
 class FileSystemWrapper;
 
@@ -42,7 +42,7 @@ class file_handle_data {
 		}
 };
 
-typedef sptr<file_handle_data> file_handle_data_ptr;
-//typedef std::shared_ptr<file_handle_data> file_handle_data_ptr;
+//typedef sptr<file_handle_data> file_handle_data_ptr;
+typedef std::shared_ptr<file_handle_data> file_handle_data_ptr;
 
 #endif // _FILE_HANDLE_DATA_H

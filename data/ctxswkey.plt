@@ -25,4 +25,5 @@ plot dat_file using 2:xtic(1) ti col fc 6, \
            '' using 4 ti col fc 2, \
            '' using 5 ti col fc 3, \
            '' using 6 ti col fc 4, \
-           '' using 7 ti col fc 5
+           '' using 7 ti col fc 5, \
+           '' using 8 ti col fc 7
