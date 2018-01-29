@@ -22,7 +22,7 @@ CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
 CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
 
-FUSECMPDATS=fuseCompare.dat
+FUSECMPDATS=fuseCompare.dat fuseCompareLg.dat
 FUSECMPSVGS=$(patsubst %.dat,%.svg,$(FUSECMPDATS))
 FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
@@ -104,7 +104,10 @@ ctxswkey.svg: ctxswkey.dat ctxswkey.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" ctxswkey.plt
 
 fuseCompare.svg: fuseCompare.dat fuseCompare.plt
-	gnuplot -e "dat_file='$<'; out_file='$@';" fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" fuseCompare.plt
+
+fuseCompareLg.svg: fuseCompareLg.dat fuseCompareLg.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" fuseCompareLg.plt
 
 clean:
 	rm -f *.svg
