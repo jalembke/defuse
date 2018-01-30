@@ -2,7 +2,7 @@
 set output out_file         # Set the output path
 
 # Set the font to something pleasing
-set term svg fname "Times,19" size 400, 250
+set term svg fname "Times,19" size 225, 250
 unset key                   # No key
 set grid                    # Turn the grid on
 
@@ -12,9 +12,15 @@ set boxwidth 0.40
 
 # Create the plot
 set format y "%.0f"
-set ylabel "Writes (MB/sec)"
+set ylabel "Writes (MB/sec)" offset 1.5
 set yrange [0:*]
 set ytics 4
+set xtics offset 0,graph 0.07
+
+set lmargin at screen 0.25
+set rmargin at screen 0.98
+set tmargin at screen 0.87
+set bmargin at screen 0.13
 
 set style line 1 lc 12
 set style line 2 lc 5
