@@ -1,4 +1,0 @@
-#!/bin/bash
-
-rm -f /tmp/tmpb/blah
-LD_PRELOAD=~/ProxyFS/ldproxyfs/libldproxyfs.so ~/ProxyFS/ldproxyfs/test/testopen

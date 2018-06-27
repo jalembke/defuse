@@ -4,11 +4,11 @@
 #sudo umount ~/proxytest;
 #sudo umount ~/proxytest2; 
 
-sudo rmmod proxyfs; 
-sudo insmod proxyfs.ko; 
+sudo rmmod defuse; 
+sudo insmod defuse.ko; 
 
-#sudo mount -t proxyfs -o backend=/mnt/ext4 /dev/null /tmp/tmpdir
-#sudo mount -t proxyfs -o backend=/tmp/tmpb /dev/null /tmp/tmpdir
-#sudo mount -t proxyfs -o backend=~/pbe /dev/null ~/proxytest
-#sudo mount -t proxyfs -o backend=~/pbe /dev/null ~/proxytest2
-#sudo mount -t proxyfs -o backend=~/proxytest2 /dev/null ~/proxytest
+#sudo mount -t defuse -o backend=/mnt/ext4 /dev/null /tmp/tmpdir
+#sudo mount -t defuse -o backend=/tmp/tmpb /dev/null /tmp/tmpdir
+#sudo mount -t defuse -o backend=~/pbe /dev/null ~/proxytest
+#sudo mount -t defuse -o backend=~/pbe /dev/null ~/proxytest2
+#sudo mount -t defuse -o backend=~/proxytest2 /dev/null ~/proxytest

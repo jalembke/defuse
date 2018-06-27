@@ -1,12 +1,12 @@
 /*
-  ProxyFS: Proxy File System
+  DEFUSE File System
   Copyright (C) 2017  James Lembke <jalembke@gmail.com>
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
 */
 
-#include "proxyfs.h"
+#include "defuse.h"
 
 #include <linux/init.h>
 #include <linux/module.h>
@@ -25,12 +25,12 @@ MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
 MODULE_DESCRIPTION("Proxy File System");
 MODULE_LICENSE("GPL");
 
-#define PROXYFS_DEFAULT_MODE	0755
-#define PROXYFS_MAGIC			0x50525859	// PRXY
+#define DEFUSE_DEFAULT_MODE	0755
+#define DEFUSE_MAGIC			0x50525859	// PRXY
 
-static struct kmem_cache *proxyfs_inode_cachep;
+static struct kmem_cache *defuse_inode_cachep;
 
-static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
+static struct inode* defuse_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
 
 /* 
  * Resolve the given proxy dentry to the real backend dentry
@@ -42,7 +42,7 @@ static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, str
  *
  * NOTE: this modifies the entry as well as the parent entri(es) 
  */
-struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
+struct dentry* defuse_resolve_dentry(struct dentry* entry)
 {
 	struct dentry *p_parent;
 	struct dentry *b_parent;
@@ -63,15 +63,15 @@ struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 	}
 
 	/* Resolve the parent if it hasn't been already */
-	if(!proxyfs_resolved_inode(p_parent->d_inode)) {
-		b_parent = proxyfs_resolve_dentry(p_parent);
+	if(!defuse_resolved_inode(p_parent->d_inode)) {
+		b_parent = defuse_resolve_dentry(p_parent);
 		if(!b_parent) {
 			dput(p_parent);
 			return NULL;
 		}
-		get_proxyfs_inode(p_parent->d_inode)->b_dentry = b_parent;
+		get_defuse_inode(p_parent->d_inode)->b_dentry = b_parent;
 	} else {
-		b_parent = proxyfs_get_b_dentry(p_parent->d_inode);
+		b_parent = defuse_get_b_dentry(p_parent->d_inode);
 	}
 
 	/* Parent's backend dentry is negative, the child backend entry should also be negative */
@@ -95,7 +95,7 @@ struct dentry* proxyfs_resolve_dentry(struct dentry* entry)
 	return b_dentry;
 }
 
-static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umode_t mode, 
+static inline int defuse_do_create(struct inode *dir, struct dentry *entry, umode_t mode, 
 	dev_t dev, const char* link, struct dentry *hardlink)
 {
 	struct inode *inode;
@@ -106,19 +106,19 @@ static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umo
 	
 	PRINTFN;
 
-	b_dir = proxyfs_get_b_dentry_resolved(dir);
+	b_dir = defuse_get_b_dentry_resolved(dir);
 	err = PTR_ERR(b_dir);
 	if(IS_ERR(b_dir)) {
 		return err;
 	}
 	if(hardlink) {
-		b_hardlink = proxyfs_get_b_dentry_resolved(d_inode(hardlink));
+		b_hardlink = defuse_get_b_dentry_resolved(d_inode(hardlink));
 		err = PTR_ERR(b_hardlink);
 		if(IS_ERR(b_hardlink)) {
 			return err;
 		}
 	}
-	b_dentry = proxyfs_resolve_dentry(entry);
+	b_dentry = defuse_resolve_dentry(entry);
 	if(!b_dentry)
 		return -EIO;
 	if(d_inode(b_dentry)) {
@@ -126,7 +126,7 @@ static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umo
 		return -ESTALE;
 	}
 
-	inode = proxyfs_iget(dir->i_sb, dir, entry, mode);
+	inode = defuse_iget(dir->i_sb, dir, entry, mode);
 	if(!inode) {
 		dput(b_dentry);
 		return -ENOSPC;
@@ -163,11 +163,11 @@ static inline int proxyfs_do_create(struct inode *dir, struct dentry *entry, umo
 	}
 
 	d_instantiate(entry, inode);
-	get_proxyfs_inode(inode)->b_dentry = b_dentry;
+	get_defuse_inode(inode)->b_dentry = b_dentry;
 	return 0;
 }
 
-static inline int proxyfs_create_object(struct inode *dir, struct dentry *entry, umode_t mode, 
+static inline int defuse_create_object(struct inode *dir, struct dentry *entry, umode_t mode, 
 	dev_t dev, const char* link, struct dentry* hardlink)
 {
 	struct vfsmount* b_mnt;
@@ -175,18 +175,18 @@ static inline int proxyfs_create_object(struct inode *dir, struct dentry *entry,
 	
 	PRINTFN;
 
-	b_mnt = proxyfs_get_b_mount(dir);
+	b_mnt = defuse_get_b_mount(dir);
 	err = mnt_want_write(b_mnt);
 	if(err) {
 		return err;
 	}
-	err = proxyfs_do_create(dir, entry, mode, dev, link, hardlink);
+	err = defuse_do_create(dir, entry, mode, dev, link, hardlink);
 	mnt_drop_write(b_mnt);
 	
 	return err;
 }
 
-static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
+static inline int defuse_do_delete(struct inode *dir, struct dentry *entry)
 {
 	struct inode *inode;
 	struct dentry *b_dir;
@@ -195,14 +195,14 @@ static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
 
 	PRINTFN;
 
-	b_dir = proxyfs_get_b_dentry_resolved(dir);
+	b_dir = defuse_get_b_dentry_resolved(dir);
 	err = PTR_ERR(b_dir);
 	if(IS_ERR(b_dir)) {
 		return err;
 	}
 
 	inode = d_inode(entry);
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	err = PTR_ERR(b_dentry);
 	if(IS_ERR(b_dentry)) {
 		return err;
@@ -219,30 +219,30 @@ static inline int proxyfs_do_delete(struct inode *dir, struct dentry *entry)
 	return err;
 }
 
-static inline int proxyfs_delete_object(struct inode *dir, struct dentry *entry)
+static inline int defuse_delete_object(struct inode *dir, struct dentry *entry)
 {
 	struct vfsmount* b_mnt;
 	int err;
 
-	b_mnt = proxyfs_get_b_mount(dir);
+	b_mnt = defuse_get_b_mount(dir);
 	err = mnt_want_write(b_mnt);
 	if(err) {
 		return err;
 	}
-	err = proxyfs_do_delete(dir, entry);
+	err = defuse_do_delete(dir, entry);
 	mnt_drop_write(b_mnt);
 	
 	return err;
 }
 
-static int proxyfs_create(struct inode *dir, struct dentry *entry, umode_t mode,
+static int defuse_create(struct inode *dir, struct dentry *entry, umode_t mode,
 			bool want_excl)
 {
 	PRINTFN;
-	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFREG, 0, NULL, NULL);
+	return defuse_create_object(dir, entry, (mode & 07777) | S_IFREG, 0, NULL, NULL);
 }
 
-struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
+struct dentry *defuse_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
 	struct inode *inode = NULL;
 	struct dentry *b_dentry = NULL;
@@ -254,21 +254,21 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 		base_mode = S_IFDIR;
 	
 	if(flags & LOOKUP_CREATE) {
-		b_dentry = proxyfs_resolve_dentry(entry);
+		b_dentry = defuse_resolve_dentry(entry);
 		if(!b_dentry)
 			return ERR_PTR(-EIO);
 		if(b_dentry->d_inode) {
-			inode = proxyfs_iget(dir->i_sb, dir, entry, b_dentry->d_inode->i_mode);
+			inode = defuse_iget(dir->i_sb, dir, entry, b_dentry->d_inode->i_mode);
 			if(!inode) {
 				dput(b_dentry);
 				return ERR_PTR(-ENOSPC);
 			}
-			get_proxyfs_inode(inode)->b_dentry = b_dentry;
+			get_defuse_inode(inode)->b_dentry = b_dentry;
 		} else {
 			dput(b_dentry);
 		}
 	} else {
-		inode = proxyfs_iget(dir->i_sb, dir, entry, base_mode | PROXYFS_DEFAULT_MODE);
+		inode = defuse_iget(dir->i_sb, dir, entry, base_mode | DEFUSE_DEFAULT_MODE);
 		if(!inode)
 			return ERR_PTR(-ENOSPC);
 	}
@@ -276,46 +276,46 @@ struct dentry *proxyfs_lookup(struct inode *dir, struct dentry *entry, unsigned 
 	return d_splice_alias(inode, entry);
 }
 
-static int proxyfs_link(struct dentry *entry, struct inode *newdir,
+static int defuse_link(struct dentry *entry, struct inode *newdir,
 		     struct dentry *newent)
 {
 	PRINTFN;
-	return proxyfs_create_object(newdir, newent, entry->d_inode->i_mode, 0, NULL, entry);
+	return defuse_create_object(newdir, newent, entry->d_inode->i_mode, 0, NULL, entry);
 }
 
-static int proxyfs_unlink(struct inode *dir, struct dentry *entry)
+static int defuse_unlink(struct inode *dir, struct dentry *entry)
 {
 	PRINTFN;
-	return proxyfs_delete_object(dir, entry);
+	return defuse_delete_object(dir, entry);
 }
 
-static int proxyfs_symlink(struct inode *dir, struct dentry *entry,
+static int defuse_symlink(struct inode *dir, struct dentry *entry,
 			const char *link)
 {
 	PRINTFN;
-	return proxyfs_create_object(dir, entry, S_IFLNK, 0, link, NULL);
+	return defuse_create_object(dir, entry, S_IFLNK, 0, link, NULL);
 }
 
-static int proxyfs_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
+static int defuse_mkdir(struct inode *dir, struct dentry *entry, umode_t mode)
 {
 	PRINTFN;
-	return proxyfs_create_object(dir, entry, (mode & 07777) | S_IFDIR, 0, NULL, NULL);
+	return defuse_create_object(dir, entry, (mode & 07777) | S_IFDIR, 0, NULL, NULL);
 }
 
-static int proxyfs_rmdir(struct inode *dir, struct dentry *entry)
+static int defuse_rmdir(struct inode *dir, struct dentry *entry)
 {
 	PRINTFN;
-	return proxyfs_delete_object(dir, entry);
+	return defuse_delete_object(dir, entry);
 }
 
-static int proxyfs_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
+static int defuse_mknod(struct inode *dir, struct dentry *entry, umode_t mode,
 		      dev_t rdev)
 {
 	PRINTFN;
-	return proxyfs_create_object(dir, entry, mode, rdev, NULL, NULL);
+	return defuse_create_object(dir, entry, mode, rdev, NULL, NULL);
 }
 
-static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
+static int defuse_rename(struct inode *olddir, struct dentry *oldent,
 		       struct inode *newdir, struct dentry *newent)
 {
 	struct dentry *b_olddir;
@@ -328,22 +328,22 @@ static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 	
 	PRINTFN;
 
-	b_olddir = proxyfs_get_b_dentry_resolved(olddir);
+	b_olddir = defuse_get_b_dentry_resolved(olddir);
 	err = PTR_ERR(b_olddir);
 	if(IS_ERR(b_olddir)) {
 		return err;
 	}
-	b_oldent = proxyfs_get_b_dentry_resolved(d_inode(oldent));
+	b_oldent = defuse_get_b_dentry_resolved(d_inode(oldent));
 	err = PTR_ERR(b_oldent);
 	if(IS_ERR(b_oldent)) {
 		return err;
 	}
-	b_newdir = proxyfs_get_b_dentry_resolved(newdir);
+	b_newdir = defuse_get_b_dentry_resolved(newdir);
 	err = PTR_ERR(b_newdir);
 	if(IS_ERR(b_newdir)) {
 		return err;
 	}
-	b_newent = proxyfs_resolve_dentry(newent);
+	b_newent = defuse_resolve_dentry(newent);
 	if(!b_newent)
 		return -EIO;
 
@@ -370,7 +370,7 @@ static int proxyfs_rename(struct inode *olddir, struct dentry *oldent,
 	return err;
 }
 
-static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int buflen)
+static int defuse_readlink(struct dentry *entry, char __user *buffer, int buflen)
 {
 	struct inode *inode;
 	struct path b_path;
@@ -381,7 +381,7 @@ static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int bufle
 	PRINTFN;
 
 	inode = d_inode(entry);
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	err = PTR_ERR(b_dentry);
 	if(IS_ERR(b_dentry)) {
 		return err;
@@ -394,7 +394,7 @@ static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int bufle
 	if (!b_inode->i_op->readlink)
 		return -EINVAL;
 
-	b_path.mnt = proxyfs_get_b_mount(inode);
+	b_path.mnt = defuse_get_b_mount(inode);
 	b_path.dentry = b_dentry;
 	touch_atime(&b_path);
 
@@ -402,27 +402,27 @@ static int proxyfs_readlink(struct dentry *entry, char __user *buffer, int bufle
 }
 
 /*
-static void *proxyfs_follow_link(struct dentry *dentry, struct nameidata *nd)
+static void *defuse_follow_link(struct dentry *dentry, struct nameidata *nd)
 {
 
 }
 
-static void proxyfs_put_link(struct dentry *dentry, struct nameidata *nd, void *c)
+static void defuse_put_link(struct dentry *dentry, struct nameidata *nd, void *c)
 {
 
 }
 */
 
-static int proxyfs_permission(struct inode *inode, int mask)
+static int defuse_permission(struct inode *inode, int mask)
 {
 	PRINTFN;
 
-	/* Permission always granted for ProxyFS */
+	/* Permission always granted for defuse */
 
 	return 0;
 }
 
-static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
+static int defuse_setattr(struct dentry *entry, struct iattr *attr)
 {
 	struct inode *inode;
 	struct dentry * b_dentry;
@@ -433,13 +433,13 @@ static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 
 	inode = d_inode(entry);
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	err = PTR_ERR(b_dentry);
 	if(IS_ERR(b_dentry)) {
 		return err;
 	}
 	
-	b_mnt = proxyfs_get_b_mount(inode);
+	b_mnt = defuse_get_b_mount(inode);
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
@@ -453,7 +453,7 @@ static int proxyfs_setattr(struct dentry *entry, struct iattr *attr)
 	return err;
 }
 
-static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
+static int defuse_getattr(struct vfsmount *mnt, struct dentry *entry,
 			struct kstat *stat)
 {
 	struct path b_path;
@@ -463,7 +463,7 @@ static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 
 	PRINTFN;
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
 		return PTR_ERR(b_dentry);
 
@@ -473,13 +473,13 @@ static int proxyfs_getattr(struct vfsmount *mnt, struct dentry *entry,
 		return -ENOENT;
 	}
 
-	b_path.mnt = proxyfs_get_b_mount(inode);
+	b_path.mnt = defuse_get_b_mount(inode);
 	b_path.dentry = b_dentry;
 	
 	return vfs_getattr(&b_path, stat);
 }
 
-static int proxyfs_setxattr(struct dentry *entry, const char *name,
+static int defuse_setxattr(struct dentry *entry, const char *name,
 			 const void *value, size_t size, int flags)
 {
 	struct inode *inode;
@@ -491,13 +491,13 @@ static int proxyfs_setxattr(struct dentry *entry, const char *name,
 
 	inode = d_inode(entry);
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	err = PTR_ERR(b_dentry);
 	if(IS_ERR(b_dentry)) {
 		return err;
 	}
 	
-	b_mnt = proxyfs_get_b_mount(inode);
+	b_mnt = defuse_get_b_mount(inode);
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
@@ -508,7 +508,7 @@ static int proxyfs_setxattr(struct dentry *entry, const char *name,
 	return err;
 }
 
-static ssize_t proxyfs_getxattr(struct dentry *entry, const char *name,
+static ssize_t defuse_getxattr(struct dentry *entry, const char *name,
 			     void *value, size_t size)
 {
 	struct dentry* b_dentry;
@@ -517,7 +517,7 @@ static ssize_t proxyfs_getxattr(struct dentry *entry, const char *name,
 
 	PRINTFN;
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
 		return PTR_ERR(b_dentry);
 
@@ -528,7 +528,7 @@ static ssize_t proxyfs_getxattr(struct dentry *entry, const char *name,
 	return vfs_getxattr(b_dentry, name, value, size);
 }
 
-static ssize_t proxyfs_listxattr(struct dentry *entry, char *list, size_t size)
+static ssize_t defuse_listxattr(struct dentry *entry, char *list, size_t size)
 {
 	struct dentry* b_dentry;
 	struct inode* b_inode;
@@ -536,7 +536,7 @@ static ssize_t proxyfs_listxattr(struct dentry *entry, char *list, size_t size)
 
 	PRINTFN;
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	if(IS_ERR(b_dentry))
 		return PTR_ERR(b_dentry);
 
@@ -547,7 +547,7 @@ static ssize_t proxyfs_listxattr(struct dentry *entry, char *list, size_t size)
 	return vfs_listxattr(b_dentry, list, size);
 }
 
-static int proxyfs_removexattr(struct dentry *entry, const char *name)
+static int defuse_removexattr(struct dentry *entry, const char *name)
 {
 	struct inode *inode;
 	struct dentry * b_dentry;
@@ -558,13 +558,13 @@ static int proxyfs_removexattr(struct dentry *entry, const char *name)
 
 	inode = d_inode(entry);
 
-	b_dentry = proxyfs_get_b_dentry_resolved(inode);
+	b_dentry = defuse_get_b_dentry_resolved(inode);
 	err = PTR_ERR(b_dentry);
 	if(IS_ERR(b_dentry)) {
 		return err;
 	}
 	
-	b_mnt = proxyfs_get_b_mount(inode);
+	b_mnt = defuse_get_b_mount(inode);
 	err = mnt_want_write(b_mnt);
 	if(err)
 		return err;
@@ -575,62 +575,62 @@ static int proxyfs_removexattr(struct dentry *entry, const char *name)
 	return err;
 }
 
-static const struct inode_operations proxyfs_inode_operations = {
-	.create		= proxyfs_create,
-	.lookup		= proxyfs_lookup,
-	.link		= proxyfs_link,
-	.unlink		= proxyfs_unlink,
-	.symlink	= proxyfs_symlink,
-	.mkdir		= proxyfs_mkdir,
-	.rmdir		= proxyfs_rmdir,
-	.mknod		= proxyfs_mknod,
-	.rename		= proxyfs_rename,
-	.readlink	= proxyfs_readlink,
-	//.follow_link	= proxyfs_follow_link,
-	//.put_link	= proxyfs_put_link,
-	.permission	= proxyfs_permission,
-	.setattr	= proxyfs_setattr,
-	.getattr	= proxyfs_getattr,
-	.setxattr	= proxyfs_setxattr,
-	.getxattr	= proxyfs_getxattr,
-	.listxattr	= proxyfs_listxattr,
-	.removexattr	= proxyfs_removexattr,
+static const struct inode_operations defuse_inode_operations = {
+	.create		= defuse_create,
+	.lookup		= defuse_lookup,
+	.link		= defuse_link,
+	.unlink		= defuse_unlink,
+	.symlink	= defuse_symlink,
+	.mkdir		= defuse_mkdir,
+	.rmdir		= defuse_rmdir,
+	.mknod		= defuse_mknod,
+	.rename		= defuse_rename,
+	.readlink	= defuse_readlink,
+	//.follow_link	= defuse_follow_link,
+	//.put_link	= defuse_put_link,
+	.permission	= defuse_permission,
+	.setattr	= defuse_setattr,
+	.getattr	= defuse_getattr,
+	.setxattr	= defuse_setxattr,
+	.getxattr	= defuse_getxattr,
+	.listxattr	= defuse_listxattr,
+	.removexattr	= defuse_removexattr,
 };
 
-static struct inode *proxyfs_alloc_inode(struct super_block *sb)
+static struct inode *defuse_alloc_inode(struct super_block *sb)
 {
 	struct inode *inode;
-	struct proxyfs_inode *pi;
+	struct defuse_inode *pi;
 	
 	PRINTFN;
 
-	inode = kmem_cache_alloc(proxyfs_inode_cachep, GFP_KERNEL);
+	inode = kmem_cache_alloc(defuse_inode_cachep, GFP_KERNEL);
 	if (!inode)
 		return NULL;
 
-	pi = get_proxyfs_inode(inode);
+	pi = get_defuse_inode(inode);
 	pi->b_dentry = NULL;
 
 	return inode;
 }
 
-static void proxyfs_i_callback(struct rcu_head *head)
+static void defuse_i_callback(struct rcu_head *head)
 {
 	struct inode *inode = container_of(head, struct inode, i_rcu);
 
-	if(proxyfs_resolved_inode(inode))
-		dput(proxyfs_get_b_dentry(inode));
+	if(defuse_resolved_inode(inode))
+		dput(defuse_get_b_dentry(inode));
 
-	kmem_cache_free(proxyfs_inode_cachep, inode);
+	kmem_cache_free(defuse_inode_cachep, inode);
 }
 
-static void proxyfs_destroy_inode(struct inode *inode)
+static void defuse_destroy_inode(struct inode *inode)
 {
 	PRINTFN;
-	call_rcu(&inode->i_rcu, proxyfs_i_callback);
+	call_rcu(&inode->i_rcu, defuse_i_callback);
 }
 
-static void proxyfs_init_inode(struct inode *inode, struct inode *dir, mode_t mode)
+static void defuse_init_inode(struct inode *inode, struct inode *dir, mode_t mode)
 {
 	PRINTFN;
 	
@@ -640,15 +640,15 @@ static void proxyfs_init_inode(struct inode *inode, struct inode *dir, mode_t mo
 	if(special_file(inode->i_mode)) {
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
 	} else {
-		inode->i_op = &proxyfs_inode_operations;
+		inode->i_op = &defuse_inode_operations;
 		inode->i_fop = &proxy_file_operations;
 	}
 }
 
-static int proxyfs_inode_eq(struct inode *inode, void *data)
+static int defuse_inode_eq(struct inode *inode, void *data)
 {
 	struct dentry* entry = (struct dentry*)data;
-	struct proxyfs_inode *pi = get_proxyfs_inode(inode);
+	struct defuse_inode *pi = get_defuse_inode(inode);
 
 	if(!entry) {
 		return 0;
@@ -660,14 +660,14 @@ static int proxyfs_inode_eq(struct inode *inode, void *data)
 	return (memcmp(pi->p_dentry->d_name.name, entry->d_name.name, pi->p_dentry->d_name.len) == 0);
 }
 
-static int proxyfs_inode_set(struct inode *inode, void *data)
+static int defuse_inode_set(struct inode *inode, void *data)
 {
 	struct dentry* entry = (struct dentry*)data;
-	get_proxyfs_inode(inode)->p_dentry = entry;
+	get_defuse_inode(inode)->p_dentry = entry;
 	return 0;
 }
 
-static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode)
+static struct inode* defuse_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode)
 {
 	struct inode *inode;
 	unsigned long dhash;
@@ -679,13 +679,13 @@ static struct inode* proxyfs_iget(struct super_block *sb, struct inode *dir, str
 	else
 		dhash = full_name_hash("/", 1);
 	
-	inode = iget5_locked(sb, dhash, proxyfs_inode_eq, proxyfs_inode_set, entry);
+	inode = iget5_locked(sb, dhash, defuse_inode_eq, defuse_inode_set, entry);
 	if (!inode)
 		return NULL;
 
 	if ((inode->i_state & I_NEW)) {
 		inode->i_flags |= S_NOATIME;
-		proxyfs_init_inode(inode, dir, mode);
+		defuse_init_inode(inode, dir, mode);
 		unlock_new_inode(inode);
 	}
 
@@ -704,7 +704,7 @@ static const match_table_t tokens = {
 	{OPT_ERR, NULL}
 };
 
-static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
+static int defuse_parse_options(char *data, struct defuse_mount_opts *opts)
 {
 	substring_t args[MAX_OPT_ARGS];
 	int option;
@@ -714,7 +714,7 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 	
 	PRINTFN;
 
-	opts->mode = PROXYFS_DEFAULT_MODE;
+	opts->mode = DEFUSE_DEFAULT_MODE;
 
 	while ((p = strsep(&data, ",")) != NULL) {
 		if (!*p)
@@ -738,26 +738,26 @@ static int proxyfs_parse_options(char *data, struct proxyfs_mount_opts *opts)
 
 	/* Backend option is required */
 	if(!option_backend) {
-		printk(KERN_ERR "ProxyFS: backend option is required\n");
+		printk(KERN_ERR "defuse: backend option is required\n");
 		return -EINVAL;
 	}
 
 	return 0;
 }
 
-static const struct super_operations proxyfs_ops = {
-	.alloc_inode    = proxyfs_alloc_inode,
-	.destroy_inode  = proxyfs_destroy_inode,
+static const struct super_operations defuse_ops = {
+	.alloc_inode    = defuse_alloc_inode,
+	.destroy_inode  = defuse_destroy_inode,
 	.statfs		= simple_statfs,
 	.drop_inode	= generic_delete_inode,
 	.show_options	= generic_show_options,
 };
 
-static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
+static int defuse_fill_super(struct super_block *sb, void *data, int silent)
 {
 	struct inode *inode;
-	struct proxyfs_inode *pi;
-	struct proxyfs_fs_info *fsi;
+	struct defuse_inode *pi;
+	struct defuse_fs_info *fsi;
 	int err;
 	struct path path;
 
@@ -765,20 +765,20 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	save_mount_options(sb, data);
 
-	fsi = kzalloc(sizeof(struct proxyfs_fs_info), GFP_KERNEL);
+	fsi = kzalloc(sizeof(struct defuse_fs_info), GFP_KERNEL);
 	sb->s_fs_info = fsi;
 	if (!fsi)
 		return -ENOMEM;
 
-	err = proxyfs_parse_options(data, &fsi->mount_opts);
+	err = defuse_parse_options(data, &fsi->mount_opts);
 	if (err)
 		return err;
 
 	sb->s_maxbytes		= MAX_LFS_FILESIZE;
 	sb->s_blocksize		= PAGE_CACHE_SIZE;
 	sb->s_blocksize_bits	= PAGE_CACHE_SHIFT;
-	sb->s_magic		= PROXYFS_MAGIC;
-	sb->s_op		= &proxyfs_ops;
+	sb->s_magic		= DEFUSE_MAGIC;
+	sb->s_op		= &defuse_ops;
 	sb->s_time_gran		= 1;
 
 	err = kern_path(fsi->mount_opts.backend, LOOKUP_FOLLOW | LOOKUP_DIRECTORY, &path);
@@ -786,21 +786,21 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 		return err;
 	
 	if(!S_ISDIR(path.dentry->d_inode->i_mode)) {
-		printk(KERN_ERR "ProxyFS: backend path: %s must be a directory\n", fsi->mount_opts.backend);
+		printk(KERN_ERR "defuse: backend path: %s must be a directory\n", fsi->mount_opts.backend);
 		path_put(&path);
 		return -EINVAL;
 	}
 
 	fsi->b_mount = path.mnt;
 
-	inode = proxyfs_iget(sb, NULL, NULL, S_IFDIR | fsi->mount_opts.mode);
+	inode = defuse_iget(sb, NULL, NULL, S_IFDIR | fsi->mount_opts.mode);
 	sb->s_root = d_make_root(inode);
 	if (!sb->s_root) {
 		path_put(&path);
 		return -ENOMEM;
 	}
 
-	pi = get_proxyfs_inode(inode);
+	pi = get_defuse_inode(inode);
 	pi->p_dentry = sb->s_root;
 	pi->b_dentry = path.dentry;
 	
@@ -809,68 +809,68 @@ static int proxyfs_fill_super(struct super_block *sb, void *data, int silent)
 	return 0;
 }
 
-static struct dentry *proxyfs_mount(struct file_system_type *fs_type,
+static struct dentry *defuse_mount(struct file_system_type *fs_type,
 		       int flags, const char *dev_name,
 		       void *raw_data)
 {
 	PRINTFN;
-	return mount_nodev(fs_type, flags, raw_data, proxyfs_fill_super);
+	return mount_nodev(fs_type, flags, raw_data, defuse_fill_super);
 }
 
-static void proxyfs_kill_sb(struct super_block *sb)
+static void defuse_kill_sb(struct super_block *sb)
 {
 	PRINTFN;
-	kfree(((struct proxyfs_fs_info *)sb->s_fs_info)->mount_opts.backend);
+	kfree(((struct defuse_fs_info *)sb->s_fs_info)->mount_opts.backend);
 	kfree(sb->s_fs_info);
 	kill_anon_super(sb);
 }
 
-static struct file_system_type proxyfs_fs_type = {
+static struct file_system_type defuse_fs_type = {
 	.owner		= THIS_MODULE,
-	.name		= "proxyfs",
+	.name		= "defuse",
 	.fs_flags	= FS_USERNS_MOUNT,
-	.mount		= proxyfs_mount,
-	.kill_sb	= proxyfs_kill_sb,
+	.mount		= defuse_mount,
+	.kill_sb	= defuse_kill_sb,
 };
-MODULE_ALIAS_FS("proxyfs");
+MODULE_ALIAS_FS("defuse");
 
-static void proxyfs_inode_init_once(void *foo)
+static void defuse_inode_init_once(void *foo)
 {
 	struct inode *inode = foo;
 
 	inode_init_once(inode);
 }
 
-static int __init proxyfs_init(void)
+static int __init defuse_init(void)
 {
 	static unsigned long once;
 
 	if (test_and_set_bit(0, &once))
 		return 0;
 	
-	printk(KERN_INFO "ProxyFS init\n");
+	printk(KERN_INFO "defuse init\n");
 
-	proxyfs_inode_cachep = kmem_cache_create("proxyfs_inode",
-		  					  sizeof(struct proxyfs_inode),
+	defuse_inode_cachep = kmem_cache_create("defuse_inode",
+		  					  sizeof(struct defuse_inode),
 					    	  0, SLAB_HWCACHE_ALIGN,
-					    	  proxyfs_inode_init_once);
+					    	  defuse_inode_init_once);
 
-	return register_filesystem(&proxyfs_fs_type);
+	return register_filesystem(&defuse_fs_type);
 	return 0;
 }
 
-static void __exit proxyfs_exit(void)
+static void __exit defuse_exit(void)
 {
-	printk(KERN_DEBUG "ProxyFS exit\n");
-	unregister_filesystem(&proxyfs_fs_type);
+	printk(KERN_DEBUG "defuse exit\n");
+	unregister_filesystem(&defuse_fs_type);
 
 	/*
 	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
-	kmem_cache_destroy(proxyfs_inode_cachep);
+	kmem_cache_destroy(defuse_inode_cachep);
 }
 
-module_init(proxyfs_init);
-module_exit(proxyfs_exit);
+module_init(defuse_init);
+module_exit(defuse_exit);

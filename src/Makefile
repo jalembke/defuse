@@ -1,10 +1,8 @@
 #
-# Makefile for the Proxy filesystem.
-#
-obj-m += proxyfs.o
-proxyfs-objs := inode.o file.o
+obj-m += defuse.o
+defuse-objs := inode.o file.o
 
-#LOCAL_CFLAGS := -DDEBUG -DDEBUG_PROXYFS
+#LOCAL_CFLAGS := -DDEBUG -DDEBUG_DEFUSE
 LOCAL_CFLAGS :=
 
 CFLAGS_inode.o := $(LOCAL_CFLAGS)
