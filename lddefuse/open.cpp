@@ -53,7 +53,6 @@ static inline file_handle_data_ptr open_internal(const std::string& cpath, const
 			ret = errno;
 			fs->close(fh);
 		}
-		
 	} else {
 		DEBUG_PRINT("ERROR 1 " << errno);
 		ret = errno;

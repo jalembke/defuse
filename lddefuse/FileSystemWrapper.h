@@ -26,9 +26,13 @@ class FileSystemWrapper
 		int init(const struct ConfigOpts& conf) {
 			xBackend = conf.backend;
 			xBackend += "/";
+			xMountPoint = conf.mount_point;
 			return 0;
 		}
         //int finalize();
+		
+		const std::string& getBackend() const { return xBackend; }
+		const std::string& getMountPoint() const { return xMountPoint; }
 
 		// Open the file specified by path using the open flags and mode, 
 		//    returns the opened file handle in ret_fh
@@ -103,6 +107,7 @@ class FileSystemWrapper
 
 	private:
 		std::string xBackend;
+		std::string xMountPoint;
 
 };
 

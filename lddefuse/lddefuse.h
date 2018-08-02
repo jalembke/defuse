@@ -64,12 +64,15 @@ class FileSystemWrapper;
 // Mount Point Functions
 void load_mounts(void);
 FileSystemWrapper* find_mount_and_strip_path(std::string& path);
+FileSystemWrapper* find_mount_from_path(const std::string& path);
 
 // File Handle Functions
 int insert_file_handle(int fd, file_handle_data_ptr& fhd);
 int remove_file_handle(int fd);
 struct file_handle_data* find_file_handle(int fd);
 int duplicate_file_handle(int fd1, int fd2);
+int save_file_handles_to_shared_space(void);
+int restore_file_handles_from_shared_space(void);
 
 // Directory Handle Functions
 int insert_dir_handle(DIR* dirp, dir_handle_data_ptr& dhd);

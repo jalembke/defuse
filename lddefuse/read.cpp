@@ -19,7 +19,7 @@ ssize_t read(int fd, void *buf, size_t count)
 
 	FD_OP_ENTER;
 
-#if defined(defuse_DO_NO_OPEN)
+#if defined(DEFUSE_DO_NO_OPEN)
 	off_t offset = 0;
 #else
 	off_t offset = lseek(fd, 0, SEEK_CUR);
@@ -33,7 +33,7 @@ ssize_t read(int fd, void *buf, size_t count)
 			ret = -1;
 		} else {
 			ret = (ssize_t)bytes_read;
-#if defined(defuse_DO_NO_OPEN)
+#if defined(DEFUSE_DO_NO_OPEN)
 #else
 			lseek(fd, offset + ret, SEEK_SET);
 #endif

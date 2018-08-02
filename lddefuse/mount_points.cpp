@@ -102,3 +102,25 @@ find_mount_and_strip_path(std::string& path)
 	DEBUG_EXIT(rv);
 	return rv;
 }
+
+FileSystemWrapper* 
+find_mount_from_path(const std::string& path)
+{
+	DEBUG_ENTER;
+	FileSystemWrapper* rv = NULL;
+
+	DEBUG_PRINT(path);
+
+	if(mount_points && mount_points->size() > 0) {
+		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {
+			std::size_t loc = path.find(itr->first);
+			if(loc != std::string::npos) {
+				rv = itr->second.get();
+				break;
+			}
+		}
+	}
+
+	DEBUG_EXIT(rv);
+	return rv;
+}

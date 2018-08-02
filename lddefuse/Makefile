@@ -9,7 +9,7 @@ DEBUGFLAGS= -DDEBUG_LDDEFUSE
 
 CFLAGS=-c -g -fPIC
 CXXFLAGS=-c -g -fPIC -std=c++0x
-LFLAGS=-ldl -shared
+LFLAGS=-ldl -lrt -shared
 
 DEFUSE_MOUNT=/tmp/tmpdir
 DEFUSE_MNT_BACKEND=/mnt
