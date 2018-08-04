@@ -7,6 +7,8 @@
 #include <time.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <limits.h>
+#include <wait.h>
 
 #include <string>
 
@@ -22,9 +24,20 @@ uint64_t getTime()
 }
 #undef NSEC_PER_SEC
 
+std::string get_path()
+{
+	char buffer[PATH_MAX + 1] = {0};
+	if(-1 == readlink("/proc/self/exe", buffer, sizeof(buffer))) {
+		fprintf(stderr, "Failed to read /proc/self/exe: %s\n", strerror(errno));
+		exit(1);
+	}
+	std::string exepath(buffer);
+	return exepath.substr(0, exepath.find_last_of("\\/"));
+}
+
 int main(int argc, char* argv[])
 {
-	if(argc != 4) {
+	if(argc != 4 && argc != 5) {
 		printf("Usage: doCopy srcdir tgtdir count\n");
 		exit(1);
 	}
@@ -34,6 +47,12 @@ int main(int argc, char* argv[])
 	std::string tgt = argv[2];
 	tgt += "/0";
 	int file_count = atoi(argv[3]);
+
+	bool with_fork = false;
+	pid_t child_pid = 0;
+	if (argc == 5) {
+		with_fork = true;
+	}
 
 	char buffer[32768];
 
@@ -50,14 +69,35 @@ int main(int argc, char* argv[])
 			exit(1);
 		}
 
-		int size_read = read(srcfd, buffer, sizeof(buffer));
-		if(size_read == -1) {
-			fprintf(stderr, "Unable to read to %s: %s\n", (src + std::to_string(i)).c_str(), strerror(errno));
-			exit(1);
-		}
-		if(write(tgtfd, buffer, size_read) == -1) {
-			fprintf(stderr, "Unable to write to %s: %s\n", (tgt + std::to_string(i)).c_str(), strerror(errno));
-			exit(1);
+		if(with_fork) {
+			std::string exepath = get_path();
+			exepath.append("/doCat");
+			child_pid = fork();
+			if(-1 == child_pid) {
+				fprintf(stderr, "Unable for fork: %s\n", strerror(errno));
+				exit(1);
+			}
+			if(child_pid == 0) {
+				dup2(srcfd, STDIN_FILENO);
+				dup2(tgtfd, STDOUT_FILENO);
+				char* const parm_list[] = {(char*)exepath.c_str(), NULL};
+				if(-1 == execv(exepath.c_str(), parm_list)) {
+					fprintf(stderr, "Unable to exec %s in child: %s\n", exepath.c_str(), strerror(errno));
+					exit(1);
+				}
+			} else {
+				waitpid(child_pid, NULL, WNOHANG);
+			}
+		} else {
+			int size_read = read(srcfd, buffer, sizeof(buffer));
+			if(size_read == -1) {
+				fprintf(stderr, "Unable to read from %s: %s\n", (src + std::to_string(i)).c_str(), strerror(errno));
+				exit(1);
+			}
+			if(write(tgtfd, buffer, size_read) == -1) {
+				fprintf(stderr, "Unable to write to %s: %s\n", (tgt + std::to_string(i)).c_str(), strerror(errno));
+				exit(1);
+			}
 		}
 		close(srcfd);
 		close(tgtfd);

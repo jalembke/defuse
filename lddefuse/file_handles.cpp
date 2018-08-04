@@ -67,6 +67,7 @@ find_file_handle(int fd)
 	DEBUG_ENTER;
 	struct file_handle_data* rv = NULL;
 
+	load_mounts();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr != file_handles.end()) {
 		rv = itr->second.get();
@@ -176,39 +177,43 @@ int restore_file_handles_from_shared_space()
 	int rv = 0;
 
 	void* shared_space_ptr = shared_space::get();
-	char* current_ptr = (char*)shared_space_ptr; 
+	if(shared_space_ptr) {
+		char* current_ptr = (char*)shared_space_ptr; 
 
-	// Retrieve the mount points
-	uint64_t* mount_point_count = (uint64_t*)current_ptr;
-	current_ptr += sizeof(uint64_t);
-	std::map<uint64_t, std::string> mount_points;
-	for(int i = 0; i < *mount_point_count; i++) {
-		shared_space_mount_point_data* mount_point_data_ptr = (shared_space_mount_point_data*)current_ptr;
-		current_ptr += sizeof(shared_space_mount_point_data);
-		char* mount_point_str = (char*)current_ptr;
-		current_ptr += mount_point_data_ptr->length;
-		mount_points.insert(std::make_pair(mount_point_data_ptr->index, std::string(mount_point_str, mount_point_data_ptr->length)));
-	}
-	// Retrieve the file handles
-	uint64_t* file_count = (uint64_t*)current_ptr;
-	current_ptr += sizeof(uint64_t);
-	for(int i = 0; i < *file_count; i++) {
-		shared_space_file_data* file_data_ptr = (shared_space_file_data*)current_ptr;
-		current_ptr += sizeof(shared_space_file_data);
-		std::map<uint64_t, std::string>::iterator mount_point_itr = mount_points.find(file_data_ptr->mount_point_index);
-		if(mount_point_itr != mount_points.end()) {
-			FileSystemWrapper* fs = find_mount_from_path(mount_point_itr->second);
-			if(fs != NULL) {
-				int real_fd = (int)file_data_ptr->file_descriptor;
+		// Retrieve the mount points
+		uint64_t* mount_point_count = (uint64_t*)current_ptr;
+		current_ptr += sizeof(uint64_t);
+		std::map<uint64_t, std::string> mount_points;
+		for(int i = 0; i < *mount_point_count; i++) {
+			shared_space_mount_point_data* mount_point_data_ptr = (shared_space_mount_point_data*)current_ptr;
+			current_ptr += sizeof(shared_space_mount_point_data);
+			char* mount_point_str = (char*)current_ptr;
+			current_ptr += mount_point_data_ptr->length;
+			mount_points.insert(std::make_pair(mount_point_data_ptr->index, std::string(mount_point_str, mount_point_data_ptr->length)));
+		}
+		// Retrieve the file handles
+		uint64_t* file_count = (uint64_t*)current_ptr;
+		current_ptr += sizeof(uint64_t);
+		for(int i = 0; i < *file_count; i++) {
+			shared_space_file_data* file_data_ptr = (shared_space_file_data*)current_ptr;
+			current_ptr += sizeof(shared_space_file_data);
+			std::map<uint64_t, std::string>::iterator mount_point_itr = mount_points.find(file_data_ptr->mount_point_index);
+			if(mount_point_itr != mount_points.end()) {
+				FileSystemWrapper* fs = find_mount_from_path(mount_point_itr->second);
+				if(fs != NULL) {
+					int real_fd = (int)file_data_ptr->file_descriptor;
 
-				// Don't add it if it already exists
-				if(!file_handle_exists(real_fd)) {
-					uint64_t fh = file_data_ptr->file_handle;
-					file_handle_data_ptr fhd = file_handle_data_ptr(new file_handle_data(fs, fh, real_fd));
-					rv = insert_file_handle(real_fd, fhd);
+					// Don't add it if it already exists
+					if(!file_handle_exists(real_fd)) {
+						uint64_t fh = file_data_ptr->file_handle;
+						file_handle_data_ptr fhd = file_handle_data_ptr(new file_handle_data(fs, fh, real_fd));
+						rv = insert_file_handle(real_fd, fhd);
+					}
 				}
 			}
 		}
+	} else {
+		DEBUG_PRINT("NO SHARED PTR");
 	}
 	DEBUG_EXIT(rv);
 }

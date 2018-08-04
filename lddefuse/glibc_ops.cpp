@@ -43,6 +43,7 @@ dlsym_exit_on_error(void* handle, const char* name)
 	return sym;
 }
 
+
 void 
 load_glibc_ops(void)
 {
@@ -143,15 +144,14 @@ load_glibc_ops(void)
 		real_ops.fremovexattr = (int (*)(int, const char*))dlsym_exit_on_error(RTLD_NEXT, "fremovexattr");
 		real_ops.munmap = (int (*)(void*, size_t))dlsym_exit_on_error(RTLD_NEXT, "munmap");
 		real_ops.msync = (int (*)(void*, size_t, int))dlsym_exit_on_error(RTLD_NEXT, "msync");
-		/*real_ops.getfscreatecon = (int (*)(security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "getfscreatecon");
-		real_ops.getfilecon = (int (*)(const char*, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "getfilecon");
-		real_ops.lgetfilecon = (int (*)(const char*, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "lgetfilecon");
-		real_ops.fgetfilecon = (int (*)(int, security_context_t*))dlsym_exit_on_error(RTLD_NEXT, "fgetfilecon");
-		real_ops.setfscreatecon = (int (*)(security_context_t))dlsym_exit_on_error(RTLD_NEXT, "setfscreatecon");
-		real_ops.setfilecon = (int (*)(const char*, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "setfilecon");
-		real_ops.lsetfilecon = (int (*)(const char*, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "lsetfilecon");
-		real_ops.fsetfilecon = (int (*)(int, security_context_t))dlsym_exit_on_error(RTLD_NEXT, "fsetfilecon");*/
-
+		real_ops.execl = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execl");
+		real_ops.execlp = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execlp");
+		real_ops.execle = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execle");
+		real_ops.execv = (int (*)(const char*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execv");
+		real_ops.execve = (int (*)(const char*, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execve");
+		real_ops.execvp = (int (*)(const char*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvp");
+		real_ops.execvpe = (int (*)(const char*, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvpe");
+		real_ops.fexecve = (int (*)(int, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "fexecve");
 		load_glibc_ops_flag = true;
 	}
 }

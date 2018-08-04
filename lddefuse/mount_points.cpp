@@ -44,11 +44,15 @@ static inline void
 load_mounts(mount_point_map_ptr& mount_points)
 {
 	static bool load_mounts_flag = false;
+	static bool loading_mounts_flag = false;
 
-	if(!load_mounts_flag) {
+	if(!load_mounts_flag && !loading_mounts_flag) {
+		loading_mounts_flag = true;
 		DEBUG_ENTER;
 
 		int rv = 0;
+		
+		load_glibc_ops();
 		mount_points = mount_point_map_ptr(new mount_point_map);
 
 		struct FileSystemWrapper::ConfigOpts fs_opts;
@@ -63,6 +67,9 @@ load_mounts(mount_point_map_ptr& mount_points)
 			exit(rv);
 		}
 
+		// Restore any saved file handles
+		restore_file_handles_from_shared_space();
+
 		// Set the mounts flag and return
 		load_mounts_flag = true;
 
@@ -73,7 +80,6 @@ load_mounts(mount_point_map_ptr& mount_points)
 __attribute__((constructor))
 static void init()
 {
-	load_glibc_ops();
 	load_mounts(mount_points);
 }
 
@@ -85,6 +91,7 @@ find_mount_and_strip_path(std::string& path)
 
 	DEBUG_PRINT(path);
 
+	load_mounts(mount_points);
 	if(mount_points && mount_points->size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {
 			std::size_t loc = path.find(itr->first);
@@ -111,6 +118,7 @@ find_mount_from_path(const std::string& path)
 
 	DEBUG_PRINT(path);
 
+	load_mounts(mount_points);
 	if(mount_points && mount_points->size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points->begin(); itr != mount_points->end(); itr++) {
 			std::size_t loc = path.find(itr->first);
@@ -123,4 +131,9 @@ find_mount_from_path(const std::string& path)
 
 	DEBUG_EXIT(rv);
 	return rv;
+}
+
+void load_mounts(void)
+{
+	load_mounts(mount_points);
 }

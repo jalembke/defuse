@@ -103,6 +103,16 @@ struct glibc_ops {
     int (*munmap)(void *start, size_t length);
     int (*msync)(void *start, size_t length, int flags);
 
+	/* exec functions */
+	int (*execl)(const char *path, const char *arg, ... /* (char  *) NULL */);
+	int (*execlp)(const char *file, const char *arg, ... /* (char  *) NULL */);
+    int (*execle)(const char *path, const char *arg, ... /*, (char *) NULL, char * const envp[] */);
+    int (*execv)(const char *path, char *const argv[]);
+	int (*execve)(const char *filename, char *const argv[], char *const envp[]);
+    int (*execvp)(const char *file, char *const argv[]);
+    int (*execvpe)(const char *file, char *const argv[], char *const envp[]);
+	int (*fexecve)(int fd, char *const argv[], char *const envp[]);
+
 	/* stdio functions */
 
     /* selinux operations */
