@@ -42,7 +42,9 @@ void* shared_space::get()
 	shared_space& space = shared_space::getInstance();
 	if(space.xFd == -1) {
 		space.xFd = syscall(SYS_open, get_shared_space_file_name(), O_RDWR);
-		assert(space.xFd != -1);
+		if(space.xFd == -1) {
+			return NULL;
+		}
 		space.xSize = get_file_size(space.xFd);
 		space.xPtr = mmap(NULL, space.xSize, PROT_READ | PROT_WRITE, MAP_SHARED, space.xFd, 0);
 		assert(space.xPtr != MAP_FAILED);
