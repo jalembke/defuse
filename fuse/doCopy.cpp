@@ -80,13 +80,15 @@ int main(int argc, char* argv[])
 			if(child_pid == 0) {
 				dup2(srcfd, STDIN_FILENO);
 				dup2(tgtfd, STDOUT_FILENO);
+				close(srcfd);
+				close(tgtfd);
 				char* const parm_list[] = {(char*)exepath.c_str(), NULL};
 				if(-1 == execv(exepath.c_str(), parm_list)) {
 					fprintf(stderr, "Unable to exec %s in child: %s\n", exepath.c_str(), strerror(errno));
 					exit(1);
 				}
 			} else {
-				waitpid(child_pid, NULL, WNOHANG);
+				waitpid(child_pid, NULL, 0);
 			}
 		} else {
 			int size_read = read(srcfd, buffer, sizeof(buffer));

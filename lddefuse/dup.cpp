@@ -13,6 +13,7 @@
 
 static inline int dup_common(int oldfd, int newfd, int flags, bool do_real_dup) 
 {
+	DEBUG_ENTER;
     DEBUG_PRINT(oldfd << " " << newfd);
 
     int ret = 0;
@@ -27,7 +28,17 @@ static inline int dup_common(int oldfd, int newfd, int flags, bool do_real_dup)
     }
 
     // Perform the real dup if necessary
+#if defined(DEFUSE_DO_NO_OPEN)
+	if (old_fhd == NULL) {
+		DEBUG_PRINT("REALDUP3: " << oldfd << " : " << newfd);
+		ret = do_real_dup ? real_ops.dup3(oldfd, newfd, flags) : newfd;
+	} else {
+		close(newfd);
+		ret = newfd;
+	}
+#else
     ret = do_real_dup ? real_ops.dup3(oldfd, newfd, flags) : newfd;
+#endif
 
     // Dup the file in the file handle map
 	if(old_fhd != NULL) {
@@ -40,6 +51,7 @@ static inline int dup_common(int oldfd, int newfd, int flags, bool do_real_dup)
 		}
 	}
 
+	DEBUG_EXIT(ret);
 	return ret;
 }
 

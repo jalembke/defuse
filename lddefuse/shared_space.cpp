@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "debug.h"
 #include "shared_space.h"
 
 static inline size_t get_file_size(int fd)
@@ -17,9 +18,11 @@ static inline size_t get_file_size(int fd)
 	return size;
 }
 
-static inline std::string get_shared_space_file_name()
+static inline char* get_shared_space_file_name()
 {
-	return std::string("/tmp/DEFUSE_") + std::to_string(getpid());
+	static char space_path_str[32];
+	snprintf(space_path_str, sizeof(space_path_str), "/tmp/DEFUSE_%d", getpid());
+	return space_path_str;
 }
 
 shared_space::~shared_space()
@@ -39,6 +42,7 @@ shared_space& shared_space::getInstance()
 
 void* shared_space::get()
 {
+	DEBUG_ENTER;
 	shared_space& space = shared_space::getInstance();
 	if(space.xFd == -1) {
 		space.xFd = syscall(SYS_open, get_shared_space_file_name(), O_RDWR);
@@ -49,22 +53,28 @@ void* shared_space::get()
 		space.xPtr = mmap(NULL, space.xSize, PROT_READ | PROT_WRITE, MAP_SHARED, space.xFd, 0);
 		assert(space.xPtr != MAP_FAILED);
 	}
+	DEBUG_EXIT(space.xPtr);
 	return space.xPtr;
 }
 
 void* shared_space::init(size_t size)
 {
+	DEBUG_ENTER;
 	shared_space& space = shared_space::getInstance();
 	if(space.xFd != -1) {
 		munmap(space.xPtr, space.xSize);
 	}
 	space.xFd = syscall(SYS_open, get_shared_space_file_name(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	assert(space.xFd != -1);
-	
+	DEBUG_PRINT(space.xFd);
+
 	space.xSize = size;
-	syscall(SYS_ftruncate, size);
+	assert(syscall(SYS_ftruncate, space.xFd, size) != -1);
+	DEBUG_PRINT(space.xSize);
 	
 	space.xPtr = mmap(NULL, space.xSize, PROT_READ | PROT_WRITE, MAP_SHARED, space.xFd, 0);
 	assert(space.xPtr != MAP_FAILED);
+
+	DEBUG_EXIT(space.xPtr);
 	return space.xPtr;
 }

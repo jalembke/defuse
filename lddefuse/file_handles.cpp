@@ -7,7 +7,13 @@
 #include "FileSystemWrapper.h"
 #include "shared_space.h"
 
-static std::map<int, file_handle_data_ptr> file_handles;
+typedef std::map<int, file_handle_data_ptr> file_handle_map;
+
+static inline file_handle_map& get_instance()
+{
+	static file_handle_map file_handles;
+	return file_handles;
+}
 
 file_handle_data::~file_handle_data()
 {
@@ -24,6 +30,7 @@ file_handle_data::~file_handle_data()
 static inline bool
 file_handle_exists(int fd)
 {
+	file_handle_map& file_handles = get_instance();
 	return file_handles.find(fd) != file_handles.end();
 }
 
@@ -32,7 +39,8 @@ insert_file_handle(int fd, file_handle_data_ptr& fhd)
 {
 	DEBUG_ENTER;
 	int rv = 0;
-
+	
+	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr != file_handles.end()) {
 		rv = EEXIST;
@@ -50,6 +58,7 @@ remove_file_handle(int fd)
 	DEBUG_ENTER;
 	int rv = 0;
 
+	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr == file_handles.end()) {
 		rv = ENOENT;
@@ -68,6 +77,7 @@ find_file_handle(int fd)
 	struct file_handle_data* rv = NULL;
 
 	load_mounts();
+	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr != file_handles.end()) {
 		rv = itr->second.get();
@@ -83,6 +93,7 @@ duplicate_file_handle(int fd1, int fd2)
 	DEBUG_ENTER;
 	int rv = 0;
 
+	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd1);
 	if(itr == file_handles.end()) {
 		rv = EBADF;
@@ -99,6 +110,7 @@ int get_file_handle_ref_count(int fd)
 	DEBUG_ENTER;
 	int rv = 0;
 
+	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr != file_handles.end()) {
 		rv = itr->second.use_count();
@@ -129,6 +141,7 @@ int save_file_handles_to_shared_space()
 {
 	DEBUG_ENTER;
 	int rv = 0;
+	file_handle_map& file_handles = get_instance();
 
 	// Determine size of mount point section of shared space
 	//   Mount point section consists of an array of mount point strings along with their index
@@ -152,6 +165,7 @@ int save_file_handles_to_shared_space()
 	DEBUG_PRINT("MPCOUNT: " << mount_point_index);
 	DEBUG_PRINT("MPFSIZE: " << mount_point_file_size);
 	DEBUG_PRINT("FHSIZE: " << shared_space_size);
+	DEBUG_PRINT("FHCOUNT: " << file_count);
 
 	// Retrieve the shared space pointer and write the file descriptor data
 	void* shared_space_ptr = shared_space::init(shared_space_size);
@@ -164,7 +178,7 @@ int save_file_handles_to_shared_space()
 	}
 	copy_offset += copy_with_offset(shared_space_ptr, &file_count, sizeof(file_count), copy_offset);
 	for(std::map<int, file_handle_data_ptr>::iterator itr = file_handles.begin(); itr != file_handles.end(); itr++) {
-		shared_space_file_data f_data = { itr->second->file_handle, (uint64_t)itr->second->file_descriptor, mount_points[itr->second->file_system->getMountPoint()] };
+		shared_space_file_data f_data = { itr->second->file_handle, (uint64_t)itr->first, mount_points[itr->second->file_system->getMountPoint()] };
 		copy_offset += copy_with_offset(shared_space_ptr, &f_data, sizeof(f_data), copy_offset);
 	}
 	DEBUG_EXIT(rv);
@@ -179,6 +193,7 @@ int restore_file_handles_from_shared_space()
 	void* shared_space_ptr = shared_space::get();
 	if(shared_space_ptr) {
 		char* current_ptr = (char*)shared_space_ptr; 
+
 
 		// Retrieve the mount points
 		uint64_t* mount_point_count = (uint64_t*)current_ptr;
@@ -206,6 +221,7 @@ int restore_file_handles_from_shared_space()
 					// Don't add it if it already exists
 					if(!file_handle_exists(real_fd)) {
 						uint64_t fh = file_data_ptr->file_handle;
+						DEBUG_PRINT(fs << " : " << fh << " : " << real_fd);
 						file_handle_data_ptr fhd = file_handle_data_ptr(new file_handle_data(fs, fh, real_fd));
 						rv = insert_file_handle(real_fd, fhd);
 					}
