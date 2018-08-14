@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "debug.h"
+#include "lddefuse.h"
 #include "fs_syscall.h"
 #include "FileSystemWrapper.h"
 

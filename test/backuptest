@@ -4,9 +4,12 @@ use strict;
 $| = 1;
 
 use Data::Dumper;
+use Cwd 'abs_path';
 
 my $stype = shift or die "Usage: backup stype ttype\n";
 my $ttype = shift or die "Usage: backup stype ttype\n";
+
+my $src_dir = dirname(dirname(abs_path($0)));
 
 my $source_path = "$stype/test";
 my $target_path = "$ttype/test";
@@ -15,9 +18,9 @@ my $direct_base = "/mnt";
 my $direct_source = "$direct_base/$source_path";
 my $direct_target = "$direct_base/$target_path";
 
-my $proxy_base = "/tmp/tmpdir";
-my $proxy_source = "$proxy_base/$source_path";
-my $proxy_target= "$proxy_base/$target_path";
+my $defuse_base = "/tmp/tmpdir";
+my $defuse_source = "$defuse_base/$source_path";
+my $defuse_target= "$defuse_base/$target_path";
 
 my $fuse_base = "/tmp/tmpfuse";
 my $fuse_source_mount = "/tmp/tmpfuseS";
@@ -28,19 +31,25 @@ my $fuse_target_base = "$fuse_target_mount/$direct_base";
 #my $fuse_target_base = "$fuse_base/$direct_base";
 my $fuse_source = "$fuse_source_base/$source_path";
 my $fuse_target = "$fuse_target_base/$target_path";
-my $fusemount = $ENV{'HOME'} . "/ProxyFS/fuse/fusexmp";
+my $fusemount = "$src_dir/defuse/fuse/fusexmp";
 
-#my $fuse_path = "$proxy_path/$direct_path";
+#my $fuse_path = "$defuse_path/$direct_path";
 #my $fuse_backend_target = $direct_path;
 #my $fuse_avfs_path = "/tmp/tmpdir/";
 #my $fuse_avfs_target = "$fuse_avfs_path/mnt/tmpfs/test.tar.gz#/test";
-#my $child_test_proxy_path = "/tmp/testdir/test";
-#my $fuse_child_test_proxy_path = "$child_test_proxy_path/$direct_path";
+#my $child_test_defuse_path = "/tmp/testdir/test";
+#my $fuse_child_test_defuse_path = "$child_test_defuse_path/$direct_path";
 
-
-my $ldproxyfs = $ENV{'HOME'} . "/ProxyFS/ldproxyfs/libldproxyfs.mnt.so";
-my $copyCmd = $ENV{'HOME'} . "/ProxyFS/fuse/doCopy";
+my $lddefuse = "$src_dir/defuse/lddefuse/liblddefuse.mnt.so";
+my $copyCmd = "$src_dir/defuse/fuse/doCopy";
 my $iterations = 20;
+
+use constant {
+	STOP_ON_ERROR => 0,
+	CONTINUE_ON_ERROR => 1,
+	NO_PRINT_COMMAND => 0,
+	PRINT_COMMAND => 1,
+};
 
 sub doSystem {
 	my $continue_on_error = shift;
@@ -65,7 +74,7 @@ sub runTest {
 
 	my @results;
 	for(1 .. $iterations) {
-		doSystem(0, 1, "rm -f $direct_target/*");
+		doSystem(STOP_ON_ERROR, PRINT_COMMAND, "rm -f $direct_target/*");
 		my $testCmd = "$prefix $copyCmd $cpy_src $cpy_tgt 60000";
 		print "$testCmd\n";
 		my $result = `$testCmd`;
@@ -75,40 +84,44 @@ sub runTest {
 	return @results;
 }
 
-doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_source");
-doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_target");
-doSystem(0, 1, "rm -rf $proxy_base");
-doSystem(1, 1, "/bin/fusermount -u $fuse_base");
-doSystem(1, 1, "/bin/fusermount -u $fuse_source_mount");
-doSystem(1, 1, "/bin/fusermount -u $fuse_target_mount");
-doSystem(0, 1, "rm -rf $fuse_base");
-doSystem(0, 1, "rm -rf $fuse_source_mount");
-doSystem(0, 1, "rm -rf $fuse_target_mount");
+#doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/usr/bin/sudo /bin/umount $defuse_source");
+#doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/usr/bin/sudo /bin/umount $defuse_target");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "rm -rf $defuse_base");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_base");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_source_mount");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_target_mount");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "rm -rf $fuse_base");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "rm -rf $fuse_source_mount");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "rm -rf $fuse_target_mount");
 
 # DIRECT
-#my @direct = runTest($direct_source, $direct_source, $direct_target);
-#printf "direct, %s\n", join(', ', @direct);
+my @direct = runTest($direct_source, $direct_source, $direct_target);
+printf "direct, %s\n", join(', ', @direct);
 
 # DEFUSE
-#doSystem(0, 1, "rm -rf $proxy_base");
-#doSystem(0, 1, "mkdir -p $proxy_source");
-#doSystem(0, 1, "mkdir -p $proxy_target");
-#doSystem(0, 1, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $proxy_source");
-#doSystem(0, 1, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $proxy_target");
-#my @defuse = runTest($direct_source, $proxy_source, $proxy_target, "LD_PRELOAD=$ldproxyfs");
-#doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_source");
-#doSystem(1, 1, "/usr/bin/sudo /bin/umount $proxy_target");
-#printf "defuse, %s\n", join(', ', @defuse);
+=pub
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "rm -rf $defuse_base");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "mkdir -p $defuse_source");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "mkdir -p $defuse_target");
+#doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $defuse_source");
+#doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$direct_base /dev/null $defuse_target");
+my @defuse = runTest($direct_source, $defuse_source, $defuse_target, "LD_PRELOAD=$lddefuse");
+#doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/usr/bin/sudo /bin/umount $defuse_source");
+#doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/usr/bin/sudo /bin/umount $defuse_target");
+printf "defuse, %s\n", join(', ', @defuse);
+=cut
 
 #FUSE
-doSystem(0, 1, "mkdir -p $fuse_base");
-doSystem(0, 1, "mkdir -p $fuse_source_mount");
-doSystem(0, 1, "mkdir -p $fuse_target_mount");
-doSystem(0, 1, "$fusemount -o direct_io $fuse_base");
-doSystem(0, 1, "$fusemount -o direct_io $fuse_source_mount");
-doSystem(0, 1, "$fusemount -o direct_io $fuse_target_mount");
+=pub
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "mkdir -p $fuse_base");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "mkdir -p $fuse_source_mount");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "mkdir -p $fuse_target_mount");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "$fusemount -o direct_io $fuse_base");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "$fusemount -o direct_io $fuse_source_mount");
+doSystem(STOP_ON_ERROR,     PRINT_COMMAND, "$fusemount -o direct_io $fuse_target_mount");
 my @fuse = runTest($direct_source, $fuse_source, $fuse_target);
-doSystem(1, 1, "/bin/fusermount -u $fuse_source_mount");
-doSystem(1, 1, "/bin/fusermount -u $fuse_target_mount");
-doSystem(1, 1, "/bin/fusermount -u $fuse_base");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_source_mount");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_target_mount");
+doSystem(CONTINUE_ON_ERROR, PRINT_COMMAND, "/bin/fusermount -u $fuse_base");
 printf "fuse, %s\n", join(', ', @fuse);
+=cut

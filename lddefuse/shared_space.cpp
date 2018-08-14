@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "debug.h"
+#include "lddefuse.h"
 #include "shared_space.h"
 
 static inline size_t get_file_size(int fd)
