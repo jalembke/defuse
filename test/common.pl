@@ -15,35 +15,40 @@ use constant {
 	PRINT_COMMAND => 1,
 };
 
+my $print_command = 0;
+
 sub _do_system {
 	my $continue_on_error = shift;
-	my $do_print = shift;
-	if($do_print == 1) {
+	if($print_command == 1) {
 		print "@_\n";
 	}
-	unless(system(@_) == 0) {
+	my $result = `@_`;
+	unless($? == 0) {
 		if($continue_on_error) {
 			print STDERR "system @_ failed: $?\n";
 		} else {
 			die "system @_ failed: $?\n";
 		}
 	}
+	return $result;
 }
 
-sub system_print_or_die {
-	_do_system(STOP_ON_ERROR, PRINT_COMMAND, @_);
+sub set_system_echo {
+	$print_command = 1;
 }
 
-sub system_print_continue {
-	_do_system(CONTINUE_ON_ERROR, PRINT_COMMAND, @_);
+sub clear_system_echo {
+	$print_command = 0;
 }
 
 sub system_or_die {
-	_do_system(STOP_ON_ERROR, NO_PRINT_COMMAND, @_);
+	return _do_system(STOP_ON_ERROR, @_);
 }
 
-sub system_continue {
-	_do_system(CONTINUE_ON_ERROR, NO_PRINT_COMMAND, @_);
+sub system_or_continue {
+	return _do_system(CONTINUE_ON_ERROR, @_);
 }
+
+
 
 return 1;

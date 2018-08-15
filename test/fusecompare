@@ -11,14 +11,20 @@ require "$script_dir/common.pl";
 my $src_dir = dirname($script_dir);
 
 $| = 1;
+#set_system_echo();
+my $do_direct = 1;
+my $do_fuse = 1;
+my $do_defuse = 1;
 
-my $type = shift or die "Usage: compare test size\n";
-my $size = shift or die "Usage: compare test size\n";
+my $type = shift or die "Usage: compare test size [fork]\n";
+my $size = shift or die "Usage: compare test size [fork]\n";
+my $fork = shift;
 
-my $fuse_mount_path = "/tmp/tmpdir/$type/test";
+my $fuse_mount_path = "/tmp/tmpdir";
 my $direct_path = "/mnt/$type/test";
-my $defuse_path = "$fuse_mount_path/$type";
-my $fuse_path = "$fuse_mount_path/$direct_path";
+my $defuse_path = "$fuse_mount_path/$type/test";
+my $defuse_backend = "/mnt/$type";
+my $fuse_path = "$fuse_mount_path$direct_path";
 
 my $fuse_avfs_path = "/tmp/tmpdir/";
 my $fuse_avfs_target = "$fuse_avfs_path/mnt/tmpfs/test.tar.gz#/test";
@@ -29,6 +35,9 @@ my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
 #my $time_command = "";
 
 my $benchmark = "$time_command $src_dir/fuse/fusetest";
+if($fork) {
+	$benchmark = "$benchmark f";
+}
 my $files = 0;
 if($size eq 's') {
 	$files = 4096;
@@ -42,7 +51,7 @@ if($size eq 's') {
 	die "Invalid benchmark size: $size\n";
 }
 
-my @types = ("ext4", "jfs", "fat");
+my @types = ("ext4", "jfs", "fat", "tmpfs");
 if(not in_set($type, @types)) {
 	die "Invalid benchmark type: $type\n";
 }
@@ -51,47 +60,49 @@ my $fusemount = "$src_dir/fuse/fusexmp";
 my $fusermount = "/bin/fusermount";
 my $fuseavfsmount = "/usr/bin/avfsd";
 
-my $lddefusefs = "$src_dir/lddefusefs/liblddefusefs.mnt.so";
+my $lddefusefs = "$src_dir/lddefuse/liblddefuse.mnt.so";
 
-my $trials = 1;
+my $trials = 50;
 my $threads = 1;
 
 sub resetMounts {
 	# Unmount FUSE
-	system_print_continue("$fusermount -u $fuse_mount_path");
+	system_or_continue("$fusermount -u $fuse_mount_path");
 
 	# Unmount DEFUSE
-	system_print_continue("/usr/bin/sudo /bin/umount $fuse_mount_path");
+	system_or_continue("/usr/bin/sudo /bin/umount $fuse_mount_path");
 
 	# Reset mount point contents
-	system_print_continue("rm -rf $fuse_mount_path");
-	system_print_continue("mkdir -p $fuse_mount_path");
+	system_or_continue("rm -rf $fuse_mount_path");
+	system_or_continue("mkdir -p $fuse_mount_path");
 
 	# Reset system mounts for backend file systems
 	for(@types) {
-		system_print_continue("/usr/bin/sudo /bin/umount /mnt/$_");
+		system_or_continue("/usr/bin/sudo /bin/umount /mnt/$_");
 	}
 	for(0 .. $#types) {
 		my $fs_type = $types[$_];
 		my $dev_num = $_+1;
 		if($fs_type eq "fat") {
-			system_print_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type -o rw,uid=\$(id -u),gid=\$(id -g)");
+			system_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type -o rw,uid=\$(id -u),gid=\$(id -g)");
+		} elsif($fs_type eq "tmpfs") {
+			system_or_die("/usr/bin/sudo /bin/mount -t tmpfs -o size=512m tmpfs /mnt/$fs_type");
 		} else {
-			system_print_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type");
+			system_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type");
 		}
 	}
 	for(@types) {
-		system_print_or_die("/usr/bin/sudo /bin/chmod 777 /mnt/$_");
-		system_print_or_die("/bin/mkdir -p /mnt/$_/test");
+		system_or_die("/usr/bin/sudo /bin/chmod 777 /mnt/$_");
+		system_or_die("/bin/mkdir -p /mnt/$_/test");
 	}
 }
 
 sub doRunTrial {
 	my $command = shift;
-	system_print_or_die("sudo sync");
-	system_print_or_die("sudo echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null");
-	print "$command\n";
-	my @result = split(/\n/, `$command`);
+	system_or_die("sudo sync");
+	#sleep 1;
+	system_or_die("sudo echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null");
+	my @result = split(/\n/, system_or_die($command));
 	chomp $result[0];
 	chomp $result[1];
 	my $trial_results;
@@ -111,16 +122,17 @@ sub runTrials {
 	my @write_results;
 	my @read_results;
 	for(1..$trials) {
+		print " $_";
 		if ($backend_target_path) {
-			system_print_or_die("rm -f $backend_target_path/*");
+			system_or_die("rm -f $backend_target_path/*");
 		}
 		push @write_results, doRunTrial($write_cmd);
 		push @read_results, doRunTrial($read_cmd);
 	}
+	print "\n";
 	return [[@write_results], [@read_results]];
 }
 
-resetMounts();
 
 my $results;
 
@@ -155,31 +167,37 @@ if($type eq "avfs") {
 }
 =cut
 
-# Direct Mount Test
-#$results->{'direct'} = runTrials($benchmark, $direct_path, $direct_path);
+if($do_direct) {
+	# Direct Mount Test
+	print "DIRECT:\n";
+	resetMounts();
+	$results->{'direct'} = runTrials($benchmark, $direct_path, $direct_path);
+}
 
-# FUSE Test
-system_print_continue("$fusemount $fuse_mount_path");
-$results->{'fuse'} = runTrials($benchmark, $fuse_path, $direct_path);
-system_print_or_die("$fusermount -u $fuse_mount_path");
-# FUSE Test Direct I/O
-#doSystem(0, "$fusemount -o direct_io $defuse_path");
-##$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path, $fuse_backend_target);
-#$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path);
-#doSystem(1, "$fusermount -u $defuse_path");
+if($do_fuse) {
+	# FUSE Test
+	print "FUSE:\n";
+	resetMounts();
+	system_or_die("$fusemount $fuse_mount_path");
+	$results->{'fuse'} = runTrials($benchmark, $fuse_path, $direct_path);
+	system_or_die("$fusermount -u $fuse_mount_path");
+	
+	# FUSE Test Direct I/O
+	print "FUSE DIRECT IO:\n";
+	resetMounts();
+	system_or_die("$fusemount -o direct_io $fuse_mount_path");
+	$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path, $direct_path);
+	system_or_continue("$fusermount -u $fuse_mount_path");
+}
 
-# DEFUSE Test
-#doSystem(0, "/usr/bin/sudo /bin/mount -t proxyfs -o backend=$defusefs_backend /dev/null $defuse_path");
-#$results->{'defusefs'} = runTrials("LD_PRELOAD=$lddefusefs $benchmark", $defusefs_path, $defusefs_backend_target);
-#doSystem(1, "/usr/bin/sudo /bin/umount $defuse_path");
-
-# Child Proc Simulation
-#doSystem(0, "$fusemount $child_test_defuse_path");
-#$results->{'defusefs_child'} = runTrials("LD_PRELOAD=$lddefusefs $benchmark", $fuse_child_test_defuse_path);
-#doSystem(1, "$fusermount -u $child_test_defuse_path");
-#doSystem(0, "$fusemount -o direct_io $child_test_defuse_path");
-#$results->{'defusefs_child'} = runTrials("LD_PRELOAD=$lddefusefs $benchmark", $fuse_child_test_defuse_path);
-#doSystem(1, "$fusermount -u $child_test_defuse_path");
+if($do_defuse) {
+	# DEFUSE Test
+	print "DEFUSE:\n";
+	resetMounts();
+	#system_or_die("/usr/bin/sudo /bin/mount -t proxyfs -o backend=$defuse_backend /dev/null $fuse_mount_path");
+	$results->{'defusefs'} = runTrials("LD_PRELOAD=$lddefusefs $benchmark", $defuse_path, $direct_path);
+	#system_or_die("/usr/bin/sudo /bin/umount $fuse_mount_path");
+}
 
 # Print results
 for(keys %{$results}) {
