@@ -40,9 +40,11 @@ if($fork) {
 }
 my $files = 0;
 if($size eq 's') {
-	$files = 4096;
+	#$files = 4096;
+	$files = 512;
 } elsif($size eq 'm') {
-	$files = 2048;
+	#$files = 2048;
+	$files = 512;
 } elsif($size eq 'l') {
 	$files = 1;
 }  elsif($size eq 'r') {
@@ -76,6 +78,9 @@ sub resetMounts {
 	system_or_continue("rm -rf $fuse_mount_path");
 	system_or_continue("mkdir -p $fuse_mount_path");
 
+	# Remove DEFUSE shared spaces
+	system_or_continue("rm -rf /tmp/DEFUSE_*");
+
 	# Reset system mounts for backend file systems
 	for(@types) {
 		system_or_continue("/usr/bin/sudo /bin/umount /mnt/$_");
@@ -99,6 +104,8 @@ sub resetMounts {
 
 sub doRunTrial {
 	my $command = shift;
+	# Remove DEFUSE shared spaces
+	system_or_continue("rm -rf /tmp/DEFUSE_*");
 	system_or_die("sudo sync");
 	#sleep 1;
 	system_or_die("sudo echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null");

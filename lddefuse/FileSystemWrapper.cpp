@@ -201,6 +201,7 @@ FileSystemWrapper::write(uint64_t fh, const char *buf, size_t size, off_t offset
 int
 FileSystemWrapper::fsync(uint64_t fh)
 {
+	DEBUG_ENTER;
 	int ret = FileSystemSyscall::fsync(fh);
 	if(-1 == ret) {
 		ret = errno;
