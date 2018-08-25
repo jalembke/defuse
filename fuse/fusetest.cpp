@@ -16,7 +16,8 @@
 
 #define RANDOM_SEED 12345678
 
-#define SMALL_BUFFER_SIZE 128
+//#define SMALL_BUFFER_SIZE 128
+#define SMALL_BUFFER_SIZE 14129
 #define LARGE_BUFFER_SIZE (128 * 1024 * 1024)
 
 char* target_dir = NULL;
@@ -161,11 +162,11 @@ static inline void do_op_within_proc(const std::string& base_file_path)
 			ret = write(fd, buffer, expected_size);
 		}
 		if(ret == -1) {
-			fprintf(stderr, "Unable to perform op to %s: %s\n", filepath.c_str(), strerror(errno));
+			fprintf(stderr, "Unable to perform op to fd %d: %s\n", fd, strerror(errno));
 			exit(1);
 		}
 		if(ret != expected_size) {
-			fprintf(stderr, "Op to file %s size: %d expected %d\n", filepath.c_str(), ret, expected_size);
+			fprintf(stderr, "Op to fd %d size: %d expected %d\n", fd, ret, expected_size);
 			exit(1);
 		}
 		close(fd);

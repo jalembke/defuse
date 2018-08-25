@@ -1,3 +1,3 @@
-Title           Direct "LD_PRELOAD" DEFUSE "DEFUSE Child" "DEFUSE Child Direct I/O" FUSE "FUSE Direct I/O"
-read            2 2	2	52	100	52	100
-write           2 2	2	3077	102	3077	102
+Title	"Direct Mount"	"LD_PRELOAD"	"DEFUSE"	"FUSE"	"FUSE Direct I/O"
+read	57	40	40	1087	210
+write	54	29	29	32834	1086

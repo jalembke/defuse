@@ -4,7 +4,7 @@ set output out_file         # Set the output path
 # Set the font to something pleasing
 set term svg fname "Times,19" size 628, 100
 set key outside center horizontal left   # Place the key in an appropriate place
-set key width -8
+set key width -2
 
 set style data histogram
 set style fill solid 0.25 border
@@ -20,9 +20,7 @@ set notitle
 set noxlabel
 set noylabel
 
-plot dat_file using 2:xtic(1) ti col, \
-           '' using 3 ti col, \
-           '' using 4 ti col, \
-           '' using 5 ti col, \
-           '' using 6 ti col, \
-           '' using 7 ti col
+plot dat_file using 2:xtic(1) ti col fs pattern 1, \
+           '' using 3 ti col fs pattern 2, \
+           '' using 4 ti col fs pattern 4, \
+           '' using 5 ti col fs pattern 5,

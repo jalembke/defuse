@@ -15,6 +15,8 @@ $| = 1;
 my $do_direct = 1;
 my $do_fuse = 1;
 my $do_defuse = 1;
+my $skip_read = 0;
+my $skip_write = 0;
 
 my $type = shift or die "Usage: compare test size [fork]\n";
 my $size = shift or die "Usage: compare test size [fork]\n";
@@ -40,11 +42,9 @@ if($fork) {
 }
 my $files = 0;
 if($size eq 's') {
-	#$files = 4096;
-	$files = 512;
+	$files = 4096;
 } elsif($size eq 'm') {
-	#$files = 2048;
-	$files = 512;
+	$files = 2048;
 } elsif($size eq 'l') {
 	$files = 1;
 }  elsif($size eq 'r') {
@@ -53,7 +53,7 @@ if($size eq 's') {
 	die "Invalid benchmark size: $size\n";
 }
 
-my @types = ("ext4", "jfs", "fat", "tmpfs");
+my @types = ("ext4", "jfs", "fat", "tmpfs", "avfs");
 if(not in_set($type, @types)) {
 	die "Invalid benchmark type: $type\n";
 }
@@ -61,6 +61,7 @@ if(not in_set($type, @types)) {
 my $fusemount = "$src_dir/fuse/fusexmp";
 my $fusermount = "/bin/fusermount";
 my $fuseavfsmount = "/usr/bin/avfsd";
+my $fuseavfsfile = "$src_dir/test/test.tar.gz_$size";
 
 my $lddefusefs = "$src_dir/lddefuse/liblddefuse.mnt.so";
 
@@ -83,7 +84,9 @@ sub resetMounts {
 
 	# Reset system mounts for backend file systems
 	for(@types) {
-		system_or_continue("/usr/bin/sudo /bin/umount /mnt/$_");
+		unless($_ eq "avfs") {
+			system_or_continue("/usr/bin/sudo /bin/umount /mnt/$_");
+		}
 	}
 	for(0 .. $#types) {
 		my $fs_type = $types[$_];
@@ -91,14 +94,23 @@ sub resetMounts {
 		if($fs_type eq "fat") {
 			system_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type -o rw,uid=\$(id -u),gid=\$(id -g)");
 		} elsif($fs_type eq "tmpfs") {
-			system_or_die("/usr/bin/sudo /bin/mount -t tmpfs -o size=512m tmpfs /mnt/$fs_type");
+			system_or_die("/usr/bin/sudo /bin/mount -t tmpfs -o size=768m tmpfs /mnt/$fs_type");
+		} elsif($fs_type eq "avfs") {
+			# Intentionally left blank
 		} else {
 			system_or_die("/usr/bin/sudo /bin/mount /dev/sda$dev_num /mnt/$fs_type");
 		}
 	}
 	for(@types) {
-		system_or_die("/usr/bin/sudo /bin/chmod 777 /mnt/$_");
-		system_or_die("/bin/mkdir -p /mnt/$_/test");
+		if($_ eq "avfs") {
+			# Intentionally left blank
+		} else {
+			system_or_die("/usr/bin/sudo /bin/chmod 777 /mnt/$_");
+			system_or_die("/bin/mkdir -p /mnt/$_/test");
+		}
+	}
+	if ($type eq "avfs") {
+		system_or_die("cp $fuseavfsfile /mnt/tmpfs/test.tar.gz");
 	}
 }
 
@@ -107,8 +119,8 @@ sub doRunTrial {
 	# Remove DEFUSE shared spaces
 	system_or_continue("rm -rf /tmp/DEFUSE_*");
 	system_or_die("sudo sync");
-	#sleep 1;
-	system_or_die("sudo echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null");
+	sleep 1;
+	#system_or_die("sudo echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null");
 	my @result = split(/\n/, system_or_die($command));
 	chomp $result[0];
 	chomp $result[1];
@@ -130,11 +142,15 @@ sub runTrials {
 	my @read_results;
 	for(1..$trials) {
 		print " $_";
-		if ($backend_target_path) {
-			system_or_die("rm -f $backend_target_path/*");
+		unless($skip_write) {
+			if ($backend_target_path) {
+				system_or_die("rm -f $backend_target_path/*");
+			}
+			push @write_results, doRunTrial($write_cmd);
 		}
-		push @write_results, doRunTrial($write_cmd);
-		push @read_results, doRunTrial($read_cmd);
+		unless($skip_read) {
+			push @read_results, doRunTrial($read_cmd);
+		}
 	}
 	print "\n";
 	return [[@write_results], [@read_results]];
@@ -143,36 +159,14 @@ sub runTrials {
 
 my $results;
 
-=pub
 if($type eq "avfs") {
-	doSystem(1, "$fusermount -u $fuse_avfs_path");
-	my @read_results;
-	for(1..$trials) {
-		doSystem(0, "$fuseavfsmount $fuse_avfs_path");
-		print "$benchmark r $fuse_avfs_target $threads $files\n";
-		my $trial_result = `$benchmark r $fuse_avfs_target $threads $files`;
-		chomp $trial_result;
-		push @read_results, $trial_result;
-		doSystem(1, "$fusermount -u $fuse_avfs_path");
-	}
-	printf "R: avfs, %s\n", join(', ', @read_results);
-	exit;
-	doSystem(0, "mkdir $defusefs_path");
-	doSystem(1, "mkdir /tmp/blah");
-	doSystem(0, "/usr/bin/sudo /bin/mount -t defusefs -o backend=/tmp/blah /dev/null $defusefs_path");
-	my @read_results;
-	for(1..$trials) {
-		print "LD_PRELOAD=$lddefusefs $benchmark r $defusefs_path $threads $files\n";
-		my $trial_result = `LD_PRELOAD=$lddefusefs $benchmark r $defusefs_path $threads $files`;
-		chomp $trial_result;
-		push @read_results, $trial_result;
-	}
-	doSystem(1, "/usr/bin/sudo /bin/umount $defusefs_path");
-	doSystem(1, "rmdir $defusefs_path");
-	printf "R: defuse_avfs, %s\n", join(', ', @read_results);
-	exit;
+	$do_direct = 0;
+	$do_defuse = 0;
+	$fusemount = $fuseavfsmount;
+	$fuse_mount_path = $fuse_avfs_path;
+	$fuse_path = $fuse_avfs_target;
+	$skip_write = 1;
 }
-=cut
 
 if($do_direct) {
 	# Direct Mount Test

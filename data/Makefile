@@ -76,14 +76,14 @@ mxw.svg: mxw.dat eval.plt
 mxr.svg: mxr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" eval.plt
 
-cmr.svg: cmr.dat cmp.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'" cmpl.plt
+cmr.svg: cmr.dat cmplm.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'" cmplm.plt
 
-csr.svg: csr.dat cmpl.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" cmpl.plt
+csr.svg: csr.dat cmpls.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" cmpls.plt
 
-clr.svg: clr.dat cmp.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpl.plt
+clr.svg: clr.dat cmpll.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpll.plt
 
 untar.svg: untar.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"" prac.plt
