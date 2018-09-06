@@ -19,4 +19,4 @@ doTest: doTest.cpp testread testwrite
 	g++ -g -pthread -o doTest -std=c++11 doTest.cpp
 
 clean:
-	rm -f doTest doCopy doCat testread testwrite
+	rm -f doTest doCopy doCat doExecTest testread testwrite
