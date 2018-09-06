@@ -28,7 +28,13 @@ FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
 FUSECMPEPSS=$(patsubst %.svg,%.eps,$(FUSECMPSVGS))
 
-all: fuseCompare eval cmp prac ctx
+FDSTASHDATS=fdstash.dat
+FDSTASHSVGS=$(patsubst %.dat,%.svg,$(FDSTASHDATS))
+FDSTASHPNGS=$(patsubst %.svg,%.png,$(FDSTASHSVGS))
+FDSTASHPDFS=$(patsubst %.svg,%.pdf,$(FDSTASHSVGS))
+FDSTASHEPSS=$(patsubst %.svg,%.eps,$(FDSTASHSVGS))
+
+all: fuseCompare eval cmp prac ctx fdstash
 
 fuseCompare: ${FUSECMPSVGS} ${FUSECMPPNGS} ${FUSECMPPDFS} ${FUSECMPEPSS}
 
@@ -40,6 +46,8 @@ prac: ${PRACSVGS} ${PRACPNGS} ${PRACPDFS} ${PRACEPSS}
 
 ctx: ${CTXSVGS} ${CTXPNGS} ${CTXPDFS} ${CTXEPSS}
 
+fdstash: ${FDSTASHSVGS} ${FDSTASHPNGS} ${FDSTASHPDFS} ${FDSTASHEPSS}
+
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
 
@@ -47,7 +55,7 @@ ctx: ${CTXSVGS} ${CTXPNGS} ${CTXPDFS} ${CTXEPSS}
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
 
 %.png: %.svg
-	convert $< $@
+	convert -density 1200 $< $@
 
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
@@ -108,6 +116,9 @@ fuseCompare.svg: fuseCompare.dat fuseCompare.plt
 
 fuseCompareLg.svg: fuseCompareLg.dat fuseCompareLg.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" fuseCompareLg.plt
+
+fdstash.svg: fdstash.dat fdstash.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" fdstash.plt
 
 clean:
 	rm -f *.svg
