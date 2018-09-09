@@ -11,6 +11,7 @@
 int
 FileSystemWrapper::open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
+	DEBUG_ENTER;
 	DEBUG_PRINT((xBackend + path));
 	int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
 	if(-1 == ret) {
@@ -39,10 +40,12 @@ FileSystemWrapper::create(const char* path, mode_t mode, uint64_t* ret_fh)
 int
 FileSystemWrapper::getattr(const char* path, struct stat *stbuf, int flags)
 {
+	DEBUG_ENTER;
 	int ret = FileSystemSyscall::stat((xBackend + path).c_str(), stbuf);
 	if(-1 == ret) {
 		ret = errno;
 	}
+	DEBUG_EXIT(ret);
 	return ret;
 }
 
