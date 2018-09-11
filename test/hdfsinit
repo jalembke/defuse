@@ -1,0 +1,39 @@
+#!/usr/bin/perl
+
+use strict;
+
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(abs_path($0));
+require "$script_dir/common.pl";
+
+my $HADOOP_VERSION="2.9.1";
+my $HADOOP_PATH=$ENV{HOME} . "/hadoop-$HADOOP_VERSION";
+my $HDFS_BIN="$HADOOP_PATH/bin/hdfs";
+
+my @hdfs_config_keys = (
+	'dfs.namenode.name.dir',
+	'dfs.datanode.data.dir'
+);
+
+set_system_echo();
+
+for(@hdfs_config_keys) {
+	reset_dir(get_hdfs_config_key($_));
+}
+
+system_or_die("$HDFS_BIN namenode -format");
+
+sub get_hdfs_config_key {
+	my $key = shift;
+	my $value = system_or_die("$HDFS_BIN getconf -confKey $key");
+	chomp $value;
+	return $value;
+}
+
+sub reset_dir {
+	my $dir = shift;
+	chomp $dir;
+	system_or_die("rm -rf $dir");
+	system_or_die("mkdir -p $dir");
+}
