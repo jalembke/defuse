@@ -1,0 +1,22 @@
+#!/usr/bin/perl
+
+use strict;
+
+use File::Basename;                                
+use Cwd 'abs_path';                                
+my $script_dir = dirname(dirname(abs_path($0)));
+require "$script_dir/common.pl";
+
+my $HADOOP_VERSION="2.9.1";
+my $HADOOP_PATH=$ENV{HOME} . "/hadoop-$HADOOP_VERSION";
+my $YARN_BIN="$HADOOP_PATH/sbin/start-yarn.sh";
+
+my $HADOOP_CONF = "$HADOOP_PATH/etc/hadoop";
+
+my $fuse = shift;
+if(defined($fuse)) {
+	$HADOOP_CONF .= "-fuse";
+}
+
+set_system_echo();
+exec_or_die("$YARN_BIN --config $HADOOP_CONF");
