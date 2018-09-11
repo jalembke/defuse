@@ -13,7 +13,6 @@ my $HDFS_BIN="$HADOOP_PATH/bin/hdfs";
 
 my @hdfs_config_keys = (
 	'dfs.namenode.name.dir',
-	'dfs.datanode.data.dir'
 );
 
 set_system_echo();

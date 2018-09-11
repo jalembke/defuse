@@ -1,0 +1,17 @@
+#!/usr/bin/perl
+
+use strict;
+
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(abs_path($0));
+require "$script_dir/common.pl";
+
+my $files = 5000;
+
+set_system_echo();
+
+for(0 .. $files) {
+	my $file = "file$_";
+	system_or_die("cp /usr/share/dict/words $file");
+}
