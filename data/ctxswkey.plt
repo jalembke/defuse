@@ -2,9 +2,9 @@
 set output out_file         # Set the output path
 
 # Set the font to something pleasing
-set term svg fname "Times,21" size 1200, 100
-set key outside center horizontal left   # Place the key in an appropriate place
-set key width 2.0
+set term svg fname "Times,18" size 1200, 50
+set key outside center horizontal center   # Place the key in an appropriate place
+set key width -1
 
 set style data histogram
 #set style fill solid 0.25 border

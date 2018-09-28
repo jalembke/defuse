@@ -10,7 +10,7 @@ CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
 CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
-PRACDATS=untar.dat cp.dat
+PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
@@ -94,10 +94,16 @@ clr.svg: clr.dat cmpll.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpll.plt
 
 untar.svg: untar.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (sec)\"" prac.plt
 
 cp.svg: cp.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFiile Systems\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
+
+wc.svg: wc.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nWord Count\"; pracTitle=\"Runtime (min)\"" prac.plt
+
+tdfsio.svg: tdfsio.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" prac.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt

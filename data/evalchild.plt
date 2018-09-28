@@ -4,7 +4,7 @@ set grid                    # Turn the grid on
 
 unset key
 
-set title gtitle offset 0,-0.7
+#set title gtitle offset 0,-0.7
 set auto x
 set yrange [0:100]
 set style data histogram

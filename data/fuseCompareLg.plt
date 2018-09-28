@@ -6,7 +6,7 @@ set term svg fname "Times,19" size 225, 250
 unset key                   # No key
 set grid                    # Turn the grid on
 
-set title gtitle offset 0,-0.7
+#set title gtitle offset 0,-0.7
 set style fill solid 0.25 border
 set boxwidth 0.40
 
@@ -19,7 +19,7 @@ set xtics offset 0,graph 0.07
 
 set lmargin at screen 0.25
 set rmargin at screen 0.98
-set tmargin at screen 0.87
+set tmargin at screen 0.97
 set bmargin at screen 0.13
 
 set style line 1 lc 12
