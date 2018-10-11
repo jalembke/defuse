@@ -14,6 +14,6 @@ my $fusexmp = "$defuse_dir/fuse/fusexmp";
 my $target_dir = "/tmp/tmpdir";
 
 system_or_continue("fusermount -u $target_dir");
-system_or_die("rmdir $target_dir");
+system_or_continue("rmdir $target_dir");
 system_or_die("mkdir -p $target_dir");
 system_or_die("$fusexmp $target_dir");

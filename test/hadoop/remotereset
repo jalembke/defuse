@@ -13,6 +13,8 @@ my $resethadooptmp = "/users/" . $ENV{USER} . "/Projects/defuse/test/hadoop/rese
 set_system_echo();
 
 my @compute_nodes = (
+	'namenode.defuse.rosco.isi.deterlab.net',
+	'resourcenode.defuse.rosco.isi.deterlab.net',
 	'dfnode-0.defuse.rosco.isi.deterlab.net',
 	'dfnode-1.defuse.rosco.isi.deterlab.net',
 	'dfnode-2.defuse.rosco.isi.deterlab.net',
@@ -21,6 +23,8 @@ my @compute_nodes = (
 );
 =pub
 my @compute_nodes = (
+	'10.1.1.2',
+	'10.1.1.3',
 	'10.1.1.4',
 	'10.1.1.5',
 	'10.1.1.6',

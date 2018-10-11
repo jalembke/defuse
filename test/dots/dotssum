@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Getopt::Std;
+use File::Basename;
+use Data::Dumper;
+use Cwd 'abs_path';
+my $script_dir = dirname(abs_path($0));
+my $common_dir = dirname($script_dir);
+require "$common_dir/common.pl";
+
+my $LOG_PATH = "/tmp/dots/results/nonfuse";
+
+our ($opt_f);
+getopts('f');
+if($opt_f) {
+	$LOG_PATH = "/tmp/dots/results/fuse";
+}
+
+my @data_fields = ( "QUERY", "INSERT", "UPDATE", "DELETE" );
+my $totals;
+$totals->{$_} = 0 foreach(@data_fields);
+
+$| = 1;
+set_system_echo();
+
+for(<$LOG_PATH/*.sum>) {
+	my $file = $_;
+	print "$file\n";
+	open SUMFILE, "<", $_ or die "Unable to open $_: $!\n";
+	my $file_results;
+	while(<SUMFILE>) {
+		my $line = $_;
+		chomp $line;
+		for(@data_fields) {
+			if($line =~ /$_\s+(\d+)/) {
+				$file_results->{$_} = $1;
+			}
+		}
+	}
+	for(keys %{$file_results}) {
+		$totals->{$_} += $file_results->{$_};
+	}
+	#print Data::Dumper->Dump([$file_results]);
+	close SUMFILE;
+}
+print Data::Dumper->Dump([$totals]);

@@ -1,4 +1,4 @@
-connect 'jdbc:derby:TESTDB;user=u1;password=p1';
+connect 'jdbc:derby:/mnt/dots/TESTDB;user=u1;password=p1';
 create schema u1;
 drop table BASIC1;
 drop table BASIC2;

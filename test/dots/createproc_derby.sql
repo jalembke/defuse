@@ -1,4 +1,4 @@
-connect 'jdbc:derby:TESTDB;user=u1;password=p1';
+connect 'jdbc:derby:/mnt/dots/TESTDB;user=u1;password=p1';
  CREATE PROCEDURE UPDATE_PROC(IN VALUE INTEGER, IN CONDITION CHAR(15))
  	LANGUAGE JAVA
  	PARAMETER STYLE JAVA
@@ -11,4 +11,4 @@ connect 'jdbc:derby:TESTDB;user=u1;password=p1';
  	READS SQL DATA
  	EXTERNAL NAME 'DotsJavaProcedures.queryProc';
 
-connect 'jdbc:derby:TESTDB;shutdown=true';
+connect 'jdbc:derby:/mnt/dots/TESTDB;shutdown=true';
