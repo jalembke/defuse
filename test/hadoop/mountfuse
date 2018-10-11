@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+
+use strict;
+
+use File::Basename;
+use Cwd 'abs_path';
+my $defuse_dir = dirname(dirname(dirname(abs_path($0))));
+require "$defuse_dir/test/common.pl";
+
+set_system_echo();
+
+my $user = $ENV{USER};
+my $fusexmp = "$defuse_dir/fuse/fusexmp";
+my $target_dir = "/tmp/tmpdir";
+
+system_or_continue("fusermount -u $target_dir");
+system_or_continue("rmdir $target_dir");
+system_or_die("mkdir -p $target_dir");
+system_or_die("$fusexmp $target_dir");

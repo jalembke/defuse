@@ -1,0 +1,23 @@
+# DEFUSE Distributed Network Topology
+
+set ns [new Simulator]
+source tb_compat.tcl
+
+set namenode [$ns node]
+set resourcenode [$ns node]
+
+set SLAVE_NODES 6
+
+# Set up the nodes
+set nodeNetwork "$namenode $resourcenode "
+for {set i 0} {$i < $SLAVE_NODES} {incr i} {
+	set dfnode($i) [$ns node]
+	tb-set-hardware $dfnode($i) dl380g3
+#	tb-set-node-os $dfnode($i) Ubuntu1604-STD
+	append nodeNetwork "$dfnode($i) "
+}
+set defuselan [$ns make-lan "$nodeNetwork" 1000Mbps 0ms]
+
+$ns rtProto Static
+
+$ns run

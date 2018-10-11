@@ -4,7 +4,7 @@ set grid                    # Turn the grid on
 
 unset key
 
-set title gtitle offset 0,-0.7 font "Times,22"
+#set title gtitle offset 0,-0.7 font "Times,22"
 set xrange [-0.7:*]
 set yrange [0:*]
 set style data histogram
@@ -17,7 +17,7 @@ set xtic scale 0
 #set xtics offset 1.3,graph 0.04
 unset xtics
 
-set tmargin at screen 0.90
+set tmargin at screen 0.97
 set rmargin at screen 0.97
 set lmargin at screen 0.34
 set bmargin at screen 0.04

@@ -41,6 +41,14 @@ sub clear_system_echo {
 	$print_command = 0;
 }
 
+sub exec_or_die {
+	if($print_command == 1) {
+		print "@_\n";
+	}
+	exec(@_);
+	die "exec @_ failed: $!\n";
+}
+
 sub system_or_die {
 	return _do_system(STOP_ON_ERROR, @_);
 }
@@ -48,7 +56,5 @@ sub system_or_die {
 sub system_or_continue {
 	return _do_system(CONTINUE_ON_ERROR, @_);
 }
-
-
 
 return 1;

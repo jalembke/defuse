@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+use strict;
+
+use List::Util qw(sum);
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(abs_path($0));
+my $common_dir = dirname($script_dir);
+require "$common_dir/common.pl";
+
+my $JAVADB_PATH = "/usr/share/javadb";
+my $DB_DIR = "/mnt/dots";
+my $DB_PATH = "$DB_DIR/TESTDB";
+my $user = $ENV{USER};
+
+$| = 1;
+set_system_echo();
+
+unless(-e $DB_DIR) {
+	system_or_die("sudo mkdir -p $DB_DIR");
+	system_or_die("sudo chown $user $DB_DIR");
+}
+
+system_or_die("rm -rf $DB_PATH");
+system_or_die("$JAVADB_PATH/bin/ij $script_dir/createdb_derby.sql");
+system_or_die("$JAVADB_PATH/bin/ij $script_dir/createtable_derby.sql");
+system_or_die("$JAVADB_PATH/bin/ij $script_dir/createproc_derby.sql");

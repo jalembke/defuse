@@ -88,28 +88,26 @@ static void init()
 FileSystemWrapper*
 find_mount_and_strip_path(std::string& path)
 {
-	DEBUG_ENTER;
 	FileSystemWrapper* rv = NULL;
-
-	DEBUG_PRINT(path);
-
 	mount_point_map& mount_points = get_instance();
 	load_mounts(mount_points);
 	if(mount_points.size() > 0) {
 		for(std::map<std::string, FileSystemWrapperPtr>::iterator itr = mount_points.begin(); itr != mount_points.end(); itr++) {
 			std::size_t loc = path.find(itr->first);
 			if(loc != std::string::npos) {
+				DEBUG_ENTER;
+				DEBUG_PRINT(path);
+				
 				path = path.substr((itr->first).length());
 				if(path.length() == 0) {
 					path = "/";
 				}
 				rv = itr->second.get();
+				DEBUG_EXIT(rv);
 				break;
 			}
 		}
 	}
-
-	DEBUG_EXIT(rv);
 	return rv;
 }
 

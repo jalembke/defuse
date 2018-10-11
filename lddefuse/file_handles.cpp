@@ -55,7 +55,6 @@ insert_file_handle(int fd, file_handle_data_ptr& fhd)
 int
 remove_file_handle(int fd)
 {
-	DEBUG_ENTER;
 	int rv = 0;
 
 	file_handle_map& file_handles = get_instance();
@@ -63,27 +62,28 @@ remove_file_handle(int fd)
 	if(itr == file_handles.end()) {
 		rv = ENOENT;
 	} else {
+		DEBUG_ENTER;
 		file_handles.erase(itr);
+		DEBUG_EXIT(rv);
 	}
 
-	DEBUG_EXIT(rv);
     return rv;
 }
 
 struct file_handle_data*
 find_file_handle(int fd)
 {
-	DEBUG_ENTER;
 	struct file_handle_data* rv = NULL;
 
 	load_mounts();
 	file_handle_map& file_handles = get_instance();
 	std::map<int, file_handle_data_ptr>::iterator itr = file_handles.find(fd);
 	if(itr != file_handles.end()) {
+		DEBUG_ENTER;
 		rv = itr->second.get();
+		DEBUG_EXIT(rv);
 	}
 
-	DEBUG_EXIT(rv);
     return rv;
 }
 

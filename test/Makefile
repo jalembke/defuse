@@ -1,4 +1,4 @@
-all: doTest doCopy doExecTest
+all: doTest doCopy doExecTest javaWrite.class javaOutputStream.class
 
 doCopy: doCopy.cpp doCat
 	g++ -g -o doCopy -std=c++11 doCopy.cpp
@@ -18,5 +18,11 @@ doExecTest: doExecTest.cpp doCat
 doTest: doTest.cpp testread testwrite
 	g++ -g -pthread -o doTest -std=c++11 doTest.cpp
 
+javaWrite.class: javaWrite.java
+	javac javaWrite.java
+
+javaOutputStream.class: javaOutputStream.java
+	javac javaOutputStream.java
+
 clean:
-	rm -f doTest doCopy doCat doExecTest testread testwrite
+	rm -f doTest doCopy doCat doExecTest testread testwrite javaWrite.class javaOutputStream.class

@@ -4,7 +4,7 @@ set grid                    # Turn the grid on
 
 unset key
 
-set title gtitle offset 0,-0.7
+#set title gtitle offset 0,-0.7
 set xrange [-0.7:1.7]
 #set yrange [0:100]
 set style data histogram
@@ -18,7 +18,7 @@ set logscale y
 set xtics offset 0,graph 0.07
 set ytics offset graph 0.02
 
-set tmargin at screen 0.87
+set tmargin at screen 0.97
 set rmargin at screen 0.98
 set lmargin at screen 0.20
 set bmargin at screen 0.08
