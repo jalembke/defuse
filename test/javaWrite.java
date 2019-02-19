@@ -1,10 +1,5 @@
-<<<<<<< HEAD
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-=======
-import java.io.FileWriter;
-import java.io.BufferedWriter;
->>>>>>> 61cf284f6ef411f545e966db77e97d7d49aa60ae
 
 public class javaWrite
 {
