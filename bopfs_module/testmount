@@ -1,0 +1,4 @@
+#!/bin/bash
+sudo rmmod bopfs; 
+sudo insmod bopfs.ko; 
+sudo mount -t defuse -o backend=/ -o library=/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so /tmp/usfsal

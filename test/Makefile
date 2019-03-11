@@ -19,7 +19,7 @@ doTest: doTest.cpp testread testwrite
 	g++ -g -pthread -o doTest -std=c++11 doTest.cpp
 
 userFault: userFault.c
-	gcc -o userFault userFault.c
+	gcc -g -o userFault userFault.c -lrt
 
 javaWrite.class: javaWrite.java
 	javac javaWrite.java
