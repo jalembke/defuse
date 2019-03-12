@@ -1,22 +1,22 @@
 all: doTest doCopy doExecTest javaWrite.class javaOutputStream.class userFault
 
-doCopy: doCopy.cpp doCat
-	g++ -g -o doCopy -std=c++11 doCopy.cpp
+doCopy: doCopy.c doCat
+	musl-gcc -g -o doCopy doCopy.c
 
-doCat: doCat.cpp
-	g++ -g -o doCat -std=c++11 doCat.cpp
+doCat: doCat.c
+	musl-gcc -g -o doCat doCat.c
 
-testread: testread.cpp
-	g++ -g -o testread -std=c++11 testread.cpp
+testread: testread.c
+	musl-gcc -g -o testread testread.c
 
-testwrite: testwrite.cpp
-	g++ -g -o testwrite -std=c++11 testwrite.cpp
+testwrite: testwrite.c
+	musl-gcc -g -o testwrite testwrite.c
 
-doExecTest: doExecTest.cpp doCat
-	g++ -g -o doExecTest -std=c++11 doExecTest.cpp
+doExecTest: doExecTest.c doCat
+	musl-gcc -g -o doExecTest doExecTest.c
 
-doTest: doTest.cpp testread testwrite
-	g++ -g -pthread -o doTest -std=c++11 doTest.cpp
+doTest: doTest.c testread testwrite
+	musl-gcc -g -pthread -o doTest doTest.c
 
 userFault: userFault.c
 	gcc -g -o userFault userFault.c -lrt

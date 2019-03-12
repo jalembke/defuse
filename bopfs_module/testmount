@@ -1,4 +1,5 @@
 #!/bin/bash
+sudo umount /tmp/usfsal
 sudo rmmod bopfs; 
 sudo insmod bopfs.ko; 
-sudo mount -t defuse -o backend=/ -o library=/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so /tmp/usfsal
+sudo mount -t bopfs -o backend=/ -o library=/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so bopfs /tmp/usfsal

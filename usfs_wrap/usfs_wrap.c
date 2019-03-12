@@ -8,26 +8,29 @@
 #include <limits.h>
 #include <errno.h>
 #include <sys/syscall.h>
+#include <inttypes.h>
 
 static char* backend = NULL;
 
 void usfs_init (const char* mount_path, const char* backend_path)
 {
-	printf("INIT: %s %s\n", mount_path, backend_path);
+	//printf("INIT: %s %s\n", mount_path, backend_path);
 	backend = strdup(backend_path);
 }
 
 int usfs_open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
+	int ret = 0;
 	char path_to_open[PATH_MAX];
 	snprintf(path_to_open, PATH_MAX, "%s/%s", backend, path);
-	printf("OPEN: %s\n", path_to_open);
+	//printf("OPEN: %s\n", path_to_open);
 	int fd = syscall(SYS_open, path_to_open, flags, mode);
 	if (fd > 0) {
 		*ret_fh = (uint64_t)fd;
+	} else {
+		ret = errno;
 	}
-	*ret_fh = 0;
-	return 0;
+	return ret;
 }
 
 int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_read)
@@ -45,6 +48,7 @@ int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_r
 
 int usfs_write(uint64_t fh, const char *buf, size_t size, off_t offset, size_t* bytes_written)
 {
+	//printf("WRITE: %" PRIu64 " %zd %zd\n", fh, size, offset);
 	int ret = syscall(SYS_pwrite64, fh, buf, size, offset);
 	if(-1 == ret) {
 		ret = errno;

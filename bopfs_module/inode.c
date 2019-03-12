@@ -33,12 +33,9 @@ static struct inode* bopfs_iget(struct super_block *sb, struct inode *dir, struc
 struct dentry *bopfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
 	struct inode *inode = NULL;
-	mode_t base_mode = S_IFREG;
+	mode_t base_mode = S_IFDIR;
 	
 	PRINTFN;
-
-	if(flags & LOOKUP_DIRECTORY)
-		base_mode = S_IFDIR;
 	
 	inode = bopfs_iget(dir->i_sb, dir, entry, base_mode | BOPFS_DEFAULT_MODE);
 	if(!inode)
