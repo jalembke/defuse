@@ -14,14 +14,14 @@
 #include <setjmp.h>
 #include <sys/wait.h>
 #include <ucontext.h>
+#include <poll.h>
+#include <pthread.h>
 
 #define errExit(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 #define PAGE_SIZE 4096
 
 static int uffd = -1;
-sigjmp_buf handlebuf;
-sigjmp_buf sigbuf;
 
 static void copy_page(int ufd, void* target, void* page)
 {
@@ -49,51 +49,16 @@ static void copy_page(int ufd, void* target, void* page)
 	}*/
 }
 
-void* global_sig_context;
-void handle_SIGBUS(int sig, siginfo_t *info, void *ucontext)
-{
-	static int fault_cnt = 0;
-	struct uffdio_copy uffdio_copy;
-	printf("SIGNAL: %d\n", sig);
-	printf("signo: %d errno: %d code: %d\n", info->si_signo, info->si_errno, info->si_code);
-	printf("ADDR: %p\n", info->si_addr);
-	printf("UFFD: %d\n", uffd);
-	if(sigsetjmp(sigbuf, 1) != 0) {
-		return;
-	}
-	global_sig_context = ucontext;
-	siglongjmp(handlebuf, 1);
-	/*if(info->si_ptr != 0) {
-		char page[PAGE_SIZE];
-		memset(page, 'A' + fault_cnt % 20, PAGE_SIZE);
-		copy_page(uffd, info->si_ptr, page);
-		fault_cnt++;
-	}*/
-}
-
-static void setup_sigbus_handler()
-{
-	struct sigaction sigbus_action;
-	sigset_t empty_sig_set;
-	sigemptyset(&empty_sig_set);
-	sigbus_action.sa_sigaction = handle_SIGBUS;
-	sigbus_action.sa_mask = empty_sig_set;
-	sigbus_action.sa_flags = SA_SIGINFO;
-	if(sigaction(SIGBUS, &sigbus_action, NULL) == -1) {
-		errExit("signal");
-	}
-}
-
 static int register_uffd()
 {
 	struct uffdio_api uffdio_api;
-	int fd = syscall(__NR_userfaultfd, O_CLOEXEC);
+	int fd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK);
 	if(fd == -1) {
 		errExit("userfaultfd");
 	}
 
 	uffdio_api.api = UFFD_API;
-	uffdio_api.features = UFFD_FEATURE_SIGBUS | UFFD_FEATURE_MISSING_SHMEM;
+	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM;
 	if (ioctl(fd, UFFDIO_API, &uffdio_api) == -1) {
 		errExit("ioctl-UFFDIO_API");
 	}
@@ -111,19 +76,67 @@ static void register_uffd_addr(void* addr, size_t len, int fd)
 	}
 }
 
+void* fault_handler_thread(void* arg) 
+{
+    static struct uffd_msg msg;
+    static int fault_cnt = 0;
+	char page[PAGE_SIZE];
+	struct uffdio_copy uffdio_copy;
+	ssize_t nread;
+
+	while(1) {
+
+		struct pollfd pollfd;
+   		int nready;
+		pollfd.fd = uffd;
+		pollfd.events = POLLIN;
+		printf("\nfault_handler_thread():\n");
+		printf("    poll start\n");
+		nready = poll(&pollfd, 1, -1);
+		if (nready == -1)
+			errExit("poll");
+
+		printf("\nfault_handler_thread():\n");
+		printf("    poll() returns: nready = %d; POLLIN = %d; POLLERR = %d\n", nready, (pollfd.revents & POLLIN) != 0, (pollfd.revents & POLLERR) != 0);
+
+		nread = read(uffd, &msg, sizeof(msg));
+  		if (nread == 0) {
+			printf("EOF on userfaultfd!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		if (nread == -1)
+			errExit("read");
+
+		if (msg.event != UFFD_EVENT_PAGEFAULT) {
+			fprintf(stderr, "Unexpected event on userfaultfd\n");
+			exit(EXIT_FAILURE);
+		}
+
+		printf("    UFFD_EVENT_PAGEFAULT event: ");
+ 		printf("flags = %llx; ", msg.arg.pagefault.flags);
+		printf("address = %llx\n", msg.arg.pagefault.address);
+
+		memset(page, 'A' + fault_cnt % 20, PAGE_SIZE);
+ 		fault_cnt++;
+		copy_page(uffd, (void*)msg.arg.pagefault.address, page);
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	char* addr;
+	pthread_t fault_thread;
 	int len = 10 * PAGE_SIZE;
 	char page[PAGE_SIZE];
 
-	setup_sigbus_handler();
 	uffd = register_uffd();
 
-	int shmem_fd = shm_open("USERFAULTFD/test/test", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+	int shmem_fd = shm_open("USERFAULTFDTEST", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 	if(shmem_fd == -1) {
 		errExit("shmem_open");
 	}
+	ftruncate(shmem_fd, len);
 	
 	addr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, shmem_fd, 0);
 	if (addr == MAP_FAILED) {
@@ -131,16 +144,13 @@ int main(int argc, char* argv[])
 	}
 	register_uffd_addr(addr, len, uffd);
 
-	int l = 0xf;
-	printf("SS ADDR: %p\n", ((char*)addr) + l);
-		
-	if (sigsetjmp(handlebuf, 1) != 0) {
-		memset(page, 'A', PAGE_SIZE);
-		copy_page(uffd, addr+l, page);
-		setcontext(global_sig_context);
+	int pthread_ret = pthread_create(&fault_thread, NULL, fault_handler_thread, (void*)0);
+	if (pthread_ret != 0) {
+		errno = pthread_ret;
+		errExit("pthread_create");
 	}
-	
-	l = 0xf;
+		
+	int l = 0xf;
 	printf("HERE1\n");
 	for(int i = 0; i < 10; i++) {
 		char c = addr[l];
@@ -148,29 +158,6 @@ int main(int argc, char* argv[])
 		l += 1024;
 	}
 	printf("HERE2\n");
-
-	return 0;
-
-	pid_t child = fork();
-	printf("FORKED: %d\n", child);
-	if(child == -1) {
-		errExit("fork");
-	}
-	if(child) {
-		printf("PAREND: %d\n", child);
-		waitpid(child, NULL, 0);
-	} else {
-		uffd = register_uffd();
-		register_uffd_addr(addr, len, uffd);
-		sleep(1);
-		printf("CHILD\n");
-		l = 0xf;
-		for(int i = 0; i < 10; i++) {
-			char c = addr[l];
-			printf("%02X\n", c);
-			l += 1024;
-		}
-	}
 
 	return 0;
 }

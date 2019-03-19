@@ -18,6 +18,8 @@
 #include <linux/parser.h>
 #include <linux/slab.h>
 #include <linux/mount.h>
+#include <linux/security.h>
+#include <linux/fsnotify.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
 MODULE_DESCRIPTION("Bypassed Open File System");
@@ -30,10 +32,48 @@ static struct kmem_cache *bopfs_inode_cachep;
 
 static struct inode* bopfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
 
+/* Special type of splice - here we are taking a regular file and attempting to splice */
+/*   it as a directory.  This will ensure lookup always succeeds but also allows       */
+/*   the file to be opened for reading and writing                                     */
+static inline struct dentry* splice_dentry(struct inode* inode, struct dentry* dentry)
+{
+	unsigned flags; 
+	
+	/* Lock the directory and inode */
+	security_d_instantiate(dentry, inode);
+	spin_lock(&inode->i_lock);
+	spin_lock(&dentry->d_lock);
+	
+	/* Add the directory alias */
+	hlist_add_head(&dentry->d_u.d_alias, &inode->i_dentry);
+	raw_write_seqcount_begin(&dentry->d_seq);
+	
+	/* Set directory type and inode */
+	dentry->d_inode = inode;
+	flags = READ_ONCE(dentry->d_flags);
+	flags &= ~(DCACHE_ENTRY_TYPE | DCACHE_FALLTHRU);
+	flags |= DCACHE_DIRECTORY_TYPE;
+	WRITE_ONCE(dentry->d_flags, flags);
+	
+	raw_write_seqcount_end(&dentry->d_seq);
+	fsnotify_update_flags(dentry);
+	
+	/* Unlock the dentry */
+	spin_unlock(&dentry->d_lock);
+
+	/* rehash the dentry */
+	d_rehash(dentry);
+
+	/* unlock the inode */
+	spin_unlock(&inode->i_lock);
+
+	return NULL;
+}
+
 struct dentry *bopfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
 	struct inode *inode = NULL;
-	mode_t base_mode = S_IFDIR;
+	mode_t base_mode = S_IFREG;
 	
 	PRINTFN;
 	
@@ -41,7 +81,8 @@ struct dentry *bopfs_lookup(struct inode *dir, struct dentry *entry, unsigned in
 	if(!inode)
 		return ERR_PTR(-ENOSPC);
 
-	return d_splice_alias(inode, entry);
+	// return d_splice_alias(inode, entry);
+	return splice_dentry(inode, entry);
 }
 
 static int bopfs_permission(struct inode *inode, int mask)

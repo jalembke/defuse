@@ -1,4 +1,4 @@
-all: doTest doCopy doExecTest javaWrite.class javaOutputStream.class userFault
+all: doTest doCopy doExecTest userFault #javaWrite.class javaOutputStream.class
 
 doCopy: doCopy.c doCat
 	musl-gcc -g -o doCopy doCopy.c
@@ -19,7 +19,7 @@ doTest: doTest.c testread testwrite
 	musl-gcc -g -pthread -o doTest doTest.c
 
 userFault: userFault.c
-	gcc -g -o userFault userFault.c -lrt
+	gcc -g -o userFault userFault.c -lrt -lpthread
 
 javaWrite.class: javaWrite.java
 	javac javaWrite.java

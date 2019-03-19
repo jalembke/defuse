@@ -10,23 +10,33 @@ my $script_dir = dirname(abs_path($0));
 require "$script_dir/common.pl";
 my $src_dir = dirname($script_dir);
 
+my $type = shift;
+
 $| = 1;
-my $do_direct = 1;
-my $do_fuse = 1;
-my $do_usfsal = 1;
+my $do_direct = 0;
+my $do_fuse = 0;
+my $do_usfsal = 0;
+
+if($type eq 'd') {
+	$do_direct = 1;
+	$do_fuse = 1;
+}
+if($type eq 'u') {
+	$do_usfsal = 1;
+}
 
 my $backend_dev = "/dev/sdb1";
-my $backend_type = "ext4";
+my $backend_type = "tmpfs";
 
-#my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
-my $time_command = "";
+my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
+#my $time_command = "";
 
 my $benchmark = "$time_command $src_dir/test/doTest";
-my $files = 1;
-my $size = 'l';
+my $files = 2048;
+my $size = 'm';
 
-my $trials = 10;
-my $threads = 1;
+my $trials = 50;
+my $threads =1;
 
 sub doRunTrial {
 	my $command = shift;
