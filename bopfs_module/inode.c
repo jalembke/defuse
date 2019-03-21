@@ -18,6 +18,8 @@
 #include <linux/parser.h>
 #include <linux/slab.h>
 #include <linux/mount.h>
+#include <linux/pagemap.h>
+#include <linux/userfaultfd_k.h>
 #include <linux/security.h>
 #include <linux/fsnotify.h>
 
@@ -25,16 +27,18 @@ MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
 MODULE_DESCRIPTION("Bypassed Open File System");
 MODULE_LICENSE("GPL");
 
-#define BOPFS_DEFAULT_MODE	0755
+#define BOPFS_DEFAULT_MODE	0777
 #define BOPFS_MAGIC			0x50525859	// PRXY
 
 static struct kmem_cache *bopfs_inode_cachep;
 
 static struct inode* bopfs_iget(struct super_block *sb, struct inode *dir, struct dentry *entry, mode_t mode);
 
+#ifdef USE_DIRECTORY_REGULAR_FILE
 /* Special type of splice - here we are taking a regular file and attempting to splice */
 /*   it as a directory.  This will ensure lookup always succeeds but also allows       */
 /*   the file to be opened for reading and writing                                     */
+/* NOTE REMOVING - THIS CRASHES THE KERNEL FOR SOME REASON */
 static inline struct dentry* splice_dentry(struct inode* inode, struct dentry* dentry)
 {
 	unsigned flags; 
@@ -69,6 +73,7 @@ static inline struct dentry* splice_dentry(struct inode* inode, struct dentry* d
 
 	return NULL;
 }
+#endif
 
 struct dentry *bopfs_lookup(struct inode *dir, struct dentry *entry, unsigned int flags)
 {
@@ -76,32 +81,86 @@ struct dentry *bopfs_lookup(struct inode *dir, struct dentry *entry, unsigned in
 	mode_t base_mode = S_IFREG;
 	
 	PRINTFN;
+
+	// printk("%X %pd\n", flags, entry);
+	if (flags & LOOKUP_PARENT || flags & LOOKUP_DIRECTORY) {
+		base_mode = S_IFDIR;
+	}
 	
 	inode = bopfs_iget(dir->i_sb, dir, entry, base_mode | BOPFS_DEFAULT_MODE);
 	if(!inode)
 		return ERR_PTR(-ENOSPC);
 
-	// return d_splice_alias(inode, entry);
-	return splice_dentry(inode, entry);
+	return d_splice_alias(inode, entry);
+	// return splice_dentry(inode, entry);
 }
 
-static int bopfs_permission(struct inode *inode, int mask)
+static int bopfs_fault(struct vm_fault *vmf)
 {
-	PRINTFN;
+	struct vm_area_struct *vma = vmf->vma;
+	struct file *file = vma->vm_file;
+	struct address_space *mapping = file->f_mapping;
+	struct inode *inode = mapping->host;
+	pgoff_t offset = vmf->pgoff;
+	pgoff_t max_off;
+	struct page *page;
 
-	/* Permission always granted for bopfs */
+	max_off = DIV_ROUND_UP(i_size_read(inode), PAGE_SIZE);
+	if (unlikely(offset >= max_off))
+		return VM_FAULT_SIGBUS;
 
+	/* search for the page in the page cache */
+	page = find_lock_entry(mapping, offset);
+
+	/* If page is out of date then it needs to be refetched */
+	if (page && !PageUptodate(page)) {
+		unlock_page(page);
+		put_page(page);
+		page = NULL;
+	}
+
+	/* found valid page in page cache */
+	if (page) {
+		vmf->page = page;
+		return VM_FAULT_LOCKED;
+	}
+
+	/* inform userspace to fault the page */
+	if (vma && userfaultfd_missing(vma)) {
+		return handle_userfault(vmf, VM_UFFD_MISSING);
+	}
+	return VM_FAULT_SIGBUS;
+}
+
+static const struct vm_operations_struct bopfs_vm_ops = {
+	.fault     = bopfs_fault,
+	.map_pages = filemap_map_pages,
+};
+
+static int bopfs_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	vma->vm_ops = &bopfs_vm_ops;
 	return 0;
 }
 
+static unsigned long bopfs_get_unmapped_area(struct file *file, unsigned long addr, unsigned long len, unsigned long pgoff,	unsigned long flags)
+{
+	return current->mm->get_unmapped_area(file, addr, len, pgoff, flags);
+}
+
+static const struct address_space_operations bopfs_aops = {
+	.set_page_dirty = __set_page_dirty_nobuffers,
+};
+
 static const struct inode_operations bopfs_inode_operations = {
 	.lookup		= bopfs_lookup,
-	.permission	= bopfs_permission,
 };
 
 static const struct file_operations bopfs_file_operations = {
 	.llseek     = default_llseek,
 	.open       = generic_file_open,
+	.mmap       = bopfs_mmap,
+	.get_unmapped_area = bopfs_get_unmapped_area,
 };
 
 static struct inode *bopfs_alloc_inode(struct super_block *sb)
@@ -139,6 +198,7 @@ static void bopfs_init_inode(struct inode *inode, struct inode *dir, mode_t mode
 	inode->i_ino = get_next_ino();
 	inode_init_owner(inode, dir, mode);
 	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
+	inode->i_mapping->a_ops = &bopfs_aops;
 	inode->i_op = &bopfs_inode_operations;
 	inode->i_fop = &bopfs_file_operations;
 }

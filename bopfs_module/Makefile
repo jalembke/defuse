@@ -2,8 +2,8 @@
 obj-m += bopfs.o
 bopfs-objs := inode.o
 
-#LOCAL_CFLAGS := -DDEBUG -DDEBUG_BOPFS
-LOCAL_CFLAGS :=
+LOCAL_CFLAGS := -DDEBUG -DDEBUG_BOPFS
+#LOCAL_CFLAGS :=
 
 CFLAGS_inode.o := $(LOCAL_CFLAGS)
 
