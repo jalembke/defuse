@@ -32,8 +32,8 @@ my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
 #my $time_command = "";
 
 my $benchmark = "$time_command $src_dir/test/doTest";
-my $files = 2048;
-my $size = 'm';
+my $files = 4096;
+my $size = 'vs';
 
 my $trials = 50;
 my $threads =1;

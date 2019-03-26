@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 
 	uffd = register_uffd();
 
-	int shmem_fd = shm_open("USERFAULTFDTEST", O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+	int shmem_fd = shm_open("USFSALTEST", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if(shmem_fd == -1) {
 		errExit("shmem_open");
 	}
