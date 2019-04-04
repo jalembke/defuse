@@ -1,0 +1,6 @@
+#!/bin/bash
+
+fusermount -u /tmp/fuse
+rm -rf /tmp/fuse
+mkdir -p /tmp/fuse
+${HOME}/Projects/defuse/fuse/fusexmp_fh /tmp/fuse

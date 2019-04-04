@@ -1,0 +1,26 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(dirname(abs_path($0)));
+require "$script_dir/common.pl";
+my $src_dir = "$script_dir/spark";
+
+$| = 1;
+my $script = shift;
+
+my @nodes = (
+	'dfnode-0',
+	'dfnode-1',
+	'dfnode-2',
+	'dfnode-3',
+	'dfnode-4'
+);
+
+for(@nodes) {
+	print "Executing $script on $_\n";
+	system_or_die("ssh $_ $src_dir/$script");
+}

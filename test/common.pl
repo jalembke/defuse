@@ -10,6 +10,7 @@ my $src_dir = dirname($script_dir);
 my $base_backend_mount = "/mnt";
 my $base_wrapper_mount = "/tmp";
 my $test_dir = "/test";
+my $avfs_target = "/test.tar.gz";
 
 my $fuse_mount_path = "$base_wrapper_mount/fuse";
 my $direct_mount_path = $base_backend_mount;
@@ -19,9 +20,16 @@ our $direct_path = "$direct_mount_path$test_dir";
 our $fuse_path = "$fuse_mount_path$direct_path";
 our $usfsal_path = "$usfsal_mount_path$direct_path";
 
+my $avfs_path = "$direct_path$avfs_target#/";
+our $fuse_avfs_path = "$fuse_mount_path$avfs_path";
+our $usfsal_avfs_path = "$usfsal_mount_path$avfs_path";
+
 my $fusemount = "$src_dir/fuse/fusexmp_fh";
+my $avfsfusemount = "$src_dir/fuse/avfsd";
 my $fusermount = "/bin/fusermount";
 my $usfsal_user_library = "$src_dir/usfs_wrap/libusfs_wrap.so";
+our $ldpreload_library = "$src_dir/lddefuse/liblddefuse.so";
+our $ldpreload_avfs_library = "$src_dir/lddefuse/liblddefuse.avfs.so";
 
 sub in_set {
 	my $value = shift;
@@ -92,6 +100,10 @@ sub mount_frontend {
 		system_or_die("$fusemount -o direct_io $fuse_mount_path");
 	} elsif($type eq "usfsal") {
 		system_or_die("/usr/bin/sudo /bin/mount -t bopfs -o backend=$usfsal_backend -o library=$usfsal_user_library bopfs $usfsal_mount_path");
+	} elsif($type eq "avfs") {
+		system_or_die("$avfsfusemount $fuse_mount_path");
+	} elsif($type eq "avfs_direct") {
+		system_or_die("$avfsfusemount -o direct_io $fuse_mount_path");
 	}
 }
 
@@ -103,7 +115,16 @@ sub umount_frontend {
 		system_or_die("$fusermount -u $fuse_mount_path");
 	} elsif($type eq "usfsal") {
 		system_or_die("/usr/bin/sudo /bin/umount $usfsal_mount_path");
+	} elsif($type eq "avfs") {
+		system_or_die("$fusermount -u $fuse_mount_path");
+	} elsif($type eq "avfs_direct") {
+		system_or_die("$fusermount -u $fuse_mount_path");
 	}
+}
+
+sub copy_avfs_target {
+	my $source_file = shift;
+	system_or_die("cp $src_dir/test/$source_file $direct_path$avfs_target");
 }
 
 sub reset_mounts {

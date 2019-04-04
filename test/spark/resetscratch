@@ -1,0 +1,12 @@
+#!/bin/bash
+
+sudo umount /mnt
+sudo mount /dev/sda3 /mnt
+sudo mkdir -p /mnt/test
+sudo chmod 777 /mnt/test
+sudo rm -rf /mnt/test/scratch
+sudo rm -rf /mnt/test/spark
+sudo mkdir -p /mnt/test/scratch
+sudo mkdir -p /mnt/test/spark
+sudo chmod 777 /mnt/test/scratch
+sudo chmod 777 /mnt/test/spark

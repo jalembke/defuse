@@ -1,0 +1,14 @@
+#!/bin/bash
+
+MASTER_NODE=dfnode-0
+SPARK_PATH=${HOME}/spark
+SPARK_SUBMIT=${SPARK_PATH}/bin/spark-submit
+WORDCOUNT_SCRIPT=${HOME}/Projects/defuse/test/spark/wordcount.py
+
+sudo rm -rf /mnt/test/spark/results
+${SPARK_PATH}/sbin/stop-all.sh
+${SPARK_PATH}/sbin/start-all.sh
+
+time $SPARK_SUBMIT \
+   --master spark://${MASTER_NODE}:7077 \
+   $WORDCOUNT_SCRIPT

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+FILE_DIR=wikipedia_300GB
+SOURCE_TAR=${FILE_DIR}.tar.bz2
+SOURCE_FILE=/proj/Rosco/tarfiles/${SOURCE_TAR}
+TARGET_DIR=/mnt/test/
+
+sudo mkdir -p $TARGET_DIR
+sudo chmod 777 $TARGET_DIR
+sudo rm -rf ${TARGET_DIR}/${FILE_DIR}
+echo tar xjf $SOURCE_FILE -C $TARGET_DIR

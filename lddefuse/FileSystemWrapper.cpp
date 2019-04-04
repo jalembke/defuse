@@ -4,23 +4,29 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "lddefuse.h"
+#include "debug.h"
 #include "fs_syscall.h"
 #include "FileSystemWrapper.h"
+
+extern "C" {
+	int            virt_open      (const char *path, int flags, mode_t mode);
+	int            virt_close     (int fh);
+	ssize_t        virt_read      (int fh, void *buf, size_t nbyte);
+};
 
 int
 FileSystemWrapper::open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
-	DEBUG_ENTER;
-	DEBUG_PRINT((xBackend + path));
-	int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
+	//DEBUG_PRINT((xBackend + path));
+	//int ret = FileSystemSyscall::open((xBackend + path).c_str(), flags, mode);
+	int ret = virt_open((xBackend + path).c_str(), flags, mode);
 	if(-1 == ret) {
 		ret = errno;
 	} else {
 		*ret_fh = ret;
 		ret = 0;
 	}
-	DEBUG_EXIT(ret);
+	//DEBUG_EXIT(ret);
 	return ret;
 }
 
@@ -40,12 +46,10 @@ FileSystemWrapper::create(const char* path, mode_t mode, uint64_t* ret_fh)
 int
 FileSystemWrapper::getattr(const char* path, struct stat *stbuf, int flags)
 {
-	DEBUG_ENTER;
 	int ret = FileSystemSyscall::stat((xBackend + path).c_str(), stbuf);
 	if(-1 == ret) {
 		ret = errno;
 	}
-	DEBUG_EXIT(ret);
 	return ret;
 }
 
@@ -166,7 +170,8 @@ FileSystemWrapper::sync()
 int
 FileSystemWrapper::close(uint64_t fh)
 {
-	int ret = FileSystemSyscall::close(fh);
+	//int ret = FileSystemSyscall::close(fh);
+	int ret = virt_close(fh);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -176,7 +181,8 @@ FileSystemWrapper::close(uint64_t fh)
 int
 FileSystemWrapper::read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_read)
 {
-	int ret = FileSystemSyscall::pread(fh, buf, size, offset);
+	//int ret = FileSystemSyscall::pread(fh, buf, size, offset);
+	int ret = virt_read(fh, buf, size);
 	if(-1 == ret) {
 		ret = errno;
 		*bytes_read = 0;
@@ -204,7 +210,6 @@ FileSystemWrapper::write(uint64_t fh, const char *buf, size_t size, off_t offset
 int
 FileSystemWrapper::fsync(uint64_t fh)
 {
-	DEBUG_ENTER;
 	int ret = FileSystemSyscall::fsync(fh);
 	if(-1 == ret) {
 		ret = errno;

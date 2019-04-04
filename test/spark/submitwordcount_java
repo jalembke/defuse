@@ -1,0 +1,15 @@
+#!/bin/bash
+
+MASTER_NODE=dfnode-0
+SPARK_PATH=${HOME}/spark
+SPARK_SUBMIT=${SPARK_PATH}/bin/spark-submit
+SPARK_EXAMPLE_JAR=${SPARK_PATH}/examples/jars/spark-examples_2.11-2.4.0.jar
+WORDCOUNT_CLASS=org.apache.spark.examples.JavaWordCount
+
+${SPARK_PATH}/sbin/stop-all.sh
+${SPARK_PATH}/sbin/start-all.sh
+
+$SPARK_SUBMIT \
+   --class $WORDCOUNT_CLASS \
+   --master spark://${MASTER_NODE}:7077 \
+   $SPARK_EXAMPLE_JAR $1
