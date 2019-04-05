@@ -4,7 +4,7 @@ use strict;
 
 use File::Basename;
 use Cwd 'abs_path';
-my $script_dir = dirname(abs_path($0));
+my $script_dir = dirname(dirname(abs_path($0)));
 require "$script_dir/common.pl";
 
 my $HADOOP_VERSION="2.9.1";
