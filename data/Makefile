@@ -1,40 +1,44 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
 EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
-EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
+#EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
 EVALPDFS=$(patsubst %.svg,%.pdf,$(EVALSVGS))
-EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
+#EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
 
 CMPDATS=cmr.dat csr.dat clr.dat
 CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) cmpkey.svg
-CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
+#CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
-CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
+#CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
 PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
-PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
+#PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
-PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
+#PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
 
 CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
 CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg
-CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
+#CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
-CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
+#CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
 
 FUSECMPDATS=fuseCompare.dat fuseCompareLg.dat
 FUSECMPSVGS=$(patsubst %.dat,%.svg,$(FUSECMPDATS))
-FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
+#FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
-FUSECMPEPSS=$(patsubst %.svg,%.eps,$(FUSECMPSVGS))
+#FUSECMPEPSS=$(patsubst %.svg,%.eps,$(FUSECMPSVGS))
 
 FDSTASHDATS=fdstash.dat
 FDSTASHSVGS=$(patsubst %.dat,%.svg,$(FDSTASHDATS))
-FDSTASHPNGS=$(patsubst %.svg,%.png,$(FDSTASHSVGS))
+#FDSTASHPNGS=$(patsubst %.svg,%.png,$(FDSTASHSVGS))
 FDSTASHPDFS=$(patsubst %.svg,%.pdf,$(FDSTASHSVGS))
-FDSTASHEPSS=$(patsubst %.svg,%.eps,$(FDSTASHSVGS))
+#FDSTASHEPSS=$(patsubst %.svg,%.eps,$(FDSTASHSVGS))
 
-all: fuseCompare eval cmp prac ctx fdstash
+MMAPDATS=mmap.dat
+MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
+MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
+
+all: fuseCompare eval cmp prac ctx fdstash mmap
 
 fuseCompare: ${FUSECMPSVGS} ${FUSECMPPNGS} ${FUSECMPPDFS} ${FUSECMPEPSS}
 
@@ -48,8 +52,11 @@ ctx: ${CTXSVGS} ${CTXPNGS} ${CTXPDFS} ${CTXEPSS}
 
 fdstash: ${FDSTASHSVGS} ${FDSTASHPNGS} ${FDSTASHPDFS} ${FDSTASHEPSS}
 
+mmap: ${MMAPSVGS} ${MMAPPDFS}
+
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
+	#rsvg-convert -f pdf $< $@
 
 %.eps: %.svg
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
@@ -125,6 +132,9 @@ fuseCompareLg.svg: fuseCompareLg.dat fuseCompareLg.plt
 
 fdstash.svg: fdstash.dat fdstash.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" fdstash.plt
+
+mmap.svg: mmap.dat mmap.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" mmap.plt
 
 clean:
 	rm -f *.svg
