@@ -1,27 +1,37 @@
 #include <sys/types.h>
 #include <stdio.h>
-#include <linux/userfaultfd.h>
 #include <sys/mman.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <sys/mman.h>
+#include <inttypes.h>
 #include <sys/syscall.h>
 #include <sys/ioctl.h>
 #include <string.h>
 #include <setjmp.h>
 #include <sys/wait.h>
-#include <ucontext.h>
 #include <poll.h>
 #include <pthread.h>
 
-#define errExit(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
+#include "userfaultfd.h"
+#include "util.h"
 
+#define READ_PAGES 32
 #define PAGE_SIZE 4096
+#define BUFFER_SIZE (READ_PAGES * PAGE_SIZE)
 
-static int uffd = -1;
+struct userfaultControlBlock {
+	int uffd;
+	int backend_fd;
+	int shmem_fd;
+	void* address;
+	int space_size;
+};
+	
+static volatile char c;
+static int fault_count;
 
 static void copy_page(int ufd, void* target, void* page)
 {
@@ -38,15 +48,26 @@ static void copy_page(int ufd, void* target, void* page)
 		if (uffdio_copy.copy != -EEXIST)
 			errExit("UFFDIO_COPY error");
 	} else if (uffdio_copy.copy != PAGE_SIZE) {
-		fprintf(stderr, "UFFDIO_COPY unexpected copy %Ld\n",
+		fprintf(stderr, "UFFDIO_COPY unexpected copy %" PRIu64 "\n",
 			uffdio_copy.copy), exit(1);
 	}
-	printf("COPYPAGE E: %p\n", target);
+	// printf("COPYPAGE E: %p\n", target);
 	/*else {
 		if(ioctl(ufd, UFFDIO_COPY, &uffdio_copy)) {
 			errExit("RETRY UFFDIO_COPY error");
 		}
 	}*/
+}
+
+static void copy_pages(struct userfaultControlBlock* ucb, void* target, void* buffer, uint64_t buffer_size)
+{
+	uint64_t bytes_remaining = ucb->space_size - (uint64_t)target - (uint64_t)ucb->address;
+	int bytes_to_copy = bytes_remaining < buffer_size ? bytes_remaining : buffer_size;
+	int pages_to_copy = ((bytes_to_copy + PAGE_SIZE-1) & ~(PAGE_SIZE-1)) / PAGE_SIZE;
+	// printf("%X %X\n", bytes_to_copy, pages_to_copy);
+	for(int i = 0; i < pages_to_copy; i++) {
+		copy_page(ucb->uffd, ((char*)target) + i*PAGE_SIZE, ((char*)buffer) + i*PAGE_SIZE);
+	}
 }
 
 static int register_uffd()
@@ -76,30 +97,37 @@ static void register_uffd_addr(void* addr, size_t len, int fd)
 	}
 }
 
+static void unregister_uffd_addr(void* addr, size_t len, int fd)
+{
+	struct uffdio_range uffdio_range;
+	uffdio_range.start = (unsigned long) addr;
+	uffdio_range.len = len;
+	if (ioctl(fd, UFFDIO_UNREGISTER, &uffdio_range) == -1) {
+		errExit("ioctl-UFFDIO_UNREGISTER");
+	}
+}
+
 void* fault_handler_thread(void* arg) 
 {
     static struct uffd_msg msg;
     static int fault_cnt = 0;
-	char page[PAGE_SIZE];
+	char buffer[BUFFER_SIZE];
 	struct uffdio_copy uffdio_copy;
 	ssize_t nread;
+	struct userfaultControlBlock* ucb = (struct userfaultControlBlock*)arg;
+	fault_count = 0;
 
 	while(1) {
 
 		struct pollfd pollfd;
    		int nready;
-		pollfd.fd = uffd;
+		pollfd.fd = ucb->uffd;
 		pollfd.events = POLLIN;
-		printf("\nfault_handler_thread():\n");
-		printf("    poll start\n");
 		nready = poll(&pollfd, 1, -1);
 		if (nready == -1)
 			errExit("poll");
 
-		printf("\nfault_handler_thread():\n");
-		printf("    poll() returns: nready = %d; POLLIN = %d; POLLERR = %d\n", nready, (pollfd.revents & POLLIN) != 0, (pollfd.revents & POLLERR) != 0);
-
-		nread = read(uffd, &msg, sizeof(msg));
+		nread = read(ucb->uffd, &msg, sizeof(msg));
   		if (nread == 0) {
 			printf("EOF on userfaultfd!\n");
 			exit(EXIT_FAILURE);
@@ -113,51 +141,94 @@ void* fault_handler_thread(void* arg)
 			exit(EXIT_FAILURE);
 		}
 
-		printf("    UFFD_EVENT_PAGEFAULT event: ");
- 		printf("flags = %llx; ", msg.arg.pagefault.flags);
-		printf("address = %llx\n", msg.arg.pagefault.address);
+		if(msg.arg.pagefault.address < (uint64_t)ucb->address) {
+			errExit("invalid fault address");
+		}
 
-		memset(page, 'A' + fault_cnt % 20, PAGE_SIZE);
- 		fault_cnt++;
-		copy_page(uffd, (void*)msg.arg.pagefault.address, page);
+		uint64_t offset = ( msg.arg.pagefault.address - (uint64_t)ucb->address);
+
+		// printf("PF: %016lX %" PRIu64 "\n", msg.arg.pagefault.address, offset);
+
+		ssize_t bytes_read = pread(ucb->backend_fd, buffer, BUFFER_SIZE, offset);
+		if(bytes_read == -1) {
+			errExit("fault read");
+		}
+		fault_count++;
+		if(bytes_read < BUFFER_SIZE) {
+			memset(((char*)buffer) + bytes_read, 0, BUFFER_SIZE-bytes_read);
+		}
+
+		copy_pages(ucb, (void*)msg.arg.pagefault.address, buffer, BUFFER_SIZE);
 	}
 }
 
-int main(int argc, char* argv[])
+static inline void* setup_paging_manager(const char* file, struct userfaultControlBlock* ucb)
 {
-	char* addr;
-	pthread_t fault_thread;
-	int len = 10 * PAGE_SIZE;
-	char page[PAGE_SIZE];
-
-	uffd = register_uffd();
-
+	int bfd = open(file, O_RDONLY);
+	off_t file_size = get_file_size(bfd);
+	if(bfd == -1) {
+		errExit("open backend");
+	}
+	int uffd = register_uffd();
+	if(uffd == -1) {
+		errExit("uffd register");
+	}
 	int shmem_fd = shm_open("USFSALTEST", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if(shmem_fd == -1) {
 		errExit("shmem_open");
 	}
-	ftruncate(shmem_fd, len);
-	
-	addr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, shmem_fd, 0);
-	if (addr == MAP_FAILED) {
+	ftruncate(shmem_fd, 0);
+	ftruncate(shmem_fd, file_size);
+
+	void* addr = mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmem_fd, 0);
+	if(addr == MAP_FAILED) {
 		errExit("mmap");
 	}
-	register_uffd_addr(addr, len, uffd);
 
-	int pthread_ret = pthread_create(&fault_thread, NULL, fault_handler_thread, (void*)0);
+	register_uffd_addr(addr, file_size, uffd);
+	ucb->uffd = uffd;
+	ucb->shmem_fd = shmem_fd;
+	ucb->backend_fd = bfd;
+	ucb->address = addr;
+	ucb->space_size = file_size;
+
+	return addr;
+}
+
+static inline void end_paging_manager(struct userfaultControlBlock* ucb)
+{
+	unregister_uffd_addr(ucb->address, ucb->space_size, ucb->uffd);
+	munmap(ucb->address, ucb->space_size);
+	close(ucb->shmem_fd);
+	close(ucb->backend_fd);
+	close(ucb->uffd);
+}
+
+int main(int argc, char* argv[])
+{
+	struct userfaultControlBlock ucb;
+	pthread_t fault_thread;
+
+	char* addr = setup_paging_manager(argv[1], &ucb);
+
+	int pthread_ret = pthread_create(&fault_thread, NULL, fault_handler_thread, (void*)&ucb);
 	if (pthread_ret != 0) {
 		errno = pthread_ret;
 		errExit("pthread_create");
 	}
-		
+
+	uint64_t start_time = get_time();
 	int l = 0xf;
-	printf("HERE1\n");
-	for(int i = 0; i < 10; i++) {
-		char c = addr[l];
-		printf("%02X\n", c);
+	while(l < ucb.space_size) {
+		c = addr[l];
+		//printf("%02X\n", c);
 		l += 1024;
 	}
-	printf("HERE2\n");
+	uint64_t end_time = get_time();
+
+	// printf("%d %" PRIu64 "\n", fault_count, end_time - start_time);
+	printf("%" PRIu64 "\n", end_time - start_time);
+	end_paging_manager(&ucb);
 
 	return 0;
 }

@@ -89,7 +89,7 @@ sub system_or_continue {
 sub drop_caches {
 	system_or_die("/bin/sync");
 	sleep 1;
-	system_or_die("/bin/echo 1 | /usr/bin/sudo /usr/bin/tee /proc/sys/vm/drop_caches > /dev/null");
+	#system_or_die("/bin/echo 1 | /usr/bin/sudo /usr/bin/tee /proc/sys/vm/drop_caches > /dev/null");
 }
 
 sub mount_frontend {

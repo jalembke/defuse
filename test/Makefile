@@ -1,5 +1,5 @@
-#CC=musl-gcc
-CC=gcc
+CC=musl-gcc
+#CC=gcc
 
 all: doTest doCopy doExecTest userFault #javaWrite.class javaOutputStream.class
 
@@ -15,6 +15,9 @@ testread: testread.c
 testwrite: testwrite.c
 	${CC} -g -o testwrite testwrite.c
 
+testmmap: testmmap.c
+	${CC} -g -o testmmap testmmap.c
+
 doExecTest: doExecTest.c doCat
 	${CC} -g -o doExecTest doExecTest.c
 
@@ -22,7 +25,7 @@ doTest: doTest.c testread testwrite
 	${CC} -g -pthread -o doTest doTest.c
 
 userFault: userFault.c
-	gcc -g -o userFault userFault.c -lrt -lpthread
+	${CC} -g -o userFault userFault.c -lrt -lpthread
 
 javaWrite.class: javaWrite.java
 	javac javaWrite.java

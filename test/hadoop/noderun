@@ -1,0 +1,44 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(dirname(abs_path($0)));
+require "$script_dir/common.pl";
+my $src_dir = "$script_dir/hadoop";
+
+$| = 1;
+my $script = shift;
+my $all = shift;
+
+my @all_nodes = (
+	'namenode',
+	'resourcenode',
+	'dfnode-0',
+	'dfnode-1',
+	'dfnode-2',
+	'dfnode-3',
+	'dfnode-4'
+);
+
+my @work_nodes = (
+	'dfnode-0',
+	'dfnode-1',
+	'dfnode-2',
+	'dfnode-3',
+	'dfnode-4'
+);
+
+if(defined($all)) {
+	for(@all_nodes) {
+		print "Executing $script on $_\n";
+		system_or_die("ssh $_ $src_dir/$script");
+	}
+} else {
+	for(@work_nodes) {
+		print "Executing $script on $_\n";
+		system_or_die("ssh $_ $src_dir/$script");
+	}
+}
