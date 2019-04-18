@@ -23,13 +23,13 @@ my $do_ld_preload = 0;
 my $do_ld_avfs = 0;
 
 if($type eq 'd') {
-	$do_direct = 1;
+	#$do_direct = 1;
 	$do_fuse = 1;
-	$do_avfs_fuse = 1;
+	#$do_avfs_fuse = 1;
 }
 if($type eq 'u') {
 	$do_usfsal = 1;
-	$do_avfs_usfsal = 1;
+	#$do_avfs_usfsal = 1;
 }
 if($type eq "l") {
 	$do_ld_avfs = 1;
@@ -144,7 +144,6 @@ for(keys %{$results}) {
 	printf "WX: %s, %s\n", $_, join(', ', map { $_->{'ctxsw'} } @{$results->{$_}->[0]});
 	printf "RX: %s, %s\n", $_, join(', ', map { $_->{'ctxsw'} } @{$results->{$_}->[1]});
 }
-exit;
 
 for(keys %backend_devs) {
 	my $backend_type = $_;

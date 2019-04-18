@@ -10,5 +10,19 @@ require "$defuse_dir/test/common.pl";
 set_system_echo();
 
 my $user = $ENV{USER};
-my $hadoop_tmp_dir = "/mnt/hadoop-$user/nm-local-dir/";
-system_or_die("rm -rf $hadoop_tmp_dir/*");
+my $hadoop_root = "/mnt/hadoop-$user/";
+my $hadoop_tmp = "$hadoop_root/nm-local-dir";
+my $hadoop_dfs = "$hadoop_root/dfs";
+my $hadoop_dfs_data = "$hadoop_dfs/data";
+
+# Delete old data
+system_or_die("sudo rm -rf $hadoop_root");
+
+# Reset tmp space
+system_or_die("sudo mkdir -p $hadoop_tmp");
+system_or_die("sudo chown $user.users $hadoop_root");
+system_or_die("sudo chown $user.users $hadoop_tmp");
+
+#Reset hadoop storage
+system_or_die("sudo mkdir -p $hadoop_dfs_data");
+system_or_die("sudo chown $user.users $hadoop_dfs_data");

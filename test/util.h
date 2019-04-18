@@ -5,6 +5,12 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <time.h>
+#include <sys/types.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+
+#define errExit(msg) do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 static inline char* get_path(char* path, size_t size)
 {
@@ -17,6 +23,14 @@ static inline char* get_path(char* path, size_t size)
 		(*last_slash) = 0;
 	}
 	return path;
+}
+
+static inline off_t get_file_size(int fd)
+{
+	off_t currentPos = lseek(fd, 0, SEEK_CUR);
+	off_t size = lseek(fd, 0, SEEK_END);
+	lseek(fd, currentPos, SEEK_SET);
+	return size;
 }
 
 #define NSEC_PER_SEC 1000000000
