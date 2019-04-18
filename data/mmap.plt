@@ -6,7 +6,7 @@ unset key
 
 #set auto x
 set style fill pattern border
-set xrange [-0.5:2.5]
+set xrange [-1.5:4.5]
 set xtic scale 0
 set yrange [0:*]
 
