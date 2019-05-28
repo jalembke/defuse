@@ -38,7 +38,11 @@ MMAPDATS=mmap.dat
 MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
 MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
 
-all: fuseCompare eval cmp prac ctx fdstash mmap
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
+TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
+TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
+
+all: fuseCompare eval cmp prac ctx fdstash mmap tpcbb
 
 fuseCompare: ${FUSECMPSVGS} ${FUSECMPPNGS} ${FUSECMPPDFS} ${FUSECMPEPSS}
 
@@ -54,9 +58,11 @@ fdstash: ${FDSTASHSVGS} ${FDSTASHPNGS} ${FDSTASHPDFS} ${FDSTASHEPSS}
 
 mmap: ${MMAPSVGS} ${MMAPPDFS}
 
+tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
+
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
-	#rsvg-convert -f pdf $< $@
+	@#rsvg-convert -f pdf $< $@
 
 %.eps: %.svg
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
@@ -106,10 +112,10 @@ untar.svg: untar.dat prac.plt
 cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
 
-wc.svg: wc.dat prac.plt
+wc.svg: wc.dat spark.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" spark.plt
 
-tdfsio.svg: tdfsio.dat prac.plt
+tdfsio.svg: tdfsio.dat spark.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" spark.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
@@ -135,6 +141,18 @@ fdstash.svg: fdstash.dat fdstash.plt
 
 mmap.svg: mmap.dat mmap.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" mmap.plt
+
+tpcbb.svg: tpcbb.dat tpcbb.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbb.plt
+
+tpcbbkey.svg: tpcbbkey.dat tpcbbkey.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbkey.plt
+
+tpcbbnorm.svg: tpcbbnorm.dat tpcbbnorm.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm.plt
+
+tpcbbnormkey.svg: tpcbbnormkey.dat tpcbbnormkey.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnormkey.plt
 
 clean:
 	rm -f *.svg
