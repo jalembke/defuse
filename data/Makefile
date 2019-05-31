@@ -1,40 +1,48 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
 EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
-EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
+#EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
 EVALPDFS=$(patsubst %.svg,%.pdf,$(EVALSVGS))
-EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
+#EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
 
 CMPDATS=cmr.dat csr.dat clr.dat
 CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) cmpkey.svg
-CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
+#CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
-CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
+#CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
 PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
-PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
+#PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
-PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
+#PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
 
 CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
 CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg
-CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
+#CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
-CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
+#CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
 
 FUSECMPDATS=fuseCompare.dat fuseCompareLg.dat
 FUSECMPSVGS=$(patsubst %.dat,%.svg,$(FUSECMPDATS))
-FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
+#FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
-FUSECMPEPSS=$(patsubst %.svg,%.eps,$(FUSECMPSVGS))
+#FUSECMPEPSS=$(patsubst %.svg,%.eps,$(FUSECMPSVGS))
 
 FDSTASHDATS=fdstash.dat
 FDSTASHSVGS=$(patsubst %.dat,%.svg,$(FDSTASHDATS))
-FDSTASHPNGS=$(patsubst %.svg,%.png,$(FDSTASHSVGS))
+#FDSTASHPNGS=$(patsubst %.svg,%.png,$(FDSTASHSVGS))
 FDSTASHPDFS=$(patsubst %.svg,%.pdf,$(FDSTASHSVGS))
-FDSTASHEPSS=$(patsubst %.svg,%.eps,$(FDSTASHSVGS))
+#FDSTASHEPSS=$(patsubst %.svg,%.eps,$(FDSTASHSVGS))
 
-all: fuseCompare eval cmp prac ctx fdstash
+MMAPDATS=mmap.dat
+MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
+MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
+
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
+TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
+TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
+
+all: fuseCompare eval cmp prac ctx fdstash mmap tpcbb
 
 fuseCompare: ${FUSECMPSVGS} ${FUSECMPPNGS} ${FUSECMPPDFS} ${FUSECMPEPSS}
 
@@ -48,8 +56,13 @@ ctx: ${CTXSVGS} ${CTXPNGS} ${CTXPDFS} ${CTXEPSS}
 
 fdstash: ${FDSTASHSVGS} ${FDSTASHPNGS} ${FDSTASHPDFS} ${FDSTASHEPSS}
 
+mmap: ${MMAPSVGS} ${MMAPPDFS}
+
+tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
+
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
+	@#rsvg-convert -f pdf $< $@
 
 %.eps: %.svg
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
@@ -99,11 +112,11 @@ untar.svg: untar.dat prac.plt
 cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
 
-wc.svg: wc.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nWord Count\"; pracTitle=\"Runtime (min)\"" prac.plt
+wc.svg: wc.dat spark.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" spark.plt
 
-tdfsio.svg: tdfsio.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" prac.plt
+tdfsio.svg: tdfsio.dat spark.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" spark.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt
@@ -125,6 +138,21 @@ fuseCompareLg.svg: fuseCompareLg.dat fuseCompareLg.plt
 
 fdstash.svg: fdstash.dat fdstash.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" fdstash.plt
+
+mmap.svg: mmap.dat mmap.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" mmap.plt
+
+tpcbb.svg: tpcbb.dat tpcbb.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbb.plt
+
+tpcbbkey.svg: tpcbbkey.dat tpcbbkey.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbkey.plt
+
+tpcbbnorm.svg: tpcbbnorm.dat tpcbbnorm.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm.plt
+
+tpcbbnormkey.svg: tpcbbnormkey.dat tpcbbnormkey.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnormkey.plt
 
 clean:
 	rm -f *.svg

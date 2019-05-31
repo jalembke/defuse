@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,19" size 220, 440
+set term svg fname "Times,19" size 200, 400
 set grid                    # Turn the grid on
 
 unset key
@@ -22,7 +22,9 @@ set rmargin at screen 0.97
 set lmargin at screen 0.34
 set bmargin at screen 0.04
 
-set ylabel "Runtime (sec)" offset 3.2 font "Times,22"
+#set ylabel "Runtime (sec)" offset 3.2 font "Times,22"
+set ylabel "Read Bandwidth (MB/sec)" offset 3.4 font "Times,22"
+set ytics offset 0.3
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot dat_file using 2:xtic(1) ti col fs pattern 1, \
