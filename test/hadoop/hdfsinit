@@ -22,6 +22,7 @@ for(@hdfs_config_keys) {
 }
 
 system_or_die("$HDFS_BIN namenode -format");
+system_or_die("$script_dir/hadoop/noderun resethadooptmp");
 
 sub get_hdfs_config_key {
 	my $key = shift;

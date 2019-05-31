@@ -1,0 +1,6 @@
+#!/bin/bash
+
+scp /mnt/test/tpchdata.tar.gz dfnode-1:/mnt/test/tpchdata.tar.gz &
+scp /mnt/test/tpchdata.tar.gz dfnode-2:/mnt/test/tpchdata.tar.gz &
+scp /mnt/test/tpchdata.tar.gz dfnode-3:/mnt/test/tpchdata.tar.gz &
+scp /mnt/test/tpchdata.tar.gz dfnode-4:/mnt/test/tpchdata.tar.gz &

@@ -17,6 +17,7 @@ my $hadoop_dfs_data = "$hadoop_dfs/data";
 
 # Delete old data
 system_or_die("sudo rm -rf $hadoop_root");
+system_or_die("sudo rm -rf /mnt/test/hadoop-$user");
 
 # Reset tmp space
 system_or_die("sudo mkdir -p $hadoop_tmp");

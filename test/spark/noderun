@@ -13,6 +13,8 @@ $| = 1;
 my $script = shift;
 
 my @nodes = (
+	#'namenode',
+	#'resourcenode',
 	'dfnode-0',
 	'dfnode-1',
 	'dfnode-2',
@@ -22,5 +24,5 @@ my @nodes = (
 
 for(@nodes) {
 	print "Executing $script on $_\n";
-	system_or_die("ssh $_ $src_dir/$script");
+	system("ssh -oStrictHostKeyChecking=no $_ $src_dir/$script");
 }

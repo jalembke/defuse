@@ -1,0 +1,273 @@
+50 GB
+        File System Counters                                                                                                                                                                                
+                FILE: Number of bytes read=31102432425                                                                                                                                                      
+                FILE: Number of bytes written=45010544832                                                                                                                                                   
+                FILE: Number of read operations=0                                                                                                                                                           
+                FILE: Number of large read operations=0                                                                                                                                                     
+                FILE: Number of write operations=0                                                                                                                                                          
+                HDFS: Number of bytes read=8007630096                                                                                                                                                       
+                HDFS: Number of bytes written=2419743                                                                                                                                                       
+                HDFS: Number of read operations=15006                                                                                                                                                       
+                HDFS: Number of large read operations=0                                               
+                HDFS: Number of write operations=2 
+        Job Counters                               
+                Killed map tasks=1                 
+                Launched map tasks=5001            
+                Launched reduce tasks=1            
+                Data-local map tasks=3790          
+                Rack-local map tasks=1211          
+                Total time spent by all maps in occupied slots (ms)=22467966                          
+                Total time spent by all reduces in occupied slots (ms)=3205027                        
+                Total time spent by all map tasks (ms)=22467966                                       
+                Total time spent by all reduce tasks (ms)=3205027                                     
+                Total vcore-milliseconds taken by all map tasks=22467966                              
+                Total vcore-milliseconds taken by all reduce tasks=3205027                            
+                Total megabyte-milliseconds taken by all map tasks=23007197184                        
+                Total megabyte-milliseconds taken by all reduce tasks=3281947648                      
+        Map-Reduce Framework                       
+                Map input records=818813730        
+                Map output records=818813730       
+                Map output bytes=11282321013       
+                Map output materialized bytes=12919978479                                             
+                Input split bytes=564003           
+                Combine input records=818813730    
+                Combine output records=818813730   
+                Reduce input groups=163730         
+                Reduce shuffle bytes=12919978479   
+                Reduce input records=818813730     
+                Reduce output records=163730       
+                Spilled Records=2789959200         
+                Shuffled Maps =5001                
+                Failed Shuffles=0                  
+                Merged Map outputs=5001            
+                GC time elapsed (ms)=634831        
+                CPU time spent (ms)=19514030       
+                Physical memory (bytes) snapshot=1574924398592                                        
+                Virtual memory (bytes) snapshot=10015571161088                                        
+                Total committed heap usage (bytes)=982875897856 
+        Shuffle Errors                             
+                BAD_ID=0                           
+                CONNECTION=0                       
+                IO_ERROR=0                         
+                WRONG_LENGTH=0                     
+                WRONG_MAP=0                        
+                WRONG_REDUCE=0                     
+        File Input Format Counters                 
+                Bytes Read=8007066093              
+        File Output Format Counters                
+                Bytes Written=2419743              
+
+140GB
+        File System Counters                                                                                                                                                                                
+                FILE: Number of bytes read=207985432064                                                                                                                                                     
+                FILE: Number of bytes written=251724339940                                                                                                                                                  
+                FILE: Number of read operations=0                                                                                                                                                           
+                FILE: Number of large read operations=0                                                                                                                                                     
+                FILE: Number of write operations=0                                                                                                                                                          
+                HDFS: Number of bytes read=140867781276                                                                                                                                                     
+                HDFS: Number of bytes written=14120822701                                                                                                                                                   
+                HDFS: Number of read operations=3153                                                                                                                                                        
+                HDFS: Number of large read operations=0                                               
+                HDFS: Number of write operations=2 
+        Job Counters                               
+                Killed map tasks=3                 
+                Launched map tasks=1053            
+                Launched reduce tasks=1            
+                Data-local map tasks=214           
+                Rack-local map tasks=839           
+                Total time spent by all maps in occupied slots (ms)=113686030                         
+                Total time spent by all reduces in occupied slots (ms)=8617612                        
+                Total time spent by all map tasks (ms)=113686030                                      
+                Total time spent by all reduce tasks (ms)=8617612                                     
+                Total vcore-milliseconds taken by all map tasks=113686030                             
+                Total vcore-milliseconds taken by all reduce tasks=8617612                            
+                Total megabyte-milliseconds taken by all map tasks=116414494720                       
+                Total megabyte-milliseconds taken by all reduce tasks=8824434688                      
+        Map-Reduce Framework                       
+                Map input records=2033820312       
+                Map output records=14758615584     
+                Map output bytes=194163285982      
+                Map output materialized bytes=43531289249                                             
+                Input split bytes=148834           
+                Combine input records=16824084870  
+                Combine output records=3629010469  
+                Reduce input groups=397809226      
+                Reduce shuffle bytes=43531289249   
+                Reduce input records=1563541183    
+                Reduce output records=397809226    
+                Spilled Records=9269448856         
+                Shuffled Maps =1050                
+                Failed Shuffles=0                  
+                Merged Map outputs=1050            
+                GC time elapsed (ms)=729955        
+                CPU time spent (ms)=52312230       
+                Physical memory (bytes) snapshot=346474758144                                         
+                Virtual memory (bytes) snapshot=2111482167296                                         
+                Total committed heap usage (bytes)=210374230016
+        Shuffle Errors                             
+                BAD_ID=0                           
+                CONNECTION=0                       
+                IO_ERROR=0                         
+                WRONG_LENGTH=0                     
+                WRONG_MAP=0                        
+                WRONG_REDUCE=0                     
+        File Input Format Counters                 
+                Bytes Read=140867632442            
+        File Output Format Counters                
+                Bytes Written=14120822701          
+
+
+WP 50GB
+real    55m58.547s                                 
+user    0m22.524s                                  
+sys     0m2.160s
+
+WP 140GB
+real    147m36.769s                                
+user    0m25.340s                                  
+sys     0m5.568s
+
+WP 300GB
+real    184m52.097s                                
+user    0m27.436s                                  
+sys     0m6.508s
+
+TeraSort 300GB
+        File System Counters                                                                                                                                                                                
+                FILE: Number of bytes read=1443084241384                                                                                                                                                    
+                FILE: Number of bytes written=1755528413046                                                                                                                                                 
+                FILE: Number of read operations=0                                                                                                                                                           
+                FILE: Number of large read operations=0                                                                                                                                                     
+                FILE: Number of write operations=0                                                                                                                                                          
+                HDFS: Number of bytes read=300000259376                                                                                                                                                     
+                HDFS: Number of bytes written=300000000000                                                                                                                                                  
+                HDFS: Number of read operations=6711                                                                                                                                                        
+                HDFS: Number of large read operations=0                                                                                                                                                     
+                HDFS: Number of write operations=2                                                                                                                                                          
+        Job Counters                               
+                Killed map tasks=99                
+                Launched map tasks=2335            
+                Launched reduce tasks=1            
+                Other local map tasks=97           
+                Data-local map tasks=176           
+                Rack-local map tasks=1495          
+                Total time spent by all maps in occupied slots (ms)=158071135                         
+                Total time spent by all reduces in occupied slots (ms)=95099499                       
+                Total time spent by all map tasks (ms)=158071135                                      
+                Total time spent by all reduce tasks (ms)=95099499                                    
+                Total vcore-milliseconds taken by all map tasks=158071135                             
+                Total vcore-milliseconds taken by all reduce tasks=95099499                           
+                Total megabyte-milliseconds taken by all map tasks=161864842240                       
+                Total megabyte-milliseconds taken by all reduce tasks=97381886976
+        Map-Reduce Framework                       
+                Map input records=3000000000       
+                Map output records=3000000000      
+                Map output bytes=306000000000      
+                Map output materialized bytes=312000013416                                            
+                Input split bytes=259376           
+                Combine input records=0            
+                Combine output records=0           
+                Reduce input groups=3000000000     
+                Reduce shuffle bytes=312000013416  
+                Reduce input records=3000000000    
+                Reduce output records=3000000000   
+                Spilled Records=16875809612        
+                Shuffled Maps =2236                
+                Failed Shuffles=0                  
+                Merged Map outputs=2236            
+                GC time elapsed (ms)=934256        
+                CPU time spent (ms)=53597360       
+                Physical memory (bytes) snapshot=700656058368                                         
+                Virtual memory (bytes) snapshot=4486625087488                                         
+                Total committed heap usage (bytes)=435241353216                                       
+        Shuffle Errors                             
+                BAD_ID=0                           
+                CONNECTION=0                       
+                IO_ERROR=0                         
+                WRONG_LENGTH=0                     
+                WRONG_MAP=0                        
+                WRONG_REDUCE=0                     
+        File Input Format Counters                 
+                Bytes Read=300000000000            
+        File Output Format Counters                
+                Bytes Written=300000000000         
+18/09/16 19:13:02 INFO terasort.TeraSort: done     
+
+real    1619m7.642s                                
+user    2m13.268s                                  
+sys     1m9.764s
+
+TeraSort 50GB
+real    183m18.092s                                
+user    0m31.572s                                  
+sys     0m8.208s
+
+Word StdDev 300GB
+real    126m53.824s
+user    0m23.576s
+sys     0m4.324s
+
+Word Mean 300GB
+real    123m39.472s                                
+user    0m22.784s                                  
+sys     0m4.332s
+
+TestDFSIO
+18/09/21 14:14:35 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write                                    
+18/09/21 14:14:35 INFO fs.TestDFSIO:             Date & time: Fri Sep 21 14:14:35 PDT 2018            
+18/09/21 14:14:35 INFO fs.TestDFSIO:         Number of files: 1000                                    
+18/09/21 14:14:35 INFO fs.TestDFSIO:  Total MBytes processed: 1000                                    
+18/09/21 14:14:35 INFO fs.TestDFSIO:       Throughput mb/sec: 14.61                                   
+18/09/21 14:14:35 INFO fs.TestDFSIO:  Average IO rate mb/sec: 17.77                                   
+18/09/21 14:14:35 INFO fs.TestDFSIO:   IO rate std deviation: 4.33                                    
+18/09/21 14:14:35 INFO fs.TestDFSIO:      Test exec time sec: 481.81                                  
+18/09/21 14:14:35 INFO fs.TestDFSIO:
+
+TestDFSIO 25000
+18/09/22 18:57:17 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write
+18/09/22 18:57:17 INFO fs.TestDFSIO:             Date & time: Sat Sep 22 18:57:17 PDT 2018
+18/09/22 18:57:17 INFO fs.TestDFSIO:         Number of files: 25000
+18/09/22 18:57:17 INFO fs.TestDFSIO:  Total MBytes processed: 25000
+18/09/22 18:57:17 INFO fs.TestDFSIO:       Throughput mb/sec: 14.2
+18/09/22 18:57:17 INFO fs.TestDFSIO:  Average IO rate mb/sec: 19.37
+18/09/22 18:57:17 INFO fs.TestDFSIO:   IO rate std deviation: 4.07
+18/09/22 18:57:17 INFO fs.TestDFSIO:      Test exec time sec: 14229.11
+18/09/22 18:57:17 INFO fs.TestDFSIO:
+
+TestDFSIO 100GB
+18/09/24 06:04:06 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write                                    
+18/09/24 06:04:06 INFO fs.TestDFSIO:             Date & time: Mon Sep 24 06:04:06 PDT 2018            
+18/09/24 06:04:06 INFO fs.TestDFSIO:         Number of files: 1                                       
+18/09/24 06:04:06 INFO fs.TestDFSIO:  Total MBytes processed: 102400                                  
+18/09/24 06:04:06 INFO fs.TestDFSIO:       Throughput mb/sec: 44.68                                   
+18/09/24 06:04:06 INFO fs.TestDFSIO:  Average IO rate mb/sec: 44.68                                   
+18/09/24 06:04:06 INFO fs.TestDFSIO:   IO rate std deviation: 0.01                                    
+18/09/24 06:04:06 INFO fs.TestDFSIO:      Test exec time sec: 2320.57                                 
+18/09/24 06:04:06 INFO fs.TestDFSIO:               
+
+real    38m43.888s                                 
+user    0m18.240s                                  
+sys     0m2.160s 
+
+TestDFSIO 300GB
+18/09/24 12:46:42 INFO fs.TestDFSIO: ----- TestDFSIO ----- : write                                    
+18/09/24 12:46:42 INFO fs.TestDFSIO:             Date & time: Mon Sep 24 12:46:42 PDT 2018            
+18/09/24 12:46:42 INFO fs.TestDFSIO:         Number of files: 1                                       
+18/09/24 12:46:42 INFO fs.TestDFSIO:  Total MBytes processed: 307200                                  
+18/09/24 12:46:42 INFO fs.TestDFSIO:       Throughput mb/sec: 38.49                                   
+18/09/24 12:46:42 INFO fs.TestDFSIO:  Average IO rate mb/sec: 38.49                                   
+18/09/24 12:46:42 INFO fs.TestDFSIO:   IO rate std deviation: 0.01                                    
+18/09/24 12:46:42 INFO fs.TestDFSIO:      Test exec time sec: 12120.66                                
+18/09/24 12:46:42 INFO fs.TestDFSIO:               
+
+real    202m3.890s                                 
+user    0m30.952s                                  
+sys     0m9.060s
+
+Teragen 100GB
+real    19m39.451s
+user    0m12.980s
+sys     0m1.268s
+
+grep 300GB
+real    123m15.702s

@@ -1,0 +1,139 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(abs_path($0));
+require "$script_dir/common.pl";
+my $src_dir = dirname($script_dir);
+
+$| = 1;
+my $do_direct = 1;
+my $do_fuse = 1;
+my $do_usfsal = 1;
+
+my $fuse_mount_path = "/tmp/fuse";
+my $direct_mount_path = "/mnt";
+my $usfsal_mount_path = "/tmp/usfsal";
+my $usfsal_backend = "/";
+my $direct_path = "$direct_mount_path/test";
+my $fuse_path = "$fuse_mount_path$direct_path";
+my $usfsal_path = "$usfsal_mount_path$direct_path";
+
+#my $time_command = "/usr/bin/time -f \"%w\" 2>&1";
+my $time_command = "";
+
+my $benchmark = "$time_command $src_dir/test/doTest";
+my $files = 4096;
+my $size = 's';
+
+my $fusemount = "$src_dir/fuse/fusexmp_fh";
+my $fusermount = "/bin/fusermount";
+my $usfsal_user_library = "$src_dir/usfs_wrap/libusfs_wrap.so";
+
+my $trials = 1;
+my $threads = 1;
+
+sub resetMounts {
+	# Unmount FUSE
+	system_or_continue("$fusermount -u $fuse_mount_path");
+
+	# Unmount usfsal
+	system_or_continue("/usr/bin/sudo /bin/umount $usfsal_mount_path");
+
+	# Reset mount point contents
+	system_or_continue("rm -rf $fuse_mount_path");
+	system_or_continue("mkdir -p $fuse_mount_path");
+	system_or_continue("rm -rf $usfsal_mount_path");
+	system_or_continue("mkdir -p $usfsal_mount_path");
+
+	# Remove usfsal shared spaces
+	system_or_continue("rm -rf /tmp/usfsal_*");
+
+	# Reset system mounts for backend file systems
+	system_or_continue("/usr/bin/sudo /bin/umount $direct_mount_path");
+	system_or_die("/usr/bin/sudo /bin/mount /dev/sdb1 $direct_mount_path");
+	system_or_die("/usr/bin/sudo /bin/mkdir -p $direct_path");
+	system_or_die("/usr/bin/sudo /bin/chmod 777 $direct_path");
+}
+
+sub doRunTrial {
+	my $command = shift;
+	# Remove usfsal shared spaces
+	system_or_continue("rm -rf /tmp/usfsal_*");
+	drop_caches();
+	my @result = split(/\n/, system_or_die($command));
+	chomp $result[0];
+	chomp $result[1];
+	my $trial_results;
+	$trial_results->{'time'} = $result[0];
+	$trial_results->{'ctxsw'} = $result[1];
+	return $trial_results;
+}
+
+sub runTrials {
+	my $benchmark_command = shift;
+	my $target_path = shift;
+	my $backend_target_path = shift;
+		
+	my $write_cmd = "$benchmark_command w $size $target_path $threads $files";
+	my $read_cmd = "$benchmark_command r $size $target_path $threads $files";
+	
+	my @write_results;
+	my @read_results;
+	for(1..$trials) {
+		print " $_";
+		if ($backend_target_path) {
+			system_or_die("rm -f $backend_target_path/*");
+		}
+		push @write_results, doRunTrial($write_cmd);
+		push @read_results, doRunTrial($read_cmd);
+	}
+	print "\n";
+	return [[@write_results], [@read_results]];
+}
+
+
+my $results;
+
+if($do_direct) {
+	# Direct Mount Test
+	print "DIRECT:\n";
+	resetMounts();
+	$results->{'direct'} = runTrials($benchmark, $direct_path, $direct_path);
+}
+
+if($do_fuse) {
+	# FUSE Test
+	print "FUSE:\n";
+	resetMounts();
+	system_or_die("$fusemount $fuse_mount_path");
+	$results->{'fuse'} = runTrials($benchmark, $fuse_path, $direct_path);
+	system_or_die("$fusermount -u $fuse_mount_path");
+	
+	# FUSE Test Direct I/O
+	print "FUSE DIRECT IO:\n";
+	resetMounts();
+	system_or_die("$fusemount -o direct_io $fuse_mount_path");
+	$results->{'fuse_direct'} = runTrials($benchmark, $fuse_path, $direct_path);
+	system_or_continue("$fusermount -u $fuse_mount_path");
+}
+
+if($do_usfsal) {
+	# usfsal Test
+	print "usfsal:\n";
+	resetMounts();
+	system_or_die("/usr/bin/sudo /bin/mount -t bopfs -o backend=$usfsal_backend -o library=$usfsal_user_library bopfs $usfsal_mount_path");
+	$results->{'usfsalfs'} = runTrials("$benchmark", $usfsal_path, $direct_path);
+	system_or_continue("/usr/bin/sudo /bin/umount $usfsal_mount_path");
+}
+
+# Print results
+for(keys %{$results}) {
+	printf "WT: %s, %s\n", $_, join(', ', map { $_->{'time'} } @{$results->{$_}->[0]});
+	printf "RT: %s, %s\n", $_, join(', ', map { $_->{'time'} } @{$results->{$_}->[1]});
+	printf "WX: %s, %s\n", $_, join(', ', map { $_->{'ctxsw'} } @{$results->{$_}->[0]});
+	printf "RX: %s, %s\n", $_, join(', ', map { $_->{'ctxsw'} } @{$results->{$_}->[1]});
+}

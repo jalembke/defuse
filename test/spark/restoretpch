@@ -1,0 +1,4 @@
+#!/bin/bash
+
+pushd /mnt/test
+nohup tar xzf tpchdata.tar.gz >& /dev/null &

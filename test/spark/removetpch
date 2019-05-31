@@ -1,0 +1,9 @@
+#!/bin/bash
+
+sudo umount /mnt
+sudo mount /dev/sda3 /mnt
+sudo rm /mnt/test/tpchdata.tar.gz
+sudo rm -rf /mnt/test/tpch
+sudo rm -rf /mnt/test/tpch_10GB
+sudo rm -rf /mnt/test/tpch_300GB
+sudo rm -rf /mnt/test/tpch_output

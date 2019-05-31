@@ -1,0 +1,5 @@
+#!/bin/bash
+
+rm /mnt/test/tpchdata.tar.gz
+#mv /mnt/test/tpch /mnt/test/tpch_10GB
+rmdir /mnt/test/tpch

@@ -111,6 +111,7 @@ void* fault_handler_thread(void* arg)
 {
     static struct uffd_msg msg;
     static int fault_cnt = 0;
+	//char* buffer = (char*)malloc(BUFFER_SIZE);
 	char buffer[BUFFER_SIZE];
 	struct uffdio_copy uffdio_copy;
 	ssize_t nread;
@@ -159,6 +160,7 @@ void* fault_handler_thread(void* arg)
 		}
 
 		copy_pages(ucb, (void*)msg.arg.pagefault.address, buffer, BUFFER_SIZE);
+		//printf("%d\n", fault_count);
 	}
 }
 
