@@ -1,0 +1,30 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(dirname(abs_path($0)));
+require "$script_dir/common.pl";
+my $src_dir = "$script_dir/spark";
+my $SPARK_PATH=$ENV{HOME} . "/spark";
+my $FUSE_CONF = "$src_dir/spark-env.sh.fuse";
+my $NATIVE_CONF = "$src_dir/spark-env.sh.native";
+
+$| = 1;
+set_system_echo();
+
+my $type = shift or die "Type required: fuse | native\n";
+die "Type not valid: fuse | native\n" unless($type eq "native" or $type eq "fuse");
+
+system_or_die("$SPARK_PATH/sbin/stop-all.sh");
+
+if($type eq "fuse") {
+	system_or_die("cp $FUSE_CONF $SPARK_PATH/conf/spark-env.sh");
+} elsif($type eq "native") {
+	system_or_die("cp $NATIVE_CONF $SPARK_PATH/conf/spark-env.sh");
+}
+
+system_or_die("$src_dir/noderun resetscratch");
+system_or_die("$SPARK_PATH/sbin/start-all.sh");

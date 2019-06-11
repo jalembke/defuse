@@ -9,7 +9,7 @@ sudo rm -rf /mnt/test/spark/results
 #${SPARK_PATH}/sbin/stop-all.sh
 #${SPARK_PATH}/sbin/start-all.sh
 
-   #--master spark://${MASTER_NODE}:7077 \
+   #--master yarn \
 time $SPARK_SUBMIT \
-   --master yarn \
-   $SCRIPT 120
+   --master spark://${MASTER_NODE}:7077 \
+   $SCRIPT 2000

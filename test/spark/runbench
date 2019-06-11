@@ -1,0 +1,37 @@
+#!/usr/bin/perl
+
+use strict;
+
+use Data::Dumper;
+use File::Basename;
+use Cwd 'abs_path';
+my $script_dir = dirname(dirname(abs_path($0)));
+require "$script_dir/common.pl";
+
+my $SPARK_BENCH_PATH=$ENV{HOME} . "/Projects/spark-bench_2.3.0_0.4.0-RELEASE/bin/spark-bench.sh";
+
+my $namenode = "namenode";
+my $master = "dfnode-0";
+
+my $iterations = 1;
+
+$| = 1;
+my $script = shift or die "Benchmark script required\n";
+my $type = shift or die "Type required: fuse | native\n";
+die "Type not valid: fuse | native\n" unless($type eq "native" or $type eq "fuse");
+
+set_system_echo();
+
+system_or_continue("rm $script.time.$type");
+
+for (1 .. $iterations) {
+	print "Resetting HDFS on $namenode\n";
+	system_or_die("ssh -oStrictHostKeyChecking=no $namenode $script_dir/hadoop/hdfsinit $type");
+
+	print "Resetting SPARK from $master\n";
+	system_or_die("ssh -oStrictHostKeyChecking=no $master $script_dir/spark/resetspark $type");
+
+	print "Running benchmark $script\n";
+	system("time -a -o $script.time.$type -p $SPARK_BENCH_PATH $script_dir/spark/$script");
+	#system_or_die("time -a -o $script.time.$type -p $SPARK_BENCH_PATH $script_dir/spark/$script");
+}

@@ -1,7 +1,7 @@
-CC=musl-gcc
-#CC=gcc
+#CC=musl-gcc
+CC=gcc
 
-all: doTest doCopy doExecTest userFault testmmap mmaptest #javaWrite.class javaOutputStream.class
+all: doTest doCopy doExecTest userFault testmmap mmaptest javaWrite.class javaOutputStream.class
 
 doCopy: doCopy.c doCat
 	${CC} -g -o doCopy doCopy.c

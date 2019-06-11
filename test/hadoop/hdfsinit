@@ -6,10 +6,12 @@ use File::Basename;
 use Cwd 'abs_path';
 my $script_dir = dirname(dirname(abs_path($0)));
 require "$script_dir/common.pl";
+my $src_dir = "$script_dir/hadoop";
 
 my $HADOOP_VERSION="2.9.1";
 my $HADOOP_PATH=$ENV{HOME} . "/hadoop-$HADOOP_VERSION";
 my $HDFS_BIN="$HADOOP_PATH/bin/hdfs";
+my $CONF = "$src_dir/hdfs-site.xml";
 
 my @hdfs_config_keys = (
 	'dfs.namenode.name.dir',
@@ -17,12 +19,21 @@ my @hdfs_config_keys = (
 
 set_system_echo();
 
+my $type = shift or die "Type required: fuse | native | defuse\n";
+die "Type not valid: fuse | native | defuse\n" unless($type eq "native" or $type eq "fuse" or $type eq "defuse");
+
+system_or_die("$HADOOP_PATH/sbin/stop-dfs.sh");
+system_or_die("cp $CONF.native $HADOOP_PATH/etc/hadoop/hdfs-site.xml");
+
 for(@hdfs_config_keys) {
 	reset_dir(get_hdfs_config_key($_));
 }
 
 system_or_die("$HDFS_BIN namenode -format");
 system_or_die("$script_dir/hadoop/noderun resethadooptmp");
+
+system_or_die("cp $CONF.$type $HADOOP_PATH/etc/hadoop/hdfs-site.xml");
+system_or_die("$HADOOP_PATH/sbin/start-dfs.sh");
 
 sub get_hdfs_config_key {
 	my $key = shift;

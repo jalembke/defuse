@@ -1,6 +1,7 @@
 #!/bin/bash
 
 fusermount -u /tmp/fuse
-rm -rf /tmp/fuse
+rmdir /tmp/fuse
 mkdir -p /tmp/fuse
-${HOME}/Projects/defuse/fuse/fusexmp_fh -o direct_io /tmp/fuse
+#${HOME}/Projects/defuse/fuse/fusexmp_fh -o direct_io /tmp/fuse
+${HOME}/Projects/defuse/fuse/fusexmp_fh /tmp/fuse
