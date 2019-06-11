@@ -10,7 +10,7 @@ CMPSVGS=$(patsubst %.dat,%.svg,$(CMPDATS)) cmpkey.svg
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
 #CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
-PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat
+PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 #PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
@@ -112,11 +112,20 @@ untar.svg: untar.dat prac.plt
 cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
 
-wc.svg: wc.dat spark.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" spark.plt
+wc.svg: wc.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" prac.plt
 
-tdfsio.svg: tdfsio.dat spark.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" spark.plt
+lrdgen.svg: lrdgen.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\nData Generation\"; pracTitle=\"Runtime (sec)\"" prac.plt
+
+lr.svg: lr.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\"; pracTitle=\"Runtime (sec)\"" prac.plt
+
+kmeans.svg: kmeans.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (sec)\"" prac.plt
+
+tdfsio.svg: tdfsio.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" prac.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt

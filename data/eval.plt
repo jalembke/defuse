@@ -22,7 +22,7 @@ set rmargin at screen 0.98
 set lmargin at screen 0.12
 set bmargin at screen 0.08
 
-set ylabel "Performnace (% of Direct Mount)" offset 3.9
+set ylabel "Throughput (% of Direct Mount)" offset 3.9
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot dat_file using 2:xtic(1) ti col fs pattern 1, \
