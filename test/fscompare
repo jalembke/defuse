@@ -23,8 +23,8 @@ my $do_ld_preload = 0;
 my $do_ld_avfs = 0;
 
 if($type eq 'd') {
-	#$do_direct = 1;
-	$do_fuse = 1;
+	$do_direct = 1;
+	#$do_fuse = 1;
 	#$do_avfs_fuse = 1;
 }
 if($type eq 'u') {
@@ -32,14 +32,14 @@ if($type eq 'u') {
 	#$do_avfs_usfsal = 1;
 }
 if($type eq "l") {
-	$do_ld_avfs = 1;
+	#$do_ld_avfs = 1;
 	$do_ld_preload = 1;
 }
 
 my %backend_devs = (
-	"ext4" => "/dev/sdb1",
-	"jfs" => "/dev/sdb2",
-	"vfat" => "/dev/sdb3",
+	#"ext4" => "/dev/sdb1",
+	#"jfs" => "/dev/sdb2",
+	#"vfat" => "/dev/sdb3",
 	"tmpfs" => "none",
 );
 
@@ -59,7 +59,7 @@ if ($size eq "m") {
 	$avfs_target = "test.tar.gz_m";
 }
 
-my $trials = 50;
+my $trials = 10;
 my $threads = 1;
 
 sub doRunTrial {
@@ -67,6 +67,7 @@ sub doRunTrial {
 	# Remove usfsal shared spaces
 	system_or_continue("rm -rf /tmp/usfsal_*");
 	drop_caches();
+	#print "$command\n";
 	my @result = split(/\n/, system_or_die($command));
 	chomp $result[0];
 	chomp $result[1];
@@ -149,7 +150,8 @@ for(keys %backend_devs) {
 	my $backend_type = $_;
 	my $backend_dev = $backend_devs{$backend_type};
 	
-	print "$backend_type:\n";
+	print "$files $backend_type:\n";
+	
 	if($do_direct) {
 		# Direct Mount Test
 		print "DIRECT:\n";

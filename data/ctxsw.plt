@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,25" size 600, 400
+set term svg fname "Times,25" size 600, 300
 set grid                    # Turn the grid on
 
 unset key
@@ -15,7 +15,7 @@ set boxwidth 0.8
 set xtic scale 0
 
 set logscale y
-set xtics offset 0,graph 0.07
+set xtics offset 0,graph 0.10
 set ytics offset graph 0.02
 
 set tmargin at screen 0.97

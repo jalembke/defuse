@@ -2,7 +2,7 @@
 set output out_file         # Set the output path
 
 # Set the font to something pleasing
-set term svg fname "Times,19" size 225, 250
+set term svg fname "Times,19" size 225, 200
 unset key                   # No key
 set grid                    # Turn the grid on
 
