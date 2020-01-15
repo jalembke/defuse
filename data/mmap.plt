@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,25" size 600, 400
+set term svg fname "Times,25" size 550, 250
 set grid                    # Turn the grid on
 
 unset key
@@ -12,13 +12,13 @@ set yrange [0:*]
 
 set boxwidth 0.5 relative
 
-set xtics offset 0,graph 0.07
+set xtics offset 0,graph 0.12
 set ytics offset graph 0.02
 
-set tmargin at screen 0.97
+set tmargin at screen 0.96
 set rmargin at screen 0.98
 set lmargin at screen 0.12
-set bmargin at screen 0.08
+set bmargin at screen 0.12
 
 set ylabel "MMAP Runtime (sec)" offset 3.9
 

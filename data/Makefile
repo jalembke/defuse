@@ -38,7 +38,7 @@ MMAPDATS=mmap.dat
 MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
 MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
 
-TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnorm2.dat tpcbbnormkey.dat
 TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
 TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
 
@@ -159,6 +159,9 @@ tpcbbkey.svg: tpcbbkey.dat tpcbbkey.plt
 
 tpcbbnorm.svg: tpcbbnorm.dat tpcbbnorm.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm.plt
+
+tpcbbnorm2.svg: tpcbbnorm2.dat tpcbbnorm2.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm2.plt
 
 tpcbbnormkey.svg: tpcbbnormkey.dat tpcbbnormkey.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnormkey.plt
