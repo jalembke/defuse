@@ -1,6 +1,8 @@
 /*
-  DEFUSE File System
+  DEFUSE Wrapped File System
   Copyright (C) 2017  James Lembke <jalembke@gmail.com>
+
+  Wrap backend file system with a delayed lookup
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
@@ -22,7 +24,7 @@
 #include <linux/xattr.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
-MODULE_DESCRIPTION("Proxy File System");
+MODULE_DESCRIPTION("DEFUSE Wrapped File System");
 MODULE_LICENSE("GPL");
 
 #define DEFUSE_DEFAULT_MODE	0755
@@ -48,7 +50,7 @@ struct dentry* defuse_resolve_dentry(struct dentry* entry)
 	struct dentry *b_parent;
 	struct dentry *b_dentry;
 
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	/* printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__); */
 
 	if(!entry)
 		return NULL;
@@ -469,7 +471,6 @@ static int defuse_getattr(struct vfsmount *mnt, struct dentry *entry,
 
 	b_inode = d_inode(b_dentry);
 	if(!b_inode) {
-		printk(KERN_INFO "HERE\n");
 		return -ENOENT;
 	}
 
@@ -738,7 +739,7 @@ static int defuse_parse_options(char *data, struct defuse_mount_opts *opts)
 
 	/* Backend option is required */
 	if(!option_backend) {
-		printk(KERN_ERR "defuse: backend option is required\n");
+		printk(KERN_ERR "defuse_wrap: backend option is required\n");
 		return -EINVAL;
 	}
 
@@ -786,7 +787,7 @@ static int defuse_fill_super(struct super_block *sb, void *data, int silent)
 		return err;
 	
 	if(!S_ISDIR(path.dentry->d_inode->i_mode)) {
-		printk(KERN_ERR "defuse: backend path: %s must be a directory\n", fsi->mount_opts.backend);
+		printk(KERN_ERR "defuse_wrap: backend path: %s must be a directory\n", fsi->mount_opts.backend);
 		path_put(&path);
 		return -EINVAL;
 	}
@@ -827,12 +828,12 @@ static void defuse_kill_sb(struct super_block *sb)
 
 static struct file_system_type defuse_fs_type = {
 	.owner		= THIS_MODULE,
-	.name		= "defuse",
+	.name		= "defuse_wrap",
 	.fs_flags	= FS_USERNS_MOUNT,
 	.mount		= defuse_mount,
 	.kill_sb	= defuse_kill_sb,
 };
-MODULE_ALIAS_FS("defuse");
+MODULE_ALIAS_FS("defuse_wrap");
 
 static void defuse_inode_init_once(void *foo)
 {
@@ -848,7 +849,7 @@ static int __init defuse_init(void)
 	if (test_and_set_bit(0, &once))
 		return 0;
 	
-	printk(KERN_INFO "defuse init\n");
+	printk(KERN_INFO "defuse_wrap: defuse init\n");
 
 	defuse_inode_cachep = kmem_cache_create("defuse_inode",
 		  					  sizeof(struct defuse_inode),
@@ -861,7 +862,7 @@ static int __init defuse_init(void)
 
 static void __exit defuse_exit(void)
 {
-	printk(KERN_DEBUG "defuse exit\n");
+	printk(KERN_DEBUG "defuse_wrap: defuse exit\n");
 	unregister_filesystem(&defuse_fs_type);
 
 	/*

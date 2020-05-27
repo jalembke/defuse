@@ -1,14 +1,5 @@
 #!/bin/bash
-
-#sudo umount /tmp/tmpdir
-#sudo umount ~/proxytest;
-#sudo umount ~/proxytest2; 
-
-sudo rmmod defuse; 
-sudo insmod defuse.ko; 
-
-#sudo mount -t defuse -o backend=/mnt/ext4 /dev/null /tmp/tmpdir
-#sudo mount -t defuse -o backend=/tmp/tmpb /dev/null /tmp/tmpdir
-#sudo mount -t defuse -o backend=~/pbe /dev/null ~/proxytest
-#sudo mount -t defuse -o backend=~/pbe /dev/null ~/proxytest2
-#sudo mount -t defuse -o backend=~/proxytest2 /dev/null ~/proxytest
+sudo umount /tmp/usfsal
+sudo rmmod bopfs; 
+sudo insmod bopfs.ko; 
+sudo mount -t bopfs -o backend=/ -o library=/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so bopfs /tmp/usfsal

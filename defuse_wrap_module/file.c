@@ -1,6 +1,8 @@
 /*
-  DEFUSE File System
+  DEFUSE Wrapped File System
   Copyright (C) 2017  James Lembke <jalembke@gmail.com>
+
+  Wrap backend file system with a delayed open
 
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
@@ -39,7 +41,7 @@ static inline int defuse_resolve_reopen(struct file* file)
 	struct inode* inode = entry->d_inode;
 	struct path b_path;
 	
-	printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__);
+	/* printk(KERN_INFO "%s\n", __PRETTY_FUNCTION__); */
 
 	// Resolve backend inodes
 	b_dentry = defuse_get_b_dentry_resolved(inode);

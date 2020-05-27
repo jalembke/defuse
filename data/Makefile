@@ -1,5 +1,5 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
-EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
+EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg
 #EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
 EVALPDFS=$(patsubst %.svg,%.pdf,$(EVALSVGS))
 #EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
@@ -17,7 +17,7 @@ PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
 #PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
 
 CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
-CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg
+CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg directkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg
 #CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
 #CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
@@ -38,7 +38,7 @@ MMAPDATS=mmap.dat
 MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
 MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
 
-TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnorm2.dat tpcbbnormkey.dat
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
 TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
 TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
 
@@ -72,6 +72,21 @@ tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
 
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
+
+defusekey.svg: defusekey.dat defusekey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" defusekey.plt
+
+directkey.svg: directkey.dat directkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" directkey.plt
+
+ldpkey.svg: ldpkey.dat ldpkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" ldpkey.plt
+
+fusediokey.svg: fusediokey.dat fusediokey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" fusediokey.plt
+
+fusekey.svg: fusekey.dat fusekey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" fusekey.plt
 
 cmpkey.svg: cmpkey.dat cmpkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" cmpkey.plt
