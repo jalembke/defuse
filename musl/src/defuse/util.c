@@ -83,3 +83,10 @@ char* resolve_path(const char *p)
 	remove_dot_dot(path);
 	return strdup(path);
 }
+
+/* given a relative path, calculate complete path using dirfd directory */
+char* resolve_path_at(int dirfd, const char* p)
+{
+	// TODO fill in handling directory
+	return resolve_path(p);
+}

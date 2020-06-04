@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 int defuse_getattr(const struct mount_point_data* mp, const char* cpath, const char* pathname, struct stat* statbuf, int flags)
 {
@@ -15,6 +15,11 @@ int defuse_getattr(const struct mount_point_data* mp, const char* cpath, const c
 	}
 	DEBUG_EXIT(rv);
 	return rv;
+}
+
+int defuse_getattrat(const struct mount_point_data* mp, const char* cpath, int dirfd, const char* pathname, struct stat* statbuf, int flags)
+{
+	return defuse_getattr(mp, cpath, pathname, statbuf, flags);
 }
 
 int defuse_fgetattr(const struct file_handle_data* fhd, int fd, struct stat* statbuf)

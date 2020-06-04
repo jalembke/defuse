@@ -7,6 +7,7 @@
 #include <sys/sysmacros.h>
 #include "syscall.h"
 #include "kstat.h"
+#include "defuse.h"
 
 struct statx {
 	uint32_t stx_mask;
@@ -133,6 +134,8 @@ static int fstatat_kstat(int fd, const char *restrict path, struct stat *restric
 
 int fstatat(int fd, const char *restrict path, struct stat *restrict st, int flag)
 {
+	DEFUSE_AT_OP(getattrat, fd, path, st, flag);
+
 	int ret;
 	if (sizeof((struct kstat){0}.st_atime_sec) < sizeof(time_t)) {
 		ret = fstatat_statx(fd, path, st, flag);

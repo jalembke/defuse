@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include "syscall.h"
+#include "defuse.h"
 
 int real_open(const char *filename, int flags, ...)
 {
