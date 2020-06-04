@@ -8,17 +8,17 @@ LFLAGS=-ldl -lrt -shared
 
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c))
 
-all: libdefuse.so
+all: libdefuse.a
 
-libdefuse.so: $(OBJS)
-	$(CC) -o $@ $(OBJS) $(LFLAGS)
+libdefuse.a: $(OBJS)
+	$(AR) rcs $@ $(OBJS)
 
 cleanobjs:
 	rm -f $(OBJS)
 
 clean:
 	rm -f $(OBJS)
-	rm -f libdefuse.so
+	rm -f libdefuse.a
 
 %.o: %.c
 	$(CC) $(CFLAGS) -o $@ $<
