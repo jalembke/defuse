@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 ssize_t defuse_write(const struct file_handle_data* fhd, int fd, const void* buf, size_t count)
 {

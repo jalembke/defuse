@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 int defuse_truncate(const struct mount_point_data* mp, const char* cpath, const char* pathname, off_t length)
 {

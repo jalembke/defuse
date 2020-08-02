@@ -1,11 +1,22 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <syscall.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 #define SEEK_DATA 3
 #define SEEK_HOLE 4
+
+off_t real_lseek(int fd, off_t offset, int whence)
+{
+#ifdef SYS__llseek
+	off_t result;
+	return syscall(SYS__llseek, fd, offset>>32, offset, &result, whence) ? -1 : result;
+#else
+	return syscall(SYS_lseek, fd, offset, whence);
+#endif
+}
 
 int defuse_lseek(const struct file_handle_data* fhd, int fd, off_t offset, int whence)
 {

@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 #define MAX_FILES 1024
 

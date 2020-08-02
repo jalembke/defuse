@@ -3,7 +3,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 int defuse_fsync(const struct file_handle_data* fhd, int fd, int data_sync)
 {

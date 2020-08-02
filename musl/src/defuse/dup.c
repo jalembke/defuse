@@ -2,8 +2,19 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <syscall.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
+
+static inline int real_dup(int oldfd)
+{
+	return syscall(SYS_dup, oldfd);
+}
+
+static inline int real_dup3(int oldfd, int newfd, int flags)
+{
+	return syscall(SYS_dup3, oldfd, newfd, flags);
+}
 
 static inline int dup_common(int oldfd, int newfd, int flags, bool do_real_dup) 
 {

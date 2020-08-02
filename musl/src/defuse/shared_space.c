@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 struct shared_space {
 	int fd;

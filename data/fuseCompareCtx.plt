@@ -11,13 +11,14 @@ set style fill pattern border
 set boxwidth 0.40
 
 # Create the plot
-set format y "%.2f"
-set ylabel "Write Speed (MB/sec)" offset 3.5
-set yrange [0:*]
+set format y "%.0f"
+set ylabel "Write Speed (MB/sec)" offset 2.6
+#set yrange [0:*]
 set xrange [-0.5:2.5]
-set ytics 0.25, 0.25 offset graph 0.07
+set ytics offset graph 0.07
 set xtics rotate by 25 right font ",15" offset 0,graph 0.05
 set xtic scale 0
+set logscale y
 
 set lmargin at screen 0.25
 set rmargin at screen 0.98
@@ -30,4 +31,4 @@ set style line 3 lt 3
 
 plot  dat_file every ::0::0 using 1:3:xtic(2) with boxes ls 1 fs pattern 6, \
       dat_file every ::1::1 using 1:3:xtic(2) with boxes ls 2 fs pattern 1, \
-	  dat_file every ::2::2 using 1:3:xtic(2) with boxes ls 3 fs pattern 4;
+      dat_file every ::2::2 using 1:3:xtic(2) with boxes ls 3 fs pattern 4;

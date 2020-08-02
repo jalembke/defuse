@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 int defuse_open(const struct mount_point_data* mp, const char* cpath, const char* filename, int flags, mode_t mode)
 {

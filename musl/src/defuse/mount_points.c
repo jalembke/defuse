@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <dlfcn.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
 
 #define MAX_MOUNTS 16
 

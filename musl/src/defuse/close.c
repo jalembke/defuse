@@ -1,7 +1,13 @@
 #include <errno.h>
 #include <unistd.h>
+#include <syscall.h>
 
-#include "libdefuse.h"
+#include "defuse.h"
+
+int real_close(int fd)
+{
+	return syscall(SYS_close, fd);
+}
 
 int defuse_close(const struct file_handle_data* fhd, int fd)
 {
