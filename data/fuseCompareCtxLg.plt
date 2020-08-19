@@ -15,7 +15,7 @@ set format y "10^%T"
 set ylabel "Context Switches" offset 2.3
 set yrange [1:150000]
 set xrange [-0.5:2.5]
-set ytics 50,50 offset graph 0.07
+set ytics offset graph 0.07
 set ytics add ('1' 1)
 #set xtics rotate by 25 right font ",15" offset 0,graph 0.05
 #set xtic scale 0

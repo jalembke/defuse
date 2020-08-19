@@ -13,7 +13,7 @@ set boxwidth 0.40
 # Create the plot
 set format y "10^%T"
 set ylabel "Context Switches" offset 2.3
-#set yrange [1:90000]
+set yrange [1:150000]
 set xrange [-0.5:2.5]
 set ytics offset graph 0.07
 set ytics add ('1' 1)
