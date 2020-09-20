@@ -11,6 +11,8 @@ set grid                    # Turn the grid on
 set format y "%.0f"
 set ytics offset graph 0.02,0
 set xtics 500, 500 offset 0,graph 0.07
+set xtics border in nomirror scale 0.4
+set ytics border in nomirror scale 0.4
 
 set yrange [0:*]
 set xrange [1:4100]

@@ -1,7 +1,6 @@
 set output out_file         # Set the output path
 set term svg fname "Times,25" size 1400, 400
-set grid                    # Turn the grid on
-
+set grid ytics              # Turn the grid on for yaxis
 unset key
 
 #set title gtitle offset 0,-0.7
@@ -15,6 +14,7 @@ set xtic scale 0
 
 set xtics rotate offset 0,graph 0.04
 set ytics offset graph 0.01
+set ytics border in nomirror scale 0.4
 
 set tmargin at screen 0.97
 set rmargin at screen 0.99
