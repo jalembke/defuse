@@ -38,7 +38,7 @@ MMAPDATS=mmap.dat
 MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
 MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
 
-TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnorm2.dat tpcbbnormkey.dat
 TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
 TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
 
