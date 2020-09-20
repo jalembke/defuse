@@ -63,6 +63,7 @@ tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
 	@#rsvg-convert -f pdf $< $@
+	pdfcrop --margins 1 $@ $@
 
 %.eps: %.svg
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
