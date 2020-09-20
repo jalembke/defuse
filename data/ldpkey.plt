@@ -4,6 +4,7 @@ set output out_file         # Set the output path
 # Set the font to something pleasing
 set term svg fname "Times,19" size 240, 50
 set key outside center horizontal center   # Place the key in an appropriate place
+set key samplen 2
 set key width -0.8
 
 set style data histogram
