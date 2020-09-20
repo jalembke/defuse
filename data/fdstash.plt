@@ -24,7 +24,7 @@ set bmargin at screen 0.20
 
 # Create the plot
 set xlabel "Inherited File Descriptors" offset 0,1.3
-set ylabel "Overhead (μsec)" offset 2.0,0
+set ylabel "Overhead (μs)" offset 2.0,0
 
 f(x) = a*x + b
 fit f(x) dat_file u 1:2 via a, b

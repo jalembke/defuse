@@ -21,7 +21,7 @@ set rmargin at screen 0.98
 set lmargin at screen 0.12
 set bmargin at screen 0.12
 
-set ylabel "MMAP Runtime (sec)" offset 3.9
+set ylabel "MMAP Runtime (s)" offset 3.9
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot  dat_file every ::0::0 using 1:3:4:xtic(2) with boxes fs pattern 6 lc 6, \

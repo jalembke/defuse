@@ -21,7 +21,7 @@ set rmargin at screen 0.99
 set lmargin at screen 0.05
 set bmargin at screen 0.25
 
-set ylabel "Time (min)" offset 3.3
+set ylabel "Time (m)" offset 3.3
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot dat_file using 2:xtic(1) ti col fs pattern 6 lc 6, \

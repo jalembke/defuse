@@ -23,7 +23,7 @@ set lmargin at screen 0.34
 set bmargin at screen 0.04
 
 #set ylabel "Runtime (sec)" offset 1.8 font "Times,22"
-set ylabel "Read Bandwidth (KB/sec)" offset 3.7 font "Times,22"
+set ylabel "Read Bandwidth (kB/s)" offset 3.7 font "Times,22"
 set ytics offset 0.3
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
