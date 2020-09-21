@@ -123,25 +123,25 @@ clr.svg: clr.dat cmpll.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpll.plt
 
 untar.svg: untar.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 cp.svg: cp.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 wc.svg: wc.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
 
 lrdgen.svg: lrdgen.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\nData Generation\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\nData Generation\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 lr.svg: lr.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 kmeans.svg: kmeans.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 tdfsio.svg: tdfsio.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt
