@@ -2,14 +2,14 @@
 set output out_file         # Set the output path
 
 # Set the font to something pleasing
-set term svg fname "Times,19" size 225, 250
+set term svg fname "Times,19" size 260, 250
 unset key                   # No key
 set grid                    # Turn the grid on
 
 set style data histogram
-set style histogram cluster gap 0.5
 set style fill pattern border
-set boxwidth 0.8
+#set style histogram cluster gap 0.5
+set boxwidth 0.5 # 0.8
 
 #set title gtitle offset 0,-0.7
 #set ylabel "Write Speed (MBps)" offset 3.5
@@ -21,7 +21,7 @@ set ytics border in nomirror scale 0.4
 set ytics offset graph 0.07
 
 set yrange [0:*]
-set xrange [-1.5:3.5]
+set xrange [-0.7:2.7]
 
 #set lmargin at screen 0.25
 #set rmargin at screen 0.98
