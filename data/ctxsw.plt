@@ -19,8 +19,9 @@ set xtics offset 0,graph 0.10
 
 set logscale y
 set format y "10^{%L}"
-set ytics offset graph 0.02, graph -0.05
+set ytics add ('1' 1)
 set ytics border in nomirror scale 0.6
+set ytics offset graph 0.02, graph -0.05
 
 #set tmargin at screen 0.97
 #set rmargin at screen 0.98
