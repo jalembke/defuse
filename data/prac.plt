@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,19" size 240, 250
+set term svg fname "Times,19" size 225, 250
 set grid                    # Turn the grid on
 
 unset key
