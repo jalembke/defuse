@@ -113,14 +113,14 @@ mxw.svg: mxw.dat eval.plt
 mxr.svg: mxr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" eval.plt
 
-cmr.svg: cmr.dat cmplm.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'" cmplm.plt
+cmr.svg: cmr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
-csr.svg: csr.dat cmpls.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" cmpls.plt
+csr.svg: csr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'; yformat='%.1f'; toMB='1000';" cmpl.plt
 
-clr.svg: clr.dat cmpll.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpll.plt
+clr.svg: clr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
 untar.svg: untar.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt

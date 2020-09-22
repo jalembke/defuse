@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,19" size 200, 225
+set term svg fname "Times,19" size 200, 250
 set grid ytics              # Turn the grid on for yaxis
 
 unset key
@@ -19,6 +19,7 @@ set xtic scale 0
 unset xtics
 set ytics offset 0.3
 set ytics border in nomirror scale 0.4
+set format y yformat
 
 #set tmargin at screen 0.97
 #set rmargin at screen 0.97
@@ -29,7 +30,7 @@ set ytics border in nomirror scale 0.4
 #set ylabel "Read Bandwidth (MB/s)" offset 2.4 font "Times,22"
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
-plot dat_file using 2:xtic(1) ti col fs pattern 1, \
-           '' using 3 ti col fs pattern 2, \
-           '' using 4 ti col fs pattern 4, \
-           '' using 5 ti col fs pattern 5
+plot dat_file using ($2/toMB):xtic(1) ti col fs pattern 1, \
+           '' using ($3/toMB) ti col fs pattern 2, \
+           '' using ($4/toMB) ti col fs pattern 4, \
+           '' using ($5/toMB) ti col fs pattern 5
