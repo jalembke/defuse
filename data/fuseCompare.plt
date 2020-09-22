@@ -12,10 +12,11 @@ set boxwidth 0.40
 
 # Create the plot
 set format y "%.2f"
-set ylabel "Write Speed (MBps)" offset 3.5
+#set ylabel "Write Speed (MBps)" offset 3.5
 set yrange [0:*]
 set xrange [-0.5:2.5]
-set ytics 0.25, 0.25 offset graph 0.07
+#set ytics 0.25, 0.25 offset graph 0.07
+set ytics yticSpread offset graph 0.07
 #set xtics rotate by 25 right font ",15" offset 0,graph 0.05
 #set xtic scale 0
 unset xtics
