@@ -22,7 +22,7 @@ CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg directkey.svg defusekey.
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
 #CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
 
-FUSECMPDATS=fuseCompareSmall.dat fuseCompareLarge.dat fuseCompareCtxSmall.dat fuseCompareCtxMixed.dat fuseCompareCtxLarge.dat
+FUSECMPDATS=fuseCompareSmall.dat fuseCompareMixed.dat fuseCompareLarge.dat fuseCompareCtxSmall.dat fuseCompareCtxMixed.dat fuseCompareCtxLarge.dat
 FUSECMPSVGS=$(patsubst %.dat,%.svg,$(FUSECMPDATS))
 #FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
@@ -157,6 +157,9 @@ ctxswkey.svg: ctxswkey.dat ctxswkey.plt
 
 fuseCompareSmall.svg: fuseCompareSmall.dat fuseCompare.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'; yformat='%.2f'; yticSpread='0.25,0.25';" fuseCompare.plt
+
+fuseCompareMixed.svg: fuseCompareMixed.dat fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'; yformat='%.0f'; yticSpread='50,50';" fuseCompare.plt
 
 fuseCompareLarge.svg: fuseCompareLarge.dat fuseCompare.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; yticSpread='50,50';" fuseCompare.plt
