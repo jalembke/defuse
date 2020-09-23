@@ -19,7 +19,7 @@ unset ytics
 set y2tics rotate by 90 offset -1,-0.45
 set y2tics border in nomirror scale 0.4
 
-set xrange [-1:4]
+set xrange [-0.7:3.7]
 set yrange [0:0.6]
 set y2range [0:0.6]
 
@@ -28,7 +28,7 @@ set y2range [0:0.6]
 #set lmargin at screen 0.12
 #set bmargin at screen 0.12
 
-set y2label "MMAP Runtime (s)" offset -4.5
+set y2label "Runtime (s)" offset -4.5
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot  dat_file every ::0::0 using 1:3:4:xtic(2) with boxes fs pattern 6 lc 6, \
