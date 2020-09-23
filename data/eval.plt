@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,19" size 260, 250
+set term svg fname "Times,19" size 365, 250
 set grid ytics              # Turn the grid on for yaxis
 
 unset key
@@ -13,7 +13,7 @@ set style histogram cluster gap 1
 set style fill pattern border
 set boxwidth 0.8
 
-set xrange [-0.7:2.7]
+set xrange [-0.7:3.7]
 set yrange [0:1]
 
 set xtic scale 0
