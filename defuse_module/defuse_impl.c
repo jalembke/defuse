@@ -20,7 +20,7 @@
 #include <linux/mount.h>
 
 MODULE_AUTHOR("James Lembke <jalembke@gmail.com>");
-MODULE_DESCRIPTION("Bypassed Open File System");
+MODULE_DESCRIPTION("DEFUSE File System");
 MODULE_LICENSE("GPL");
 
 #define DEFUSE_DEFAULT_MODE	0777
