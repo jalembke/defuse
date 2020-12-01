@@ -28,8 +28,8 @@ set xrange [-0.5:6.5]
 #set lmargin at screen 0.23
 #set bmargin at screen 0.25
 
-#set ylabel "Runtime (% of Direct Mount)" offset 3.0,-0.5
-set ylabel "Normalized Runtime" offset 2.7
+#set ylabel "Runtime (% of direct mount)" offset 3.0,-0.5
+set ylabel "Normalized runtime" offset 2.7
 
 # To show direct mount value
 f(x) = 1
@@ -37,4 +37,4 @@ f(x) = 1
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
 plot dat_file using ($2/100):xtic(1) ti col fs pattern 2 lc 2, \
            '' using ($3/100) ti col fs pattern 4 lc 3, \
-           f(x) lw 2 lc black dt 2 title "Direct Mount"
+           f(x) lw 2 lc black dt 2 title "Direct mount"
