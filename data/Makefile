@@ -1,5 +1,5 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
-EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg
+EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg
 #EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
 EVALPDFS=$(patsubst %.svg,%.pdf,$(EVALSVGS))
 #EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
@@ -17,12 +17,12 @@ PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
 #PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
 
 CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
-CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg
+CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg directkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg
 #CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
 #CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
 
-FUSECMPDATS=fuseCompare.dat fuseCompareLg.dat
+FUSECMPDATS=fuseCompareSmall.dat fuseCompareMixed.dat fuseCompareLarge.dat fuseCompareCtxSmall.dat fuseCompareCtxMixed.dat fuseCompareCtxLarge.dat
 FUSECMPSVGS=$(patsubst %.dat,%.svg,$(FUSECMPDATS))
 #FUSECMPPNGS=$(patsubst %.svg,%.png,$(FUSECMPSVGS))
 FUSECMPPDFS=$(patsubst %.svg,%.pdf,$(FUSECMPSVGS))
@@ -38,7 +38,7 @@ MMAPDATS=mmap.dat
 MMAPSVGS=$(patsubst %.dat,%.svg,$(MMAPDATS))
 MMAPPDFS=$(patsubst %.svg,%.pdf,$(MMAPSVGS))
 
-TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnormkey.dat
+TPCBBDATS=tpcbb.dat tpcbbkey.dat tpcbbnorm.dat tpcbbnorm2.dat tpcbbnormkey.dat
 TPCBBSVGS=$(patsubst %.dat,%.svg,$(TPCBBDATS))
 TPCBBPDFS=$(patsubst %.svg,%.pdf,$(TPCBBSVGS))
 
@@ -63,6 +63,7 @@ tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
 %.pdf: %.svg
 	inkscape $< --export-pdf=$@
 	@#rsvg-convert -f pdf $< $@
+	pdfcrop --margins 1 $@ $@
 
 %.eps: %.svg
 	inkscape $< -E $@ --export-ignore-filters --export-ps-level=3
@@ -72,6 +73,21 @@ tpcbb: ${TPCBBSVGS} ${TPCBBPDFS}
 
 evalkey.svg: evalkey.dat evalkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" evalkey.plt
+
+defusekey.svg: defusekey.dat defusekey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" defusekey.plt
+
+directkey.svg: directkey.dat directkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" directkey.plt
+
+ldpkey.svg: ldpkey.dat ldpkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" ldpkey.plt
+
+fusediokey.svg: fusediokey.dat fusediokey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" fusediokey.plt
+
+fusekey.svg: fusekey.dat fusekey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" fusekey.plt
 
 cmpkey.svg: cmpkey.dat cmpkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" cmpkey.plt
@@ -97,35 +113,35 @@ mxw.svg: mxw.dat eval.plt
 mxr.svg: mxr.dat eval.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File Read'" eval.plt
 
-cmr.svg: cmr.dat cmplm.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'" cmplm.plt
+cmr.svg: cmr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
-csr.svg: csr.dat cmpls.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" cmpls.plt
+csr.svg: csr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'; yformat='%.1f'; toMB='1000';" cmpl.plt
 
-clr.svg: clr.dat cmpll.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" cmpll.plt
+clr.svg: clr.dat cmpl.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
 untar.svg: untar.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 cp.svg: cp.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 wc.svg: wc.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (min)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
 
 lrdgen.svg: lrdgen.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\nData Generation\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\nData Generation\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 lr.svg: lr.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linear Regression\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 kmeans.svg: kmeans.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (sec)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
 
 tdfsio.svg: tdfsio.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (min)\"" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
 
 ctxsws.svg: ctxsws.dat ctxsw.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Small File Context Switches\"" ctxsw.plt
@@ -139,17 +155,30 @@ ctxswm.svg: ctxswm.dat ctxsw.plt
 ctxswkey.svg: ctxswkey.dat ctxswkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" ctxswkey.plt
 
-fuseCompare.svg: fuseCompare.dat fuseCompare.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" fuseCompare.plt
+fuseCompareSmall.svg: fuseCompareSmall.dat fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'; yformat='%.2f'; yticSpread='0.25,0.25';" fuseCompare.plt
 
-fuseCompareLg.svg: fuseCompareLg.dat fuseCompareLg.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" fuseCompareLg.plt
+fuseCompareMixed.svg: fuseCompareMixed.dat fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'; yformat='%.0f'; yticSpread='50,50';" fuseCompare.plt
+
+fuseCompareLarge.svg: fuseCompareLarge.dat fuseCompare.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; yticSpread='50,50';" fuseCompare.plt
+
+fuseCompareCtxSmall.svg: fuseCompareCtxSmall.dat fuseCompareCtx.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Small File'" fuseCompareCtx.plt
+
+fuseCompareCtxMixed.svg: fuseCompareCtxMixed.dat fuseCompareCtx.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Mixed File'" fuseCompareCtx.plt
+
+fuseCompareCtxLarge.svg: fuseCompareCtxLarge.dat fuseCompareCtx.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'" fuseCompareCtx.plt
 
 fdstash.svg: fdstash.dat fdstash.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" fdstash.plt
 
 mmap.svg: mmap.dat mmap.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" mmap.plt
+	inkscape --actions="select-all;transform-rotate:90;FileSave;FileClose" --batch-process $@
 
 tpcbb.svg: tpcbb.dat tpcbb.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbb.plt
@@ -159,6 +188,9 @@ tpcbbkey.svg: tpcbbkey.dat tpcbbkey.plt
 
 tpcbbnorm.svg: tpcbbnorm.dat tpcbbnorm.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm.plt
+
+tpcbbnorm2.svg: tpcbbnorm2.dat tpcbbnorm2.plt
+	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnorm2.plt
 
 tpcbbnormkey.svg: tpcbbnormkey.dat tpcbbnormkey.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbbnormkey.plt
