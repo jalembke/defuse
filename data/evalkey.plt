@@ -21,7 +21,8 @@ set notitle
 set noxlabel
 set noylabel
 
-plot dat_file using 2:xtic(1) ti col fs pattern 1, \
-           '' using 3 ti col fs pattern 2, \
-           '' using 4 ti col fs pattern 4, \
-           '' using 5 ti col fs pattern 5,
+plot dat_file using 2:xtic(1) ti col lc 1 fs pattern 1, \
+           '' using 3 ti col lc 7 fs pattern 7, \
+           '' using 4 ti col lc 2 fs pattern 2, \
+           '' using 5 ti col lc 3 fs pattern 4, \
+           '' using 6 ti col lc 4 fs pattern 5,
