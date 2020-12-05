@@ -29,7 +29,8 @@ set ytics border in nomirror scale 0.4
 #set bmargin at screen 0.08
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
-plot dat_file using ($2/100):xtic(1) ti col fs pattern 1, \
-           '' using ($3/100) ti col fs pattern 2, \
-           '' using ($4/100) ti col fs pattern 4, \
-           '' using ($5/100) ti col fs pattern 5
+plot dat_file using ($2/100):xtic(1) ti col lc 1 fs pattern 1, \
+           '' using ($3/100) ti col lc 7 fs pattern 7, \
+           '' using ($4/100) ti col lc 2 fs pattern 2, \
+           '' using ($5/100) ti col lc 3 fs pattern 4, \
+           '' using ($6/100) ti col lc 4 fs pattern 5

@@ -1,2 +1,2 @@
-Title           "Direct mount" "LD\\_PRELOAD" XYZ FUSE "FUSE\ndirect I/O"
-key             0 0 0 0 0 
+Title           "Direct mount" "LD\\_PRELOAD" Direct-FUSE XYZ FUSE "FUSE\ndirect I/O"
+key             0 0 0 0 0 0 
