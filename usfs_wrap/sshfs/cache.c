@@ -6,7 +6,9 @@
   See the file COPYING.
 */
 
-#include "cache.h"
+#include <fuse.h>
+#include <fuse_opt.h>
+
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -14,6 +16,8 @@
 #include <errno.h>
 #include <glib.h>
 #include <pthread.h>
+
+#include "cache.h"
 
 #define DEFAULT_CACHE_TIMEOUT_SECS 20
 #define DEFAULT_MAX_CACHE_SIZE 10000
@@ -28,7 +32,7 @@ struct cache {
 	unsigned int max_size;
 	unsigned int clean_interval_secs;
 	unsigned int min_clean_interval_secs;
-	struct fuse_operations *next_oper;
+	struct sshfs_operations *next_oper;
 	GHashTable *table;
 	pthread_mutex_t lock;
 	time_t last_cleaned;
@@ -251,6 +255,7 @@ uint64_t cache_get_write_ctr(void)
 	return res;
 }
 
+/*
 static void *cache_init(struct fuse_conn_info *conn,
                         struct fuse_config *cfg)
 {
@@ -262,9 +267,10 @@ static void *cache_init(struct fuse_conn_info *conn,
 
 	return res;
 }
+*/
 
 static int cache_getattr(const char *path, struct stat *stbuf,
-			 struct fuse_file_info *fi)
+			 uint64_t *fi)
 {
 	int err = cache_get_attr(path, stbuf);
 	if (err) {
@@ -293,7 +299,7 @@ static int cache_readlink(const char *path, char *buf, size_t size)
 		}
 	}
 	pthread_mutex_unlock(&cache.lock);
-	err = cache.next_oper->readlink(path, buf, size);
+	//err = cache.next_oper->readlink(path, buf, size);
 	if (!err)
 		cache_add_link(path, buf, size);
 
@@ -323,7 +329,7 @@ static int cache_releasedir(const char *path, struct fuse_file_info *fi)
 	
 	if(cfi->is_open) {
 		fi->fh = cfi->fs_fh;
-		err = cache.next_oper->releasedir(path, fi);
+		//err = cache.next_oper->releasedir(path, fi);
 	} else
 		err = 0;
 
@@ -332,14 +338,13 @@ static int cache_releasedir(const char *path, struct fuse_file_info *fi)
 }
 
 static int cache_dirfill (void *buf, const char *name,
-			  const struct stat *stbuf, off_t off,
-			  enum fuse_fill_dir_flags flags)
+			  const struct stat *stbuf, off_t off)
 {
 	int err;
 	struct readdir_handle *ch;
 
 	ch = (struct readdir_handle*) buf;
-	err = ch->filler(ch->buf, name, stbuf, off, flags);
+	err = ch->filler(ch->buf, name, stbuf, off);
 	if (!err) {
 		g_ptr_array_add(ch->dir, g_strdup(name));
 		if (stbuf->st_mode & S_IFMT) {
@@ -355,8 +360,7 @@ static int cache_dirfill (void *buf, const char *name,
 }
 
 static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-			 off_t offset, struct fuse_file_info *fi,
-			 enum fuse_readdir_flags flags)
+			 off_t offset, struct fuse_file_info *fi)
 {
 	struct readdir_handle ch;
 	struct file_handle *cfi;
@@ -373,7 +377,7 @@ static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		if (node->dir_valid - now >= 0) {
 			for(dir = node->dir; *dir != NULL; dir++)
 				// FIXME: What about st_mode?
-				filler(buf, *dir, NULL, 0, 0);
+				filler(buf, *dir, NULL, 0);
 			pthread_mutex_unlock(&cache.lock);
 			return 0;
 		}
@@ -398,7 +402,7 @@ static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	ch.filler = filler;
 	ch.dir = g_ptr_array_new();
 	ch.wrctr = cache_get_write_ctr();
-	err = cache.next_oper->readdir(path, &ch, cache_dirfill, offset, fi, flags);
+	err = cache.next_oper->readdir(path, &ch, cache_dirfill, offset, fi);
 	g_ptr_array_add(ch.dir, NULL);
 	dir = (char **) ch.dir->pdata;
 	if (!err) {
@@ -496,10 +500,10 @@ static int cache_utimens(const char *path, const struct timespec tv[2],
 	return err;
 }
 
-static int cache_write(const char *path, const char *buf, size_t size,
-                       off_t offset, struct fuse_file_info *fi)
+static int cache_write(const char *buf, size_t size,
+                       off_t offset, uint64_t *fi)
 {
-	int res = cache.next_oper->write(path, buf, size, offset, fi);
+	int res = cache.next_oper->write(buf, size, offset, fi);
 	if (res >= 0)
 		cache_invalidate_write(path);
 	return res;
@@ -515,7 +519,7 @@ static int cache_create(const char *path, mode_t mode,
 }
 
 static int cache_truncate(const char *path, off_t size,
-			  struct fuse_file_info *fi)
+			  uint64_t *fi)
 {
 	int err = cache.next_oper->truncate(path, size, fi);
 	if (!err)
@@ -523,9 +527,17 @@ static int cache_truncate(const char *path, off_t size,
 	return err;
 }
 
-static void cache_fill(struct fuse_operations *oper,
-		       struct fuse_operations *cache_oper)
+static void cache_fill(struct sshfs_operations *oper,
+		       struct sshfs_operations *cache_oper)
 {
+	cache_oper->read     = oper->read;
+	cache_oper->write    = oper->write ? cache_write : NULL;
+	cache_oper->fsync    = oper->fsync;
+	cache_oper->release  = oper->release;
+	cache_oper->truncate = oper->truncate ? cache_truncate : NULL;
+	cache_oper->getattr  = oper->getattr ? cache_getattr : NULL;
+	cache_oper->unlink   = oper->unlink ? cache_unlink : NULL;
+/*	
 	cache_oper->access   = oper->access;
 	cache_oper->chmod    = oper->chmod ? cache_chmod : NULL;
 	cache_oper->chown    = oper->chown ? cache_chown : NULL;
@@ -556,11 +568,12 @@ static void cache_fill(struct fuse_operations *oper,
 	cache_oper->unlink   = oper->unlink ? cache_unlink : NULL;
 	cache_oper->utimens  = oper->utimens ? cache_utimens : NULL;
 	cache_oper->write    = oper->write ? cache_write : NULL;
+*/
 }
 
-struct fuse_operations *cache_wrap(struct fuse_operations *oper)
+struct sshfs_operations *cache_wrap(struct sshfs_operations *oper)
 {
-	static struct fuse_operations cache_oper;
+	static struct sshfs_operations cache_oper;
 	cache.next_oper = oper;
 
 	cache_fill(oper, &cache_oper);

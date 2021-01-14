@@ -6,10 +6,9 @@
     See the file COPYING.
 */
 
-#include <fuse.h>
-#include <fuse_opt.h>
+#include "sshfs_op.h"
 
-struct fuse_operations *cache_wrap(struct fuse_operations *oper);
+struct sshfs_operations *cache_wrap(struct sshfs_operations *oper);
 int cache_parse_options(struct fuse_args *args);
 void cache_add_attr(const char *path, const struct stat *stbuf, uint64_t wrctr);
 void cache_invalidate(const char *path);

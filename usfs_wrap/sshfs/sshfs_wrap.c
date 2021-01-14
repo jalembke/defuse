@@ -13,8 +13,6 @@
 
 #include <fuse.h>
 #include <fuse_opt.h>
-#include <fuse_lowlevel.h>
-
 
 #include <assert.h>
 #include <stdio.h>
@@ -360,7 +358,7 @@ struct sshfs {
 	int ext_statvfs;
 	int ext_hardlink;
 	int ext_fsync;
-	struct sshfs_op *op;
+	struct sshfs_operations *op;
 
 	/* statistics */
 	uint64_t bytes_sent;
@@ -2736,7 +2734,7 @@ static int sshfs_open_common(const char *path, int flags, mode_t mode, uint64_t 
 		if (sshfs.dir_cache)
 			cache_add_attr(path, &stbuf, wrctr);
 		buf_finish(&sf->handle);
-		*fh = (unsigned long) sf;
+		*fi = (uint64_t) sf;
 	} else {
 		if (sshfs.dir_cache)
 			cache_invalidate(path);
@@ -2758,7 +2756,7 @@ static int sshfs_open_common(const char *path, int flags, mode_t mode, uint64_t 
 
 static int sshfs_open(const char *path, uint64_t *fi)
 {
-	return sshfs_open_common(path, 0, fi);
+	return sshfs_open_common(path, 0, 0, fi);
 }
 
 static int sshfs_flush(uint64_t *fi)
@@ -3365,8 +3363,8 @@ static int sshfs_truncate_zero(const char *path)
 	int err;
 	uint64_t fi;
 
-	fi.flags = O_WRONLY | O_TRUNC;
-	err = sshfs_open(path, &fi);
+	int flags = O_WRONLY | O_TRUNC;
+	err = sshfs_open_common(path, flags, 0, &fi);
 	if (!err)
 		sshfs_release(path, &fi);
 
@@ -3389,14 +3387,14 @@ static int sshfs_truncate_shrink(const char *path, off_t size)
 	if (!data)
 		return -ENOMEM;
 
-	fi.flags = O_RDONLY;
-	res = sshfs_open(path, &fi);
+	int flags = O_RDONLY;
+	res = sshfs_open_common(path, flags, 0, &fi);
 	if (res)
 		goto out;
 
 	for (offset = 0; offset < size; offset += res) {
 		size_t bufsize = calc_buf_size(size, offset);
-		res = sshfs_read(path, data + offset, bufsize, offset, &fi);
+		res = sshfs_read(data + offset, bufsize, offset, &fi);
 		if (res <= 0)
 			break;
 	}
@@ -3404,19 +3402,19 @@ static int sshfs_truncate_shrink(const char *path, off_t size)
 	if (res < 0)
 		goto out;
 
-	fi.flags = O_WRONLY | O_TRUNC;
-	res = sshfs_open(path, &fi);
+	flags = O_WRONLY | O_TRUNC;
+	res = sshfs_open_common(path, flags, 0, &fi);
 	if (res)
 		goto out;
 
 	for (offset = 0; offset < size; offset += res) {
 		size_t bufsize = calc_buf_size(size, offset);
-		res = sshfs_write(path, data + offset, bufsize, offset, &fi);
+		res = sshfs_write(data + offset, bufsize, offset, &fi);
 		if (res < 0)
 			break;
 	}
 	if (res >= 0)
-		res = sshfs_flush(path, &fi);
+		res = sshfs_flush(&fi);
 	sshfs_release(path, &fi);
 
 out:
@@ -3429,18 +3427,18 @@ static int sshfs_truncate_extend(const char *path, off_t size,
 {
 	int res;
 	char c = 0;
-	uint64_t tmpfi;
-	uint64_t *openfi = fi;
+	uint64_t tempfi;
+	uint64_t* openfi = fi;
 	if (!fi) {
-		openfi = &tmpfi;
-		openfi->flags = O_WRONLY;
-		res = sshfs_open(path, openfi);
+		openfi = &tempfi;
+		int flags = O_WRONLY;
+		res = sshfs_open_common(path, flags, 0, openfi);
 		if (res)
 			return res;
 	}
-	res = sshfs_write(path, &c, 1, size - 1, openfi);
+	res = sshfs_write(&c, 1, size - 1, openfi);
 	if (res == 1)
-		res = sshfs_flush(path, openfi);
+		res = sshfs_flush(openfi);
 	if (!fi)
 		sshfs_release(path, openfi);
 
@@ -4056,7 +4054,8 @@ int usfs_init(const char* mount_path, const char* backend_path)
 
 	/* emulate command line args */
 	int argc = 1;
-	char** argv = { "sshfs" };
+	char* argv[1];
+	argv[0] = "sshfs";
 	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 
 	sshfs.blksize = 4096;
@@ -4105,14 +4104,11 @@ int usfs_init(const char* mount_path, const char* backend_path)
 
 	if (sshfs.show_version) {
 		printf("SSHFS version %s\n", PACKAGE_VERSION);
-		printf("FUSE library version %s\n", fuse_pkgversion());
-		fuse_lowlevel_version();
 		exit(0);
 	}
 
 	if (sshfs.show_help) {
 		usage(args.argv[0]);
-		fuse_lib_help(&args);
 		exit(0);
 	} else if (!sshfs.host) {
 		fprintf(stderr, "missing host\n");
@@ -4257,7 +4253,7 @@ int usfs_init(const char* mount_path, const char* backend_path)
 
 int usfs_open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
-	int rc = sshfs_open_common(path, mode, ret_fh);
+	int rc = sshfs_open_common(path, flags, mode, ret_fh);
 	return -rc;
 }
 
@@ -4269,13 +4265,13 @@ int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_r
 
 int usfs_write(uint64_t fh, const char *buf, size_t size, off_t offset, size_t* bytes_written)
 {
-	int rc = sshfs.op->write(buf, size, offset, &fi);
+	int rc = sshfs.op->write(buf, size, offset, &fh);
 	return -rc;
 }
 
 int usfs_fsync(uint64_t fh, int data_sync)
 {
-	int rc = sshfs.op->fsync(NULL, data_sync, &fh);
+	int rc = sshfs.op->fsync(data_sync, &fh);
 	return -rc;
 }
 
