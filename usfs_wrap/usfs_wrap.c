@@ -12,7 +12,7 @@
 
 static char* backend = NULL;
 
-void usfs_init (const char* mount_path, const char* backend_path)
+void usfs_init(const char* mount_path, const char* backend_path)
 {
 	//printf("INIT: %s %s\n", mount_path, backend_path);
 	backend = strdup(backend_path);
