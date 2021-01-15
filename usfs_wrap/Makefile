@@ -15,7 +15,7 @@ libavfs_wrap.so: avfs_wrap.o
 	$(CC) -o $@ avfs_wrap.o /usr/local/lib/libavfs.a $(LFLAGS)
 
 libsshfs_wrap.so: sshfs_wrap.o cache.o
-	$(CC) -o $@ ssh_wrap.o cache.o `pkg-config fuse --libs` $(LFLAGS)
+	$(CC) -o $@ sshfs_wrap.o cache.o `pkg-config fuse --libs` $(LFLAGS)
 
 cleanobjs:
 	rm -f usfs_wrap.o avfs_wrap.o

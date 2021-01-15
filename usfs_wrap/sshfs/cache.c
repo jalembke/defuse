@@ -388,11 +388,13 @@ static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	if(cfi->is_open)
 		fi->fh = cfi->fs_fh;
 	else {
+		/*
 		if(cache.next_oper->opendir) {
 			err = cache.next_oper->opendir(path, fi);
 			if(err)
 				return err;
 		}
+		*/
 		cfi->is_open = 1;
 		cfi->fs_fh = fi->fh;
 	} 
@@ -402,7 +404,7 @@ static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	ch.filler = filler;
 	ch.dir = g_ptr_array_new();
 	ch.wrctr = cache_get_write_ctr();
-	err = cache.next_oper->readdir(path, &ch, cache_dirfill, offset, fi);
+	//err = cache.next_oper->readdir(path, &ch, cache_dirfill, offset, fi);
 	g_ptr_array_add(ch.dir, NULL);
 	dir = (char **) ch.dir->pdata;
 	if (!err) {
@@ -417,7 +419,7 @@ static int cache_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 static int cache_mknod(const char *path, mode_t mode, dev_t rdev)
 {
-	int err = cache.next_oper->mknod(path, mode, rdev);
+	int err = 0; // cache.next_oper->mknod(path, mode, rdev);
 	if (!err)
 		cache_invalidate_dir(path);
 	return err;
@@ -425,7 +427,7 @@ static int cache_mknod(const char *path, mode_t mode, dev_t rdev)
 
 static int cache_mkdir(const char *path, mode_t mode)
 {
-	int err = cache.next_oper->mkdir(path, mode);
+	int err = 0; // cache.next_oper->mkdir(path, mode);
 	if (!err)
 		cache_invalidate_dir(path);
 	return err;
@@ -441,7 +443,7 @@ static int cache_unlink(const char *path)
 
 static int cache_rmdir(const char *path)
 {
-	int err = cache.next_oper->rmdir(path);
+	int err = 0; // cache.next_oper->rmdir(path);
 	if (!err)
 		cache_invalidate_dir(path);
 	return err;
@@ -449,7 +451,7 @@ static int cache_rmdir(const char *path)
 
 static int cache_symlink(const char *from, const char *to)
 {
-	int err = cache.next_oper->symlink(from, to);
+	int err = 0; // cache.next_oper->symlink(from, to);
 	if (!err)
 		cache_invalidate_dir(to);
 	return err;
@@ -457,7 +459,7 @@ static int cache_symlink(const char *from, const char *to)
 
 static int cache_rename(const char *from, const char *to, unsigned int flags)
 {
-	int err = cache.next_oper->rename(from, to, flags);
+	int err = 0; // cache.next_oper->rename(from, to, flags);
 	if (!err)
 		cache_do_rename(from, to);
 	return err;
@@ -465,7 +467,7 @@ static int cache_rename(const char *from, const char *to, unsigned int flags)
 
 static int cache_link(const char *from, const char *to)
 {
-	int err = cache.next_oper->link(from, to);
+	int err = 0; // cache.next_oper->link(from, to);
 	if (!err) {
 		cache_invalidate(from);
 		cache_invalidate_dir(to);
@@ -476,7 +478,7 @@ static int cache_link(const char *from, const char *to)
 static int cache_chmod(const char *path, mode_t mode,
                        struct fuse_file_info *fi)
 {
-	int err = cache.next_oper->chmod(path, mode, fi);
+	int err = 0; // cache.next_oper->chmod(path, mode, fi);
 	if (!err)
 		cache_invalidate(path);
 	return err;
@@ -485,7 +487,7 @@ static int cache_chmod(const char *path, mode_t mode,
 static int cache_chown(const char *path, uid_t uid, gid_t gid,
                        struct fuse_file_info *fi)
 {
-	int err = cache.next_oper->chown(path, uid, gid, fi);
+	int err = 0; // cache.next_oper->chown(path, uid, gid, fi);
 	if (!err)
 		cache_invalidate(path);
 	return err;
@@ -494,7 +496,7 @@ static int cache_chown(const char *path, uid_t uid, gid_t gid,
 static int cache_utimens(const char *path, const struct timespec tv[2],
 			 struct fuse_file_info *fi)
 {
-	int err = cache.next_oper->utimens(path, tv, fi);
+	int err = 0; // cache.next_oper->utimens(path, tv, fi);
 	if (!err)
 		cache_invalidate(path);
 	return err;
@@ -505,14 +507,15 @@ static int cache_write(const char *buf, size_t size,
 {
 	int res = cache.next_oper->write(buf, size, offset, fi);
 	if (res >= 0)
-		cache_invalidate_write(path);
+		//cache_invalidate_write(path);
+		cache_invalidate_write("");
 	return res;
 }
 
 static int cache_create(const char *path, mode_t mode,
                         struct fuse_file_info *fi)
 {
-	int err = cache.next_oper->create(path, mode, fi);
+	int err = 0; // cache.next_oper->create(path, mode, fi);
 	if (!err)
 		cache_invalidate_dir(path);
 	return err;
