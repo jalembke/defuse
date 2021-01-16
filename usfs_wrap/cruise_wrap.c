@@ -10,7 +10,8 @@
 #include <inttypes.h>
 #include <pthread.h>
 
-#include <cruise.h>
+#include "cruise.h"
+#include "cruise-internal.h"
 
 static char* backend = NULL;
 
@@ -37,7 +38,7 @@ int usfs_open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 
 int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_read)
 {
-	int ret = CRUISE_WRAP(pread)((int)fh, buf, size, offst);
+	int ret = CRUISE_WRAP(pread)((int)fh, buf, size, offset);
 	if(-1 == ret) {
 		ret = errno;
 		*bytes_read = 0;
@@ -50,7 +51,7 @@ int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_r
 
 int usfs_write(uint64_t fh, const char *buf, size_t size, off_t offset, size_t* bytes_written)
 {
-	int ret = CRUIS_WRAP(pwrite)((int)fh, buf, size, offset);
+	int ret = CRUISE_WRAP(pwrite)((int)fh, buf, size, offset);
 	if(-1 == ret) {
 		ret = errno;
 		*bytes_written = 0;
@@ -63,15 +64,24 @@ int usfs_write(uint64_t fh, const char *buf, size_t size, off_t offset, size_t* 
 
 int usfs_fsync(uint64_t fh, int data_sync)
 {
-	return 0;
+	int ret = 0;
+	if(!data_sync) {
+		ret = CRUISE_WRAP(fsync)((int)fh);
+    } else {
+		ret = CRUISE_WRAP(fdatasync)((int)fh);
+	}
+	if(-1 == ret) {
+		ret = errno;
+	}
+	return ret;
 }
 
 int usfs_truncate(const char* path, off_t length)
 {
-	int ret =0;
+	int ret = 0;
 	char path_to_truncate[PATH_MAX];
 	snprintf(path_to_truncate, PATH_MAX, "%s/%s", backend, path);
-	ret = virt_truncate(path_to_truncate, length);
+	ret = CRUISE_WRAP(truncate)(path_to_truncate, length);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -80,7 +90,7 @@ int usfs_truncate(const char* path, off_t length)
 
 int usfs_ftruncate(uint64_t fh, off_t offset)
 {
-	int ret = virt_ftruncate((int)fh, offset);
+	int ret = CRUISE_WRAP(ftruncate)((int)fh, offset);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -89,7 +99,7 @@ int usfs_ftruncate(uint64_t fh, off_t offset)
 
 int usfs_fgetattr(uint64_t fh, struct stat *stbuf)
 {
-	int ret = virt_fstat((int)fh, stbuf);
+	int ret = CRUISE_WRAP(stat)((int)fh, stbuf);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -101,12 +111,7 @@ int usfs_getattr(const char* path, struct stat *stbuf, int flags)
 	int ret = 0;
 	char path_to_stat[PATH_MAX];
 	snprintf(path_to_stat, PATH_MAX, "%s/%s", backend, path);
-	//printf("GETATTR %s %o\n", path_to_stat, flags);
-	if (flags & AT_SYMLINK_NOFOLLOW) {
-		ret = virt_lstat(path_to_stat, stbuf);
-	} else {
-		ret = virt_stat(path_to_stat, stbuf);
-	}
+	ret = CRUISE_WRAP(stat)(path_to_stat, stbuf);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -118,7 +123,7 @@ int usfs_unlink(const char* path)
 	int ret =0;
 	char path_to_unlink[PATH_MAX];
 	snprintf(path_to_unlink, PATH_MAX, "%s/%s", backend, path);
-	ret = virt_unlink(path_to_unlink);
+	ret = CRUISE_WRAP(unlink)(path_to_unlink);
 	if(-1 == ret) {
 		ret = errno;
 	}
@@ -127,5 +132,5 @@ int usfs_unlink(const char* path)
 
 int usfs_close(uint64_t fh)
 {
-	return virt_close(fh);
+	return CRUISE_WRAP(close)((int)fh);
 }
