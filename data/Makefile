@@ -1,5 +1,5 @@
 EVALDATS=smw.dat smr.dat lgw.dat lgr.dat mxw.dat mxr.dat
-EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg directfusekey.svg
+EVALSVGS=$(patsubst %.dat,%.svg,$(EVALDATS)) evalkey.svg xyzkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg directfusekey.svg
 #EVALPNGS=$(patsubst %.svg,%.png,$(EVALSVGS))
 EVALPDFS=$(patsubst %.svg,%.pdf,$(EVALSVGS))
 #EVALEPSS=$(patsubst %.svg,%.eps,$(EVALSVGS))
@@ -17,7 +17,7 @@ PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
 #PRACEPSS=$(patsubst %.svg,%.eps,$(PRACSVGS))
 
 CTXDATS=ctxsws.dat ctxswl.dat ctxswm.dat
-CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg directkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg directfusekey.svg
+CTXSVGS=$(patsubst %.dat,%.svg,$(CTXDATS)) ctxswkey.svg directkey.svg xyzkey.svg defusekey.svg fusekey.svg fusediokey.svg ldpkey.svg directfusekey.svg
 #CTXPNGS=$(patsubst %.svg,%.png,$(CTXSVGS))
 CTXPDFS=$(patsubst %.svg,%.pdf,$(CTXSVGS))
 #CTXEPSS=$(patsubst %.svg,%.eps,$(CTXSVGS))
@@ -76,6 +76,9 @@ evalkey.svg: evalkey.dat evalkey.plt
 
 defusekey.svg: defusekey.dat defusekey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" defusekey.plt
+
+xyzkey.svg: xyzkey.dat xyzkey.plt 
+	gnuplot -e "dat_file='$<'; out_file='$@';" xyzkey.plt
 
 directkey.svg: directkey.dat directkey.plt 
 	gnuplot -e "dat_file='$<'; out_file='$@';" directkey.plt
