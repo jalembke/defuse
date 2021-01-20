@@ -185,7 +185,7 @@ fdstash.svg: fdstash.dat fdstash.plt
 mmap.svg: mmap.dat mmap.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" mmap.plt
 	#inkscape --actions="select-all;transform-rotate:90;FileSave;FileClose" --batch-process $@
-	inkscape $@ --select=gnuplot_canvas --verb=ObjectRotate90 --verb=FileSave --verb=FileClose --verb=FileQuit
+	#inkscape $@ --select=gnuplot_canvas --verb=ObjectRotate90 --verb=FileSave --verb=FileClose --verb=FileQuit
 
 tpcbb.svg: tpcbb.dat tpcbb.plt
 	gnuplot -e "dat_file='$<'; out_file='$@';" tpcbb.plt
