@@ -19,7 +19,7 @@ unset xtics
 #set ytics yticSpread
 #set xtics offset 0, graph 0.10
 set ytics border in nomirror scale 0.4
-set ytics offset graph 0.05
+set ytics offset graph 0.03
 
 set yrange [0:*]
 set xrange [-0.7:3.7]
