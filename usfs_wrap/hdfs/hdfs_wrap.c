@@ -1724,87 +1724,87 @@ void usfs_init(const char* mount_path, const char* backend_path)
 
 int usfs_open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 {
-	int rc = 0;
-	if(flags & O_CREAT) {
-		rc = hadoop_fuse_mknod(path, mode);
-	}
-	if(rc != 0) {
-		return -rc;
-	}
-	rc = hadoop_fuse_open(path, flags, ret_fh);
-	if(rc >= 0) {
-		struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)(*ret_fh);
-		strncpy(fh->file_path, path, PATH_MAX);
-	}
-	return -rc;
+  int rc = 0;
+  if(flags & O_CREAT) {
+    rc = hadoop_fuse_mknod(path, mode);
+  }
+  if(rc != 0) {
+    return -rc;
+  }
+  rc = hadoop_fuse_open(path, flags, ret_fh);
+  if(rc >= 0) {
+    struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)(*ret_fh);
+    strncpy(fh->file_path, path, PATH_MAX);
+  }
+  return -rc;
 }
 
-int usfs_read(uint64_t fhi, char *buf, size_t size, off_t offset, size_t* bytes_read)
+int usfs_read(uint64_t fhi, char * buf, size_t size, off_t offset, size_t* bytes_read)
 {
-	struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
-	int rc = hadoop_fuse_read(fh->file_path, buf, size, offset, &fhi);
-	if(rc < 0) {
-		return -rc;
-	} else {
-		*bytes_read = rc;
-	}
-	return 0;
+  struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
+  int rc = hadoop_fuse_read(fh->file_path, buf, size, offset, &fhi);
+  if(rc < 0) {
+    return -rc;
+  } else {
+    *bytes_read = rc;
+  }
+  return 0;
 }
 
-int usfs_write(uint64_t fhi, const char *buf, size_t size, off_t offset, size_t* bytes_written)
+int usfs_write(uint64_t fhi, const char * buf, size_t size, off_t offset, size_t* bytes_written)
 {
-	struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
-	int rc = hadoop_fuse_write(fh->file_path, buf, size, offset, &fhi);
-	if(rc < 0) {
-		return -rc;
-	} else {
-		*bytes_written = rc;
-	}
-	return 0;
+  struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
+  int rc = hadoop_fuse_write(fh->file_path, buf, size, offset, &fhi);
+  if(rc < 0) {
+    return -rc;
+  } else {
+    *bytes_written = rc;
+  }
+  return 0;
 }
 
 int usfs_fsync(uint64_t fhi, int data_sync)
 {
-	struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
-	int rc = hadoop_fuse_fsync(fh->file_path, data_sync, &fhi);
-	return -rc;
+  struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
+  int rc = hadoop_fuse_fsync(fh->file_path, data_sync, &fhi);
+  return -rc;
 }
 
 int usfs_truncate(const char* path, off_t length)
 {
-	int rc = hadoop_fuse_truncate(path, length);
-	return -rc;
+  int rc = hadoop_fuse_truncate(path, length);
+  return -rc;
 }
 
 int usfs_ftruncate(uint64_t fhi, off_t offset)
 {
-	struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
-	int rc = hadoop_fuse_ftruncate(fh->file_path, offset, &fhi);
-	return -rc;
+  struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
+  int rc = hadoop_fuse_ftruncate(fh->file_path, offset, &fhi);
+  return -rc;
 }
 
-int usfs_fgetattr(uint64_t fhi, struct stat *stbuf)
+int usfs_fgetattr(uint64_t fhi, struct stat * stbuf)
 {
-	struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
-	int rc = hadoop_fuse_getattr(fh->file_path, stbuf);
-	return -rc;
+  struct Hadoop_Fuse_FileHandle* fh = (struct Hadoop_Fuse_FileHandle*)fhi;
+  int rc = hadoop_fuse_getattr(fh->file_path, stbuf);
+  return -rc;
 }
 
-int usfs_getattr(const char* path, struct stat *stbuf, int flags)
+int usfs_getattr(const char* path, struct stat * stbuf, int flags)
 {
-	(void)flags;
-	int rc = hadoop_fuse_getattr(path, stbuf);
-	return -rc;
+  (void)flags;
+  int rc = hadoop_fuse_getattr(path, stbuf);
+  return -rc;
 }
 
 int usfs_unlink(const char* path)
 {
-	int rc = hadoop_fuse_delete(path);
-	return -rc;
+  int rc = hadoop_fuse_delete(path);
+  return -rc;
 }
 
 int usfs_close(uint64_t ret_fh)
 {
-	(void)ret_fh;
-	return 0;
+  (void)ret_fh;
+  return 0;
 }
