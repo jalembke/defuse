@@ -1,5 +1,5 @@
 set output out_file         # Set the output path
-set term svg fname "Times,19" size 365, 250
+set term svg fname "Times,19" size 340, 250
 set grid ytics              # Turn the grid on for yaxis
 
 unset key
