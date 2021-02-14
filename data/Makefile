@@ -134,10 +134,10 @@ clr.svg: clr.dat cmpl.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
 untar.svg: untar.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f\";" prac.plt
 
 cp.svg: cp.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f\";" prac.plt
 
 wc.svg: wc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
