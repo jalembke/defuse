@@ -79,7 +79,7 @@ static int register_uffd()
 	}
 
 	uffdio_api.api = UFFD_API;
-	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM;
+	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM | UFFD_FEATURE_EVENT_UNMAP;
 	if (ioctl(fd, UFFDIO_API, &uffdio_api) == -1) {
 		errExit("ioctl-UFFDIO_API");
 	}
@@ -199,8 +199,8 @@ static inline void* setup_paging_manager(const char* file, struct userfaultContr
 
 static inline void end_paging_manager(struct userfaultControlBlock* ucb)
 {
-	unregister_uffd_addr(ucb->address, ucb->space_size, ucb->uffd);
 	munmap(ucb->address, ucb->space_size);
+	unregister_uffd_addr(ucb->address, ucb->space_size, ucb->uffd);
 	close(ucb->shmem_fd);
 	close(ucb->backend_fd);
 	close(ucb->uffd);
