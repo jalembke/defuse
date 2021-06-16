@@ -5,6 +5,7 @@ set grid ytics              # Turn the grid on for yaxis
 unset key
 
 #set title gtitle offset 0,-0.7 font "Times,22"
+set errorbars fullwidth
 set style data histogram
 set style histogram cluster gap 0.5
 set style histogram errorbars gap 2 lw 1

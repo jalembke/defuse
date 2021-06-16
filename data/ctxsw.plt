@@ -5,10 +5,12 @@ set grid ytics              # Turn the grid on for yaxis
 unset key
 
 #set title gtitle offset 0,-0.7
+set errorbars fullwidth
 set style data histogram
 set style histogram cluster gap 1.0
+set style histogram errorbars gap 2 lw 1
 #set style fill solid 0.25 border
-set style fill pattern border
+set style fill pattern border lt -1
 set boxwidth 0.8
 
 set xrange [-0.55:1.55]
@@ -31,9 +33,9 @@ set ytics offset graph 0.02, graph -0.05
 #set ylabel "I/O Context Switches" offset 4.5
 
 # 2, 3, 4, 5 are the indexes of the columns; 'fc' stands for 'fillcolor'
-plot dat_file using 2:xtic(1) ti col lc 6 fs pattern 6, \
-           '' using 3 ti col lc 1 fs pattern 1, \
-           '' using 4 ti col lc 7 fs pattern 7, \
-           '' using 5 ti col lc 2 fs pattern 2, \
-           '' using 6 ti col lc 3 fs pattern 4, \
-           '' using 7 ti col lc 4 fs pattern 5,
+plot dat_file using 2:3:4:xtic(1) ti col lc 6 fs pattern 6, \
+           '' using 5:6:7 ti col lc 1 fs pattern 1, \
+           '' using 8:9:10 ti col lc 7 fs pattern 7, \
+           '' using 11:12:13 ti col lc 2 fs pattern 2, \
+           '' using 14:15:16 ti col lc 3 fs pattern 4, \
+           '' using 17:18:19 ti col lc 4 fs pattern 5,

@@ -5,12 +5,14 @@ set grid                    # Turn the grid on
 unset key
 
 #set title gtitle offset 0,-0.8 font "Times,22"
-set xrange [-0.65:0.65]
+set xrange [-0.40:0.40]
 set yrange [0:*]
+set errorbars fullwidth
 set style data histogram
 set style histogram cluster gap 0.5
+set style histogram errorbars gap 2 lw 1
 #set style fill solid 0.25 border
-set style fill pattern border
+set style fill pattern border lt -1
 set boxwidth 0.8
 
 #set xtics offset 1.3,graph 0.4
@@ -35,6 +37,6 @@ set format y yformat
 #           '' using 5 ti col lc 3 fs pattern 4, \
 #           '' using 6 ti col lc 4 fs pattern 5
 
-plot dat_file using 2:xtic(1) ti col lc 6 fs pattern 6, \
-           '' using 4 ti col lc 2 fs pattern 2, \
-           '' using 5 ti col lc 3 fs pattern 4
+plot dat_file using 2:3:4:xtic(1) ti col lc 6 fs pattern 6, \
+           '' using 5:6:7 ti col lc 2 fs pattern 2, \
+           '' using 8:9:10 ti col lc 3 fs pattern 4
