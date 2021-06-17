@@ -21,11 +21,11 @@ int main(int argc, char* argv[])
 	}
 
 	uint64_t start_time = get_time();
-	int l = 0xf;
-	while(l < file_size) {
+	int l = rand() % (file_size + 1);
+	for(int i = 0; i < 1250000; i++) {
 		c = addr[l];
 		//addr[l] = l;
-		l += 1024;
+		l = rand() % (file_size + 1);
 	}
 	uint64_t end_time = get_time();
 

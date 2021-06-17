@@ -3,7 +3,7 @@ CC=gcc
 SYSIO_HOME=../../direct-fuse
 SYSIO_INCLUDE=$(SYSIO_HOME)/include
 
-all: doTest doCopy doExecTest userFault testmmap mmaptest javaWrite.class javaOutputStream.class
+all: doTest doCopy doExecTest randUserFault userFault randmmap testmmap mmaptest #javaWrite.class javaOutputStream.class
 
 doCopy: doCopy.c doCat
 	${CC} -g -o doCopy doCopy.c
@@ -20,6 +20,9 @@ testwrite: testwrite.c
 testmmap: testmmap.c
 	${CC} -g -o testmmap testmmap.c
 
+randmmap: randmmap.c
+	${CC} -g -o randmmap randmmap.c
+
 doExecTest: doExecTest.c doCat
 	${CC} -g -o doExecTest doExecTest.c
 
@@ -34,6 +37,9 @@ mamptest: mmaptest.c
 
 userFault: userFault.c
 	${CC} -g -o userFault userFault.c -lrt -lpthread
+
+randUserFault: randUserFault.c
+	${CC} -g -o randUserFault randUserFault.c -lrt -lpthread
 
 javaWrite.class: javaWrite.java
 	javac javaWrite.java
