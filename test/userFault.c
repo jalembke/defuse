@@ -79,7 +79,8 @@ static int register_uffd()
 	}
 
 	uffdio_api.api = UFFD_API;
-	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM | UFFD_FEATURE_EVENT_UNMAP;
+	//uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM | UFFD_FEATURE_EVENT_UNMAP;
+	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM;
 	if (ioctl(fd, UFFDIO_API, &uffdio_api) == -1) {
 		errExit("ioctl-UFFDIO_API");
 	}
@@ -222,7 +223,10 @@ int main(int argc, char* argv[])
 	uint64_t start_time = get_time();
 	int l = 0xf;
 	while(l < ucb.space_size) {
-		c = addr[l];
+		if(argv[2][0] == 'r')
+			c = addr[l];
+		else
+			addr[l] = 100;
 		//printf("%02X\n", c);
 		l += 1024;
 	}
