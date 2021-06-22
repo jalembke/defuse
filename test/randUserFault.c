@@ -18,7 +18,7 @@
 #include "userfaultfd.h"
 #include "util.h"
 
-#define READ_PAGES 128
+#define READ_PAGES 32
 #define PAGE_SIZE 4096
 #define BUFFER_SIZE (READ_PAGES * PAGE_SIZE)
 
@@ -59,36 +59,8 @@ static void copy_page(int ufd, void* target, void* page)
 	}*/
 }
 
-static void copy_buffer(int ufd, void* target, void* src, uint64_t len)
-{
-	struct uffdio_copy uffdio_copy;
-	
-	//printf("COPYPAGE I: %p\n", target);
-	uffdio_copy.dst = (unsigned long)target & ~(PAGE_SIZE - 1);
-	uffdio_copy.src = (unsigned long)src;
-	uffdio_copy.len = len;
-	uffdio_copy.mode = 0;
-	uffdio_copy.copy = 0;
-	if (ioctl(ufd, UFFDIO_COPY, &uffdio_copy)) {
-		/* real retval in ufdio_copy.copy */
-		if (uffdio_copy.copy != -EEXIST)
-			errExit("UFFDIO_COPY error");
-	} else if (uffdio_copy.copy != len) {
-		fprintf(stderr, "UFFDIO_COPY unexpected copy %" PRIu64 "\n",
-			uffdio_copy.copy), exit(1);
-	}
-	// printf("COPYPAGE E: %p\n", target);
-	/*else {
-		if(ioctl(ufd, UFFDIO_COPY, &uffdio_copy)) {
-			errExit("RETRY UFFDIO_COPY error");
-		}
-	}*/
-}
-
 static void copy_pages(struct userfaultControlBlock* ucb, void* target, void* buffer, uint64_t buffer_size)
 {
-	copy_buffer(ucb->uffd, target, buffer, buffer_size);
-	/*
 	uint64_t bytes_remaining = ucb->space_size - (uint64_t)target - (uint64_t)ucb->address;
 	int bytes_to_copy = bytes_remaining < buffer_size ? bytes_remaining : buffer_size;
 	int pages_to_copy = ((bytes_to_copy + PAGE_SIZE-1) & ~(PAGE_SIZE-1)) / PAGE_SIZE;
@@ -96,7 +68,6 @@ static void copy_pages(struct userfaultControlBlock* ucb, void* target, void* bu
 	for(int i = 0; i < pages_to_copy; i++) {
 		copy_page(ucb->uffd, ((char*)target) + i*PAGE_SIZE, ((char*)buffer) + i*PAGE_SIZE);
 	}
-	*/
 }
 
 static int register_uffd()
@@ -108,12 +79,7 @@ static int register_uffd()
 	}
 
 	uffdio_api.api = UFFD_API;
-<<<<<<< HEAD
-	//uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM | UFFD_FEATURE_EVENT_UNMAP;
-	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM;
-=======
 	uffdio_api.features = UFFD_FEATURE_MISSING_SHMEM; // | UFFD_FEATURE_EVENT_UNMAP;
->>>>>>> c2cab53cbd5ab79fd61fc29fe65e420bc338f8e1
 	if (ioctl(fd, UFFDIO_API, &uffdio_api) == -1) {
 		errExit("ioctl-UFFDIO_API");
 	}
@@ -260,21 +226,15 @@ int main(int argc, char* argv[])
 		errno = pthread_ret;
 		errExit("pthread_create");
 	}
+	int file_size = ucb.space_size;
 
 	uint64_t start_time = get_time();
-	int l = 0xf;
-	while(l < ucb.space_size) {
-<<<<<<< HEAD
-		if(argv[2][0] == 'r')
-			c = addr[l];
-		else
-			addr[l] = 100;
-=======
+	int l = rand() % (file_size + 1);
+	for(int i = 0; i < 1250000; i++) {
 		c = addr[l];
 		//addr[l] = l;
->>>>>>> c2cab53cbd5ab79fd61fc29fe65e420bc338f8e1
 		//printf("%02X\n", c);
-		l += 1024;
+		l = rand() % (file_size + 1);
 	}
 	uint64_t end_time = get_time();
 
