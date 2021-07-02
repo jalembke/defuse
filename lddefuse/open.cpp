@@ -65,6 +65,8 @@ static inline int open_common(const char *path, int flags, mode_t mode)
 {
 	int ret = -1;
 
+	DEBUG_PRINT(path);
+
 	OP_ENTER;
 
 	file_handle_data_ptr fhd = open_internal(cpath, path, fs, flags, mode);
@@ -88,6 +90,7 @@ static inline mode_t get_umask()
 
 int openat(int dirfd, const char* path, int flags, ...)
 {
+        DEBUG_ENTER;
 	mode_t mode = 0;
     if (flags & O_CREAT) {
         va_list argf;

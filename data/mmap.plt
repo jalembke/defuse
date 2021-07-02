@@ -42,6 +42,6 @@ set ytics offset graph 0.03
 #      dat_file every ::2::2 using 1:3:4:xtic(2) with boxes fs pattern 4 lc 3, \
 #      dat_file every ::2::2 using 1:3:4:5 with errorbars pt 0 lc 8;
 
-plot dat_file using 2:3:4:xtic(1) ti col fs pattern 6, \
-           '' using 5:6:7 ti col fs pattern 2, \
-           '' using 8:9:10 ti col fs pattern 4
+plot dat_file using 2:3:4:xtic(1) ti col lc 6 fs pattern 6, \
+           '' using 5:6:7 ti col lc 2 fs pattern 2, \
+           '' using 8:9:10 ti col lc 3 fs pattern 4

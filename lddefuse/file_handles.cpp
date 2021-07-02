@@ -232,5 +232,7 @@ int restore_file_handles_from_shared_space()
 		DEBUG_PRINT("NO SHARED PTR");
 	}
 	DEBUG_EXIT(rv);
+
+	return rv;
 }
 
