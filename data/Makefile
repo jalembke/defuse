@@ -10,7 +10,7 @@ CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
 #CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
-PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat
+PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat kernelgcc.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
@@ -134,10 +134,10 @@ clr.svg: clr.dat cmpl.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle='Large File'; yformat='%.0f'; toMB='1';" cmpl.plt
 
 untar.svg: untar.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Decompress\nLinux Kernel\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 cp.svg: cp.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 wc.svg: wc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
@@ -150,6 +150,10 @@ lr.svg: lr.dat prac.plt
 
 kmeans.svg: kmeans.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"KMeans\"; pracTitle=\"Runtime (s)\"; yformat=\"%.0f s\";" prac.plt
+
+kernelgcc.svg: kernelgcc.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linux Kernel Compile\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
+
 
 tdfsio.svg: tdfsio.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
