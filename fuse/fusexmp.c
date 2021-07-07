@@ -98,10 +98,13 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
 {
 	int res;
 
+	mode_t testmode = S_IRUSR | S_IWUSR;
+
 	/* On Linux this could just be 'mknod(path, mode, rdev)' but this
 	   is more portable */
 	if (S_ISREG(mode)) {
-		res = open(path, O_CREAT | O_EXCL | O_WRONLY, mode);
+		printf("%X %X\n", mode, testmode);
+		res = open(path, O_CREAT | O_EXCL | O_WRONLY, testmode);
 		if (res >= 0)
 			res = close(res);
 	} else if (S_ISFIFO(mode))
