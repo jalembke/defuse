@@ -10,7 +10,7 @@ CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
 #CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
-PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat kernelgcc.dat access.dat chmod.dat
+PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat kernelgcc.dat access.dat chmod.dat create.dat unlink.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
@@ -144,6 +144,12 @@ access.svg: access.dat prac.plt
 
 chmod.svg: chmod.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Change File Mode\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+
+create.svg: create.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Create File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+
+unlink.svg: unlink.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Unlink File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
 
 wc.svg: wc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
