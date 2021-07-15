@@ -10,7 +10,7 @@ CMPPNGS=$(patsubst %.svg,%.png,$(CMPSVGS))
 CMPPDFS=$(patsubst %.svg,%.pdf,$(CMPSVGS))
 #CMPEPSS=$(patsubst %.svg,%.eps,$(CMPSVGS))
 
-PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat kernelgcc.dat
+PRACDATS=untar.dat cp.dat wc.dat tdfsio.dat lrdgen.dat lr.dat kmeans.dat kernelgcc.dat access.dat chmod.dat
 PRACSVGS=$(patsubst %.dat,%.svg,$(PRACDATS)) prackey.svg
 PRACPNGS=$(patsubst %.svg,%.png,$(PRACSVGS))
 PRACPDFS=$(patsubst %.svg,%.pdf,$(PRACSVGS))
@@ -139,6 +139,12 @@ untar.svg: untar.dat prac.plt
 cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
+access.svg: access.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"File Access\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+
+chmod.svg: chmod.dat prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Change File Mode\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+
 wc.svg: wc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
 
@@ -153,7 +159,6 @@ kmeans.svg: kmeans.dat prac.plt
 
 kernelgcc.svg: kernelgcc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Linux Kernel Compile\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
-
 
 tdfsio.svg: tdfsio.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Hadoop\nTestDFSIO\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
