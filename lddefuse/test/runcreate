@@ -1,0 +1,14 @@
+#!/bin/bash
+
+LIBPATH=/users/lembkej/defuse/lddefuse/liblddefuse.so
+fusermount -u /tmp/fuse
+
+for i in {1..50}
+do
+	rm -f /mnt/test/test*
+	#LD_PRELOAD=${LIBPATH} ./mytime ./testdfcreate
+	#./mytime ./testcreate
+	../../fuse/fusexmp /tmp/fuse
+	./mytime ./testfusecreate
+	fusermount -u /tmp/fuse
+done

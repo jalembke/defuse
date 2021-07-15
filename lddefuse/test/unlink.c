@@ -9,12 +9,7 @@ int main(int argc, char* argv[])
 	char crtbuf[64];
 	for(int i = 0; i < 10000; i++) {
 		snprintf(crtbuf, sizeof(crtbuf), "/mnt/test/test%d", i);
-		int fd = creat(crtbuf, S_IRUSR | S_IWUSR);
-		if(fd == -1) {
-			printf("ERROR: %s\n", strerror(errno));
-			return 1;
-		}
-		close(fd);
+		unlink(crtbuf);
 	}
 	return 0;
 }
