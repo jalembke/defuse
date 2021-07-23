@@ -140,16 +140,16 @@ cp.svg: cp.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Backup Accross\nFile Systems\"; pracTitle=\"Runtime (s)\"; yformat=\"%.1f s\";" prac.plt
 
 access.svg: access.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"File Access\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"File Access\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f\";" prac.plt
 
 chmod.svg: chmod.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Change File Mode\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Change File Mode\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f\";" prac.plt
 
 create.svg: create.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Create File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Create File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f\";" prac.plt
 
 unlink.svg: unlink.dat prac.plt
-	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Unlink File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f s\";" prac.plt
+	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Unlink File\"; pracTitle=\"Runtime (s)\"; yformat=\"%.2f\";" prac.plt
 
 wc.svg: wc.dat prac.plt
 	gnuplot -e "dat_file='$<'; out_file='$@'; gtitle=\"Spark\nWord Count\"; pracTitle=\"Runtime (m)\"; yformat=\"%.0f m\";" prac.plt
