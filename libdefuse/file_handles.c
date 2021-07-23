@@ -146,21 +146,24 @@ out:
 }
 
 int 
-duplicate_file_handle(int fd1, int fd2)
+duplicate_file_handle(int fd1, int fd2, struct file_handle_data** oldfhd)
 {
 	DEBUG_ENTER;
 	int rv = 0;
+	(*oldfhd) = NULL;
 	if (fd1 >= MAX_FILES || fd2 >= MAX_FILES) {
 		rv = EBADF;
 	} else {
 		struct file_handle_table* fht = get_instance();
 		if (fht->file_handles[fd2] != NULL) {
-			remove_file_handle(fd2);
+			(*oldfhd) = &fht->file_handles[fd2]->f_data;
 		}
 		if (file_handle_use_count_internal(fht->file_handles[fd1]) > 0) {
 			fht->file_handles[fd2] = fht->file_handles[fd1];
 			fht->file_handles[fd1]->use_count++;
-			link_file_descriptor(fht, fd2);
+			if((*oldfhd) == NULL) {
+				link_file_descriptor(fht, fd2);
+			}
 		}
 	}
 	DEBUG_EXIT(rv);
@@ -300,4 +303,3 @@ int restore_file_handles_from_shared_space()
 	}
 	DEBUG_EXIT(rv);
 }
-
