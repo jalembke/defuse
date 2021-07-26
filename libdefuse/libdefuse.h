@@ -34,7 +34,7 @@ struct file_handle_data
 };
 // #include "dir_handle_data.h"
 
-//#define DEBUG_DEFUSE
+#define DEBUG_DEFUSE
 
 #ifdef DEBUG_DEFUSE
     #include "libdefuse_debug.h"
@@ -73,11 +73,11 @@ struct file_handle_data
         DEBUG_ENTER;
     }
 */
-int real_open(const char *filename, int flags, ...);
+extern int real_open(const char *filename, int flags, ...);
+extern void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off);
 int real_ftruncate(int fd, off_t length);
 int real_close(int fd);
 off_t real_lseek(int fd, off_t offset, int whence);
-void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off);
 int real_execve(const char *path, char *const argv[], char *const envp[]);
 int real_dup(int old);
 int real_dup3(int old, int new, int flags);
@@ -100,6 +100,7 @@ int defuse_dup2(int oldfd, int newfd);
 int defuse_dup3(int oldfd, int newfd, int flags);
 
 // Mount Point Functions
+void load_mounts_void();
 struct mount_point_data* find_mount_and_strip_path(char* path);
 struct mount_point_data* find_mount_from_path(const char* path);
 

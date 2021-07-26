@@ -2,8 +2,8 @@ CC=gcc
 CXX=g++
 AR=ar
 
-CFLAGS=-c -g -fPIC
-CXXFLAGS=-c -g -fPIC -std=c++0x
+CFLAGS=-c -g -fPIC -Wformat-truncation=0
+CXXFLAGS=-c -g -fPIC -std=c++0x -Wformat-truncation=0
 LFLAGS=-ldl -lrt -shared
 
 OBJS = $(patsubst %.cpp,%.o,$(wildcard *.cpp)) $(patsubst %.c,%.o,$(wildcard *.c))

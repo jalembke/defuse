@@ -3,6 +3,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
+#include <sys/vfs.h>
+#include <sys/statvfs.h>
+#include <utime.h>
 #include <dirent.h>
 //#include <selinux/selinux.h>
 
@@ -30,13 +34,9 @@ struct glibc_ops {
     int (*fallocate)(int fd, off_t offset, off_t length);
     int (*close)(int fd);
 	int (*__xstat)(int vers, const char *name, struct stat *buf);
-	int (*__xstat64)(int vers, const char *file, struct stat64 *buf);
     int (*__fxstat)(int vers, int fd, struct stat *buf);
-    int (*__fxstat64)(int vers, int fd, struct stat64 *buf);
 	int (*__fxstatat)(int vers, int dirfd, const char *pathname, struct stat *buf, int flags);
-	int (*__fxstatat64)(int vers, int dirfd, const char *pathname, struct stat64 *buf, int flags);
     int (*__lxstat)(int vers, const char *path, struct stat *buf);
-    int (*__lxstat64)(int vers, const char *path, struct stat64 *buf);
     int (*futimesat)(int dirfd, const char *path, const struct timeval times[2]);
     int (*utimes)(const char *path, const struct timeval times[2]);
     int (*utime)(const char *path, const struct utimbuf *buf);
@@ -64,9 +64,7 @@ struct glibc_ops {
 	DIR* (*opendir)(const char *name);
 	DIR* (*fdopendir)(int fd);
     struct dirent* (*readdir)(DIR* dirp);
-    struct dirent64* (*readdir64)(DIR* dirp);
     int (*readdir_r)(DIR *dirp, struct dirent *entry, struct dirent **result);
-	int (*readdir64_r)(DIR* dirp, struct dirent *entry, struct dirent64 **result);
 	int (*closedir)(DIR *dirp);
     int (*access)(const char *path, int mode);
     int (*faccessat)(int dirfd, const char *path, int mode, int flags);
@@ -75,18 +73,14 @@ struct glibc_ops {
     void (*sync)(void);
     int (*fsync)(int fd);
     int (*fdatasync)(int fd);
-    int (*fadvise)(int fd, off_t offset, off_t len, int advice);
-    int (*fadvise64)(int fd, off64_t offset, off64_t len, int advice);
+    int (*posix_fadvise)(int fd, off_t offset, off_t len, int advice);
     int (*statfs)(const char *path, struct statfs *buf);
-    int (*statfs64)(const char *path, struct statfs64 *buf);
     int (*fstatfs)(int fd, struct statfs *buf);
-    int (*fstatfs64)(int fd, struct statfs64 *buf);
     int (*statvfs)(const char *path, struct statvfs *buf);
     int (*fstatvfs)(int fd, struct statvfs *buf);
 	int (*__xmknod)(int vers, const char *path, mode_t mode, dev_t *dev);
     int (*__xmknodat)(int vers, int dirfd, const char *path, mode_t mode, dev_t dev);
     ssize_t (*sendfile)(int outfd, int infd, off_t *offset, size_t count);
-    ssize_t (*sendfile64)(int outfd, int infd, off64_t *offset, size_t count);
     int (*setxattr)(const char *path, const char *name, const void *value, size_t size, int flags);
     int (*lsetxattr)(const char *path, const char *name, const void *value, size_t size, int flags);
     int (*fsetxattr)(int fd, const char *name, const void *value, size_t size, int flags);
@@ -102,6 +96,19 @@ struct glibc_ops {
     void *(*mmap)(void *start, size_t length, int prot, int flags, int fd, off_t offset);
     int (*munmap)(void *start, size_t length);
     int (*msync)(void *start, size_t length, int flags);
+
+#ifdef _LARGEFILE64_SOURCE
+	int (*__xstat64)(int vers, const char *file, struct stat64 *buf);
+    int (*__fxstat64)(int vers, int fd, struct stat64 *buf);
+	int (*__fxstatat64)(int vers, int dirfd, const char *pathname, struct stat64 *buf, int flags);
+    int (*__lxstat64)(int vers, const char *path, struct stat64 *buf);
+    int (*statfs64)(const char *path, struct statfs64 *buf);
+    int (*fstatfs64)(int fd, struct statfs64 *buf);
+    int (*posix_fadvise64)(int fd, off64_t offset, off64_t len, int advice);
+    ssize_t (*sendfile64)(int outfd, int infd, off64_t *offset, size_t count);
+    struct dirent64* (*readdir64)(DIR* dirp);
+	int (*readdir64_r)(DIR* dirp, struct dirent *entry, struct dirent64 **result);
+#endif
 
 	/* exec functions */
 	int (*execl)(const char *path, const char *arg, ... /* (char  *) NULL */);

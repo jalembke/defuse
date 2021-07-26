@@ -10,8 +10,8 @@
 
 #define TEST_MOUNT_PATH "/tmp/defuse"
 #define TEST_MOUNT_BACKEND "/"
-//#define TEST_MOUNT_LIBRARY "/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so"
-#define TEST_MOUNT_LIBRARY "/users/lembkej/Projects/defuse/usfs_wrap/libavfs_wrap.so"
+#define TEST_MOUNT_LIBRARY "/home/lembke/defuse/usfs_wrap/libusfs_wrap.so"
+// #define TEST_MOUNT_LIBRARY "/users/lembkej/Projects/defuse/usfs_wrap/libavfs_wrap.so"
 
 struct mount_point_array {
 	size_t length;
@@ -127,7 +127,6 @@ static inline struct mount_point_array* get_instance()
 void load_mounts_void() {
 	load_mounts(get_instance());
 }
-
 
 int get_all_mounts(struct mount_point_data*** mpd)
 {

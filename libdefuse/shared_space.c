@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "libdefuse.h"
 
@@ -75,9 +76,10 @@ void* get_shared_space()
 	struct shared_space* space = get_instance();
 	if(space->fd == -1) {
 		char* shared_space_file = get_shared_space_file_name();
+		DEBUG_PRINT(shared_space_file);
 		space->fd = real_open(shared_space_file, O_RDWR, 0);
 		free(shared_space_file);
-		if(space->fd == 0) {
+		if(space->fd == -1) {
 			goto out;
 		}
 		space->size = get_file_size(space->fd);
@@ -89,7 +91,7 @@ void* get_shared_space()
 		rv = space->space_ptr;
 	}
 out:
-	DEBUG_EXIT((int)rv);
+	DEBUG_EXIT(rv);
 	return rv;
 }
 
@@ -116,6 +118,6 @@ void* init_shared_space(size_t size)
 		rv = space->space_ptr;
 	}
 out:
-	DEBUG_EXIT((int)rv);
+	DEBUG_EXIT(rv);
 	return rv;
 }

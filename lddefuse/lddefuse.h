@@ -1,14 +1,9 @@
-#ifndef __LDDEFUSE_H
-#define __LDDEFUSE_H
+#ifndef _LDDEFUSE_H
+#define _LDDEFUSE_H
 
 #include <stdint.h>
 #include <dirent.h>
 #include <string>
-
-#include "file_handle_data.h"
-#include "dir_handle_data.h"
-
-class FileSystemWrapper;
 
 #if !defined(DEFUSE_DO_REAL_OPEN) && !defined(DEFUSE_DO_NULL_OPEN) && !defined(DEFUSE_DO_NO_OPEN)
 #error "-DDEFUSE_DO_REAL_OPEN or -DDEFUSE_DO_NULL_OPEN required"
@@ -79,8 +74,4 @@ int insert_dir_handle(DIR* dirp, dir_handle_data_ptr& dhd);
 int remove_dir_handle(DIR* dirp);
 dir_handle_data* find_dir_handle(DIR* dirp);
 
-// Path Resolution
-void resolve_path(const char *p, std::string& path);
-void resolve_path_at(int dirfd, const char *p, std::string& path);
-
-#endif // __LDDEFUSE_H
+#endif // _LDDEFUSE_H

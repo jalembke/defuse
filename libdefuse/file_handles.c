@@ -141,7 +141,7 @@ find_file_handle(int fd)
 	}
 	rv = &(fht->file_handles[fd]->f_data);
 out:
-	DEBUG_EXIT(rv != NULL ? rv->file_handle : 0);
+	DEBUG_EXIT(rv ? rv->file_handle : 0);
     return rv;
 }
 

@@ -1,15 +1,37 @@
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <sys/syscall.h>
 #include <dlfcn.h>
-#include <strings.h>
-#include <string>
-#include <sstream>
+#include <fcntl.h>
+#include <stdarg.h>
 
-#include "lddefuse.h"
+#include "libdefuse.h"
 #include "glibc_ops.h"
 
 struct glibc_ops real_ops;
+
+int real_open(const char *filename, int flags, ...)
+{
+	mode_t mode = 0;
+
+	if ((flags & O_CREAT) || (flags & O_TMPFILE) == O_TMPFILE) {
+		va_list ap;
+		va_start(ap, flags);
+		mode = va_arg(ap, mode_t);
+		va_end(ap);
+	}
+
+	return real_ops.open(filename, flags, mode);
+}
+
+
+void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
+{
+	return real_ops.mmap(start, len, prot, flags, fd, off);
+}
 
 static inline void* 
 dlsym_exit_on_error(void* handle, const char* name)
@@ -32,14 +54,12 @@ dlsym_exit_on_error(void* handle, const char* name)
 		syscall(SYS_write, STDERR_FILENO, err_str.data(), err_str.length());
 		*/
 	} else if((error = dlerror()) != NULL) {
-		std::stringstream err_out;
-		err_out << "Error: Failed to link symbol " << name << ": " << error << std::endl;
-		std::string err_str = err_out.str();
-		syscall(SYS_write, STDERR_FILENO, err_str.data(), err_str.length());
+		char error_msg[512];
+		int size = snprintf(error_msg, sizeof(error_msg), "Error: Failed to link symbol %s: %s\n", name, error);
+		syscall(SYS_write, STDERR_FILENO, error_msg, size);
 		exit(EXIT_FAILURE);
 	}
 	
-	//DEBUG_EXIT(sym);
 	return sym;
 }
 
@@ -51,6 +71,7 @@ load_glibc_ops(void)
 
 	if(!load_glibc_ops_flag) {
 
+		DEBUG_ENTER;
 		bzero(&real_ops, sizeof(struct glibc_ops));
 		real_ops.open = (int (*)(const char*, int, ...))dlsym_exit_on_error(RTLD_NEXT, "open");
 		real_ops.open64 = (int (*)(const char*, int, ...))dlsym_exit_on_error(RTLD_NEXT, "open64");
@@ -73,13 +94,9 @@ load_glibc_ops(void)
 		real_ops.fallocate = (int (*)(int, off_t, off_t))dlsym_exit_on_error(RTLD_NEXT, "fallocate");
 		real_ops.close = (int (*)(int))dlsym_exit_on_error(RTLD_NEXT, "close");
 		real_ops.__xstat = (int (*)(int, const char*, struct stat*))dlsym_exit_on_error(RTLD_NEXT, "__xstat");
-		real_ops.__xstat64 = (int (*)(int, const char*, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__xstat64");
 		real_ops.__fxstat = (int (*)(int, int, struct stat*))dlsym_exit_on_error(RTLD_NEXT, "__fxstat");
-		real_ops.__fxstat64 = (int (*)(int, int, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__fxstat64");
 		real_ops.__fxstatat = (int (*)(int, int, const char*, struct stat*, int))dlsym_exit_on_error(RTLD_NEXT, "__fxstatat");
-		real_ops.__fxstatat64 = (int (*)(int, int, const char*, struct stat64*, int))dlsym_exit_on_error(RTLD_NEXT, "__fxstatat64");
 		real_ops.__lxstat = (int (*)(int, const char*, struct stat*))dlsym_exit_on_error(RTLD_NEXT, "__lxstat");
-		real_ops.__lxstat64 = (int (*)(int, const char*, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__lxstat64");
 		real_ops.futimesat = (int (*)(int, const char*, const struct timeval*))dlsym_exit_on_error(RTLD_NEXT, "futimesat");
 		real_ops.utimes = (int (*)(const char*, const struct timeval*))dlsym_exit_on_error(RTLD_NEXT, "utimes");
 		real_ops.utime = (int (*)(const char*, const struct utimbuf*))dlsym_exit_on_error(RTLD_NEXT, "utime");
@@ -106,8 +123,8 @@ load_glibc_ops(void)
 		real_ops.linkat = (int (*)(int, const char*, int, const char*, int))dlsym_exit_on_error(RTLD_NEXT, "linkat");
 		real_ops.opendir = (DIR* (*)(const char*))dlsym_exit_on_error(RTLD_NEXT, "opendir");
 		real_ops.fdopendir = (DIR* (*)(int))dlsym_exit_on_error(RTLD_NEXT, "fdopendir");
-		real_ops.readdir = (dirent* (*)(DIR*))dlsym_exit_on_error(RTLD_NEXT, "readdir");
-		real_ops.readdir64 = (dirent64* (*)(DIR*))dlsym_exit_on_error(RTLD_NEXT, "readdir64");
+		real_ops.readdir = (struct dirent* (*)(DIR*))dlsym_exit_on_error(RTLD_NEXT, "readdir");
+		real_ops.readdir64 = (struct dirent64* (*)(DIR*))dlsym_exit_on_error(RTLD_NEXT, "readdir64");
 		real_ops.readdir_r = (int (*)(DIR*, struct dirent*, struct dirent **))dlsym_exit_on_error(RTLD_NEXT, "readdir_r");
 		real_ops.readdir64_r = (int (*)(DIR*, struct dirent*, struct dirent64 **))dlsym_exit_on_error(RTLD_NEXT, "readdir64_r");
 		real_ops.closedir = (int (*)(DIR*))dlsym_exit_on_error(RTLD_NEXT, "closedir");
@@ -118,18 +135,14 @@ load_glibc_ops(void)
 		real_ops.sync = (void (*)())dlsym_exit_on_error(RTLD_NEXT, "sync");
 		real_ops.fsync = (int (*)(int))dlsym_exit_on_error(RTLD_NEXT, "fsync");
 		real_ops.fdatasync = (int (*)(int))dlsym_exit_on_error(RTLD_NEXT, "fdatasync");
-		real_ops.fadvise = (int (*)(int, off_t, off_t, int))dlsym_exit_on_error(RTLD_NEXT, "fadvise");
-		real_ops.fadvise64 = (int (*)(int, off64_t, off64_t, int))dlsym_exit_on_error(RTLD_NEXT, "fadvise64");
+		real_ops.posix_fadvise = (int (*)(int, off_t, off_t, int))dlsym_exit_on_error(RTLD_NEXT, "posix_fadvise");
 		real_ops.statfs = (int (*)(const char*, struct statfs*))dlsym_exit_on_error(RTLD_NEXT, "statfs");
-		real_ops.statfs64 = (int (*)(const char*, struct statfs64*))dlsym_exit_on_error(RTLD_NEXT, "statfs64");
 		real_ops.fstatfs = (int (*)(int, struct statfs*))dlsym_exit_on_error(RTLD_NEXT, "fstatfs");
-		real_ops.fstatfs64 = (int (*)(int, struct statfs64*))dlsym_exit_on_error(RTLD_NEXT, "fstatfs64");
 		real_ops.statvfs = (int (*)(const char*, struct statvfs*))dlsym_exit_on_error(RTLD_NEXT, "statvfs");
 		real_ops.fstatvfs = (int (*)(int, struct statvfs*))dlsym_exit_on_error(RTLD_NEXT, "fstatvfs");
 		real_ops.__xmknod = (int (*)(int, const char*, mode_t, dev_t*))dlsym_exit_on_error(RTLD_NEXT, "__xmknod");
 		real_ops.__xmknodat = (int (*)(int, int, const char*, mode_t, dev_t))dlsym_exit_on_error(RTLD_NEXT, "__xmknodat");
 		real_ops.sendfile = (ssize_t (*)(int, int, off_t*, size_t))dlsym_exit_on_error(RTLD_NEXT, "sendfile");
-		real_ops.sendfile64 = (ssize_t (*)(int, int, off64_t*, size_t))dlsym_exit_on_error(RTLD_NEXT, "sendfile64");
 		real_ops.setxattr = (int (*)(const char*, const char*, const void*, size_t, int))dlsym_exit_on_error(RTLD_NEXT, "setxattr");
 		real_ops.lsetxattr = (int (*)(const char*, const char*, const void*, size_t, int))dlsym_exit_on_error(RTLD_NEXT, "lsetxattr");
 		real_ops.fsetxattr = (int (*)(int, const char*, const void*, size_t, int))dlsym_exit_on_error(RTLD_NEXT, "fsetxattr");
@@ -152,6 +165,19 @@ load_glibc_ops(void)
 		real_ops.execvp = (int (*)(const char*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvp");
 		real_ops.execvpe = (int (*)(const char*, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvpe");
 		real_ops.fexecve = (int (*)(int, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "fexecve");
+		
+#ifdef _LARGEFILE64_SOURCE
+		real_ops.__xstat64 = (int (*)(int, const char*, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__xstat64");
+		real_ops.__fxstat64 = (int (*)(int, int, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__fxstat64");
+		real_ops.__fxstatat64 = (int (*)(int, int, const char*, struct stat64*, int))dlsym_exit_on_error(RTLD_NEXT, "__fxstatat64");
+		real_ops.__lxstat64 = (int (*)(int, const char*, struct stat64*))dlsym_exit_on_error(RTLD_NEXT, "__lxstat64");
+		real_ops.statfs64 = (int (*)(const char*, struct statfs64*))dlsym_exit_on_error(RTLD_NEXT, "statfs64");
+		real_ops.fstatfs64 = (int (*)(int, struct statfs64*))dlsym_exit_on_error(RTLD_NEXT, "fstatfs64");
+		real_ops.posix_fadvise64 = (int (*)(int, off64_t, off64_t, int))dlsym_exit_on_error(RTLD_NEXT, "posix_fadvise64");
+		real_ops.sendfile64 = (ssize_t (*)(int, int, off64_t*, size_t))dlsym_exit_on_error(RTLD_NEXT, "sendfile64");
+#endif
+
 		load_glibc_ops_flag = true;
+		DEBUG_EXIT(0);
 	}
 }

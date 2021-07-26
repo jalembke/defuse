@@ -13,7 +13,7 @@ int defuse_open(const struct mount_point_data* mp, const char* cpath, const char
 	uint64_t fh = 0;
 
 	rv = mp->open(cpath, flags, mode, &fh);
-	DEBUG_PRINT_INT(rv);
+	DEBUG_PRINT_INT((uint64_t)rv);
 	if (rv == 0) {
 		struct file_handle_data fhd;
 		fhd.file_handle = fh;

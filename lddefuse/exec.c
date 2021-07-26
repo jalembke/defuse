@@ -2,14 +2,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "lddefuse.h"
+#include "libdefuse.h"
 #include "glibc_ops.h"
-
-#pragma GCC visibility push(default)
-
-#ifdef __cplusplus
-    extern "C" {
-#endif
 
 // int execl(const char *path, const char *arg, ... /* (char  *) NULL */);
 // int execlp(const char *file, const char *arg, ... /* (char  *) NULL */);
@@ -48,8 +42,3 @@ int fexecve(int fd, char *const argv[], char *const envp[])
 	save_file_handles_to_shared_space();
 	return real_ops.fexecve(fd, argv, envp);
 }
-
-#ifdef __cplusplus
-#endif
-}
-#pragma GCC visibility push(default)
