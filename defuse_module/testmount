@@ -1,5 +1,13 @@
 #!/bin/bash
-sudo umount /tmp/usfsal
-sudo rmmod bopfs; 
-sudo insmod bopfs.ko; 
-sudo mount -t bopfs -o backend=/ -o library=/users/lembkej/Projects/defuse/usfs_wrap/libusfs_wrap.so bopfs /tmp/usfsal
+
+DEFUSE_ROOT=$HOME/defuse
+BACKEND=/
+MOUNT_POINT=/tmp/defuse
+US_LIB=$DEFUSE_ROOT/usfs_wrap/libusfs_wrap.so
+
+sudo umount $MOUNT_POINT
+sudo rm -rf $MOUNT_POINT
+sudo mkdir -p $MOUNT_POINT
+sudo rmmod defuse; 
+sudo insmod defuse.ko; 
+sudo mount -t defuse -o backend=$BACKEND -o library=$US_LIB defuse $MOUNT_POINT

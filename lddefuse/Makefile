@@ -20,7 +20,11 @@ clean:
 	rm -f $(OBJS)
 	rm -f liblddefuse.so
 
-liblddefuse.so: $(OBJS) $(LIBDEFUSE)/libdefuse.a
+.PHONY: libdefuse.a
+libdefuse.a:
+	$(MAKE) -C $(LIBDEFUSE)
+
+liblddefuse.so: $(OBJS) libdefuse.a
 	$(CXX) -o $@ $(OBJS) $(LFLAGS) $(LIBDEFUSE)/libdefuse.a
 
 %.o: %.c

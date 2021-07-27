@@ -33,6 +33,17 @@ void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 	return real_ops.mmap(start, len, prot, flags, fd, off);
 }
 
+
+ssize_t real_read(int fd, void *buf, size_t count)
+{
+	return real_ops.read(fd, buf, count);
+}
+
+int real_close(int fd)
+{
+	return real_ops.close(fd);
+}
+
 static inline void* 
 dlsym_exit_on_error(void* handle, const char* name)
 {
@@ -46,18 +57,8 @@ dlsym_exit_on_error(void* handle, const char* name)
 	sym = dlsym(handle, name);
 
 	// Check for error
-	if(sym == NULL) {
-		/*
-		std::stringstream err_out;
-		err_out << "Warning: Failed to link symbol " << name << ": Symbol not found" << std::endl;
-		std::string err_str = err_out.str();
-		syscall(SYS_write, STDERR_FILENO, err_str.data(), err_str.length());
-		*/
-	} else if((error = dlerror()) != NULL) {
-		char error_msg[512];
-		int size = snprintf(error_msg, sizeof(error_msg), "Error: Failed to link symbol %s: %s\n", name, error);
-		syscall(SYS_write, STDERR_FILENO, error_msg, size);
-		exit(EXIT_FAILURE);
+	if((error = dlerror()) != NULL) {
+		print_error_and_exit("Error: Failed to link symbol %s: %s\n", name, error);
 	}
 	
 	return sym;

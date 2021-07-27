@@ -133,6 +133,18 @@ int usfs_unlink(const char* path)
 	return ret;
 }
 
+int usfs_access(const char* path, int mode)
+{
+	int ret =0;
+	char path_to_access[PATH_MAX];
+	snprintf(path_to_access, PATH_MAX, "%s/%s", backend, path);
+	ret = syscall(SYS_access, path_to_access, mode);
+	if(-1 == ret) {
+		ret = errno;
+	}
+	return ret;
+}
+
 int usfs_close(uint64_t ret_fh)
 {
 	return syscall(SYS_close, (int)ret_fh);

@@ -25,6 +25,7 @@ struct mount_point_data
 	int (*fgetattr) (uint64_t, struct stat*);
 	int (*getattr) (const char*, struct stat*, int);
 	int (*unlink) (const char*);
+	int (*access) (const char*, int);
 };
 
 struct file_handle_data 
@@ -75,8 +76,10 @@ struct file_handle_data
 */
 extern int real_open(const char *filename, int flags, ...);
 extern void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off);
+extern ssize_t real_read(int fd, void *buf, size_t count);
+extern int real_close(int fd);
+
 int real_ftruncate(int fd, off_t length);
-int real_close(int fd);
 off_t real_lseek(int fd, off_t offset, int whence);
 int real_execve(const char *path, char *const argv[], char *const envp[]);
 int real_dup(int old);
@@ -126,8 +129,8 @@ dir_handle_data* find_dir_handle(DIR* dirp);
 */
 
 // Utility Functions
-char* resolve_path(const char *path);
-//void resolve_path_at(int dirfd, const char *p, std::string& path);
 void* memdup(void* ptr, size_t size);
+char* resolve_path(const char *path);
+void print_error_and_exit(const char* format, ...);
 
 #endif // __DEFUSE_H

@@ -12,11 +12,6 @@
 
 static inline uint64_t debuggettime()
 {
-    /*
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    uint64_t ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-    */
     struct timespec tp;
     clock_gettime(CLOCK_REALTIME, &tp);
     uint64_t ns = tp.tv_sec * 1000000000 + tp.tv_nsec;
@@ -48,7 +43,7 @@ static inline uint64_t debuggettime()
 		char DEBUG_HEADER_BUFFER[OUTPUT_BUFFER_SIZE]; \
 		DEBUG_HEADER(DEBUG_HEADER_BUFFER); \
 		char DEBUG_OUTPUT_BUFFER[OUTPUT_BUFFER_SIZE]; \
-		snprintf(DEBUG_OUTPUT_BUFFER, OUTPUT_BUFFER_SIZE, "%s %s : %" PRIu64 "\n", DEBUG_HEADER_BUFFER, __PRETTY_FUNCTION__, (uint64_t)value); \
+		snprintf(DEBUG_OUTPUT_BUFFER, OUTPUT_BUFFER_SIZE, "%s %s : %" PRId64 "\n", DEBUG_HEADER_BUFFER, __PRETTY_FUNCTION__, (int64_t)value); \
         syscall(SYS_write, STDERR_FILENO, DEBUG_OUTPUT_BUFFER, strlen(DEBUG_OUTPUT_BUFFER)); \
 	}
 
@@ -66,23 +61,9 @@ static inline uint64_t debuggettime()
 		char DEBUG_HEADER_BUFFER[OUTPUT_BUFFER_SIZE]; \
 		DEBUG_HEADER(DEBUG_HEADER_BUFFER); \
 		char DEBUG_OUTPUT_BUFFER[OUTPUT_BUFFER_SIZE]; \
-		snprintf(DEBUG_OUTPUT_BUFFER, OUTPUT_BUFFER_SIZE, "%s EXT %s : %" PRIu64 "\n", DEBUG_HEADER_BUFFER, __PRETTY_FUNCTION__, (uint64_t)value); \
+		snprintf(DEBUG_OUTPUT_BUFFER, OUTPUT_BUFFER_SIZE, "%s EXT %s : %" PRId64 "\n", DEBUG_HEADER_BUFFER, __PRETTY_FUNCTION__, (int64_t)value); \
         syscall(SYS_write, STDERR_FILENO, DEBUG_OUTPUT_BUFFER, strlen(DEBUG_OUTPUT_BUFFER)); \
     }
-
-/*
-#define DEBUG_PRINT(value)
-#define DEBUG_ENTER
-#define DEBUG_EXIT(value) \
-    { \
-	    if(value == EINTR) {\
-        std::stringstream DEBUG_OUT_STREAM; \
-        DEBUG_OUT_STREAM << DEBUG_HEADER << " EXT " << __PRETTY_FUNCTION__ << " : " << value << std::endl; \
-        std::string DEBUG_OUT_STRING = DEBUG_OUT_STREAM.str(); \
-        syscall(SYS_write, STDERR_FILENO, DEBUG_OUT_STRING.data(), DEBUG_OUT_STRING.length()); \
-		} \
-    }
-*/
 
 #define DEBUG_PRINT_BUFFER(BPTR, BSIZE) \
     { \

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <strings.h>
 #include <stdbool.h>
@@ -7,6 +8,8 @@
 #include "libdefuse.h"
 
 #define MAX_MOUNTS 16
+#define DEFUSE_MOUNT_TYPE "defuse"
+#define DEFUSE_MOUNT_TYPE_SIZE (sizeof(DEFUSE_MOUNT_TYPE) - 1)
 
 #define TEST_MOUNT_PATH "/tmp/defuse"
 #define TEST_MOUNT_BACKEND "/"
@@ -37,6 +40,23 @@ struct mount_point_array {
 			} \
 		} \
 	} \
+}
+
+static inline ssize_t read_line(int fd, char* buf, size_t size)
+{
+	int rv = 0;
+	char* p = buf;
+	for(int i = 0; i < size; i++) {
+		if((rv = real_read(fd, p, 1)) != 1) {
+			return rv;
+		}
+		if(*p == '\n') {
+			*p = 0;
+			return p-buf;
+		}
+		p++;
+	}
+	return size;
 }
 
 static inline struct mount_point_data*
@@ -72,6 +92,7 @@ load_mount(const char* mount_path, const char* backend_path, const char* library
 		LOAD_TARGET(handle, "usfs_fgetattr", rv, fgetattr, true);
 		LOAD_TARGET(handle, "usfs_getattr", rv, getattr, true);
 		LOAD_TARGET(handle, "usfs_unlink", rv, unlink, true);
+		LOAD_TARGET(handle, "usfs_access", rv, access, true);
 		if (rv != NULL && rv->init != NULL) {
 			rv->init(mount_path, backend_path);
 		}
@@ -86,6 +107,47 @@ load_mount(const char* mount_path, const char* backend_path, const char* library
 }
 
 static inline void
+load_mounts_from_file(const char* file, struct mount_point_array* mount_points)
+{
+	int rv = 0;
+	char buffer[512];
+
+	char backend[512];
+	char mount_point[512];
+	char library[512];
+
+	int mounts_fd = real_open(file, O_RDONLY);
+	if(mounts_fd < 0) {
+		print_error_and_exit("Unable to open %s: %s\n", file, strerror(errno));
+	}
+	char* p;
+	while((rv = read_line(mounts_fd, buffer, sizeof(buffer))) > 0) {
+		if(rv > DEFUSE_MOUNT_TYPE_SIZE && memcmp(buffer, DEFUSE_MOUNT_TYPE, DEFUSE_MOUNT_TYPE_SIZE) == 0) {
+			if(sscanf(buffer, "defuse %s", mount_point) != 1) {
+				print_error_and_exit("Unable to retrieve mount point from: %s\n", buffer);
+			}
+			if((p = strstr(buffer, "backend=")) == NULL ||
+				sscanf(p, "backend=%[^, ]", backend) == 0) {
+				print_error_and_exit("Unable to retrieve backend from: %s\n", buffer);
+			}
+			if((p = strstr(buffer, "library=")) == NULL ||
+				sscanf(p, "library=%[^, ]", library) == 0) {
+				print_error_and_exit("Unable to retrieve library from: %s\n", buffer);
+			}
+
+			struct mount_point_data* mp = load_mount(TEST_MOUNT_PATH, TEST_MOUNT_BACKEND, TEST_MOUNT_LIBRARY);
+			if (mp == NULL) {
+				print_error_and_exit("Error loading mount MP NULL: %s %s %s\n", mount_point, backend, library);
+			}
+			mp->index = mount_points->length;
+			mount_points->mounts[mount_points->length] = mp;
+			mount_points->length++;
+		}
+	}
+	real_close(mounts_fd);
+}
+
+static inline void
 load_mounts(struct mount_point_array* mount_points)
 {
 	static bool mounts_loaded_flag = false;
@@ -97,15 +159,8 @@ load_mounts(struct mount_point_array* mount_points)
 
 	mount_points->length = 0;
 
-	struct mount_point_data* mp = load_mount(TEST_MOUNT_PATH, TEST_MOUNT_BACKEND, TEST_MOUNT_LIBRARY);
-	if (mp == NULL) {
-		DEBUG_PRINT("NULL MOUNT POINT");
-		exit(EXIT_FAILURE);
-	}
-	mp->index = mount_points->length;
-	mount_points->mounts[mount_points->length] = mp;
-	mount_points->length++;
-
+	load_mounts_from_file("/proc/mounts", mount_points);
+	
 	// Restore any saved file handles
 	restore_file_handles_from_shared_space();
 
