@@ -44,6 +44,16 @@ int real_close(int fd)
 	return real_ops.close(fd);
 }
 
+off_t real_lseek(int fd, off_t offset, int whence)
+{
+	return real_ops.lseek(fd, offset, whence);
+}
+
+int real_ftruncate(int fd, off_t length)
+{
+	return real_ops.ftruncate(fd, length);
+}
+
 static inline void* 
 dlsym_exit_on_error(void* handle, const char* name)
 {
@@ -63,7 +73,6 @@ dlsym_exit_on_error(void* handle, const char* name)
 	
 	return sym;
 }
-
 
 void 
 load_glibc_ops(void)
@@ -94,6 +103,7 @@ load_glibc_ops(void)
 		real_ops.ftruncate = (int (*)(int, off_t))dlsym_exit_on_error(RTLD_NEXT, "ftruncate");
 		real_ops.fallocate = (int (*)(int, off_t, off_t))dlsym_exit_on_error(RTLD_NEXT, "fallocate");
 		real_ops.close = (int (*)(int))dlsym_exit_on_error(RTLD_NEXT, "close");
+		real_ops.lseek = (off_t (*)(int, off_t, int))dlsym_exit_on_error(RTLD_NEXT, "lseek");
 		real_ops.__xstat = (int (*)(int, const char*, struct stat*))dlsym_exit_on_error(RTLD_NEXT, "__xstat");
 		real_ops.__fxstat = (int (*)(int, int, struct stat*))dlsym_exit_on_error(RTLD_NEXT, "__fxstat");
 		real_ops.__fxstatat = (int (*)(int, int, const char*, struct stat*, int))dlsym_exit_on_error(RTLD_NEXT, "__fxstatat");

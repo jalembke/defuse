@@ -264,6 +264,7 @@ int restore_file_handles_from_shared_space()
 		uint64_t* mount_point_count = (uint64_t*)shared_space_ptr;
 
 		// Retrieve the mount points
+		DEBUG_PRINT_INT(*mount_point_count * sizeof(char*));
 		char** mount_paths = (char**)malloc(*mount_point_count * sizeof(char*));
 		current_ptr += sizeof(uint64_t);
 		for(int i = 0; i < *mount_point_count; i++) {

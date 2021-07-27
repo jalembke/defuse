@@ -15,17 +15,17 @@ struct mount_point_data
 	char* library_path;
 
 	void (*init) (const char*, const char*);
-	int (*open) (const char *, int, mode_t, uint64_t*);
+	int (*access) (const char*, int);
 	int (*close) (uint64_t);
-	int (*read) (uint64_t, char*, size_t, off_t, size_t*);
-	int (*write) (uint64_t, const char*, size_t, off_t, size_t*);
+	int (*getattr) (const char*, struct stat*, int);
 	int (*fsync) (uint64_t, int);
 	int (*ftruncate) (uint64_t, off_t);
 	int (*truncate) (const char*, off_t);
 	int (*fgetattr) (uint64_t, struct stat*);
-	int (*getattr) (const char*, struct stat*, int);
+	int (*open) (const char *, int, mode_t, uint64_t*);
+	int (*read) (uint64_t, char*, size_t, off_t, size_t*);
 	int (*unlink) (const char*);
-	int (*access) (const char*, int);
+	int (*write) (uint64_t, const char*, size_t, off_t, size_t*);
 };
 
 struct file_handle_data 
@@ -58,7 +58,6 @@ struct file_handle_data
 
 #define DEFUSE_FD_OP(OP, FD, ...) \
 	{ \
-		DEBUG_ENTER; \
 		struct file_handle_data* fhd = find_file_handle(FD); \
 		if(fhd != NULL) { \
 			return defuse_##OP(fhd, __VA_ARGS__); \
@@ -74,18 +73,16 @@ struct file_handle_data
         DEBUG_ENTER;
     }
 */
+// Real operations used internally by libdefuse
 extern int real_open(const char *filename, int flags, ...);
 extern void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off);
 extern ssize_t real_read(int fd, void *buf, size_t count);
 extern int real_close(int fd);
-
-int real_ftruncate(int fd, off_t length);
-off_t real_lseek(int fd, off_t offset, int whence);
-int real_execve(const char *path, char *const argv[], char *const envp[]);
-int real_dup(int old);
-int real_dup3(int old, int new, int flags);
+extern off_t real_lseek(int fd, off_t offset, int whence);
+extern int real_ftruncate(int fd, off_t length);
 
 // Syscall Operations
+int defuse_access(const struct mount_point_data* mp, const char* cpath, const char* filename, int mode);
 int defuse_open(const struct mount_point_data* mp, const char* cpath, const char* filename, int flags, mode_t mode);
 int defuse_close(const struct file_handle_data* fhd, int fd);
 int defuse_getattr(const struct mount_point_data* mp, const char* cpath, const char* pathname, struct stat* statbuf, int flags);
@@ -97,7 +94,6 @@ int defuse_unlink(const struct mount_point_data*mp, const char* cpath, const cha
 int defuse_truncate(const struct mount_point_data* mp, const char* cpath, const char* path, off_t length);
 int defuse_ftruncate(const struct file_handle_data* fhd, int fd, off_t length);
 int defuse_lseek(const struct file_handle_data* fhd, int fd, off_t offset, int whence);
-int defuse_execve(const char* path, char *const argv[], char *const envp[]);
 int defuse_dup(int oldfd);
 int defuse_dup2(int oldfd, int newfd);
 int defuse_dup3(int oldfd, int newfd, int flags);

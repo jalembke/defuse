@@ -14,7 +14,6 @@ static char* backend = NULL;
 
 void usfs_init(const char* mount_path, const char* backend_path)
 {
-	//printf("INIT: %s %s\n", mount_path, backend_path);
 	backend = strdup(backend_path);
 }
 
@@ -23,7 +22,6 @@ int usfs_open(const char* path, int flags, mode_t mode, uint64_t* ret_fh)
 	int ret = 0;
 	char path_to_open[PATH_MAX];
 	snprintf(path_to_open, PATH_MAX, "%s/%s", backend, path);
-	//printf("OPEN: %s %o %o\n", path_to_open, flags, mode);
 	int fd = syscall(SYS_open, path_to_open, flags, mode);
 	if (fd > 0) {
 		*ret_fh = (uint64_t)fd;
@@ -48,7 +46,6 @@ int usfs_read(uint64_t fh, char *buf, size_t size, off_t offset, size_t* bytes_r
 
 int usfs_write(uint64_t fh, const char *buf, size_t size, off_t offset, size_t* bytes_written)
 {
-	//printf("WRITE: %" PRIu64 " %zd %zd\n", fh, size, offset);
 	int ret = syscall(SYS_pwrite64, fh, buf, size, offset);
 	if(-1 == ret) {
 		ret = errno;
@@ -109,7 +106,6 @@ int usfs_getattr(const char* path, struct stat *stbuf, int flags)
 	int ret = 0;
 	char path_to_stat[PATH_MAX];
 	snprintf(path_to_stat, PATH_MAX, "%s/%s", backend, path);
-	//printf("GETATTR %s %o\n", path_to_stat, flags);
 	if (flags & AT_SYMLINK_NOFOLLOW) {
 		ret = syscall(SYS_lstat, path_to_stat, stbuf);
 	} else {
@@ -123,7 +119,7 @@ int usfs_getattr(const char* path, struct stat *stbuf, int flags)
 
 int usfs_unlink(const char* path)
 {
-	int ret =0;
+	int ret = 0;
 	char path_to_unlink[PATH_MAX];
 	snprintf(path_to_unlink, PATH_MAX, "%s/%s", backend, path);
 	ret = syscall(SYS_unlink, path_to_unlink);
@@ -135,7 +131,7 @@ int usfs_unlink(const char* path)
 
 int usfs_access(const char* path, int mode)
 {
-	int ret =0;
+	int ret = 0;
 	char path_to_access[PATH_MAX];
 	snprintf(path_to_access, PATH_MAX, "%s/%s", backend, path);
 	ret = syscall(SYS_access, path_to_access, mode);

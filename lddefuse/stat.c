@@ -42,12 +42,12 @@ STAT_WRAPPER(__xstat, stat, 0);
 STAT_WRAPPER(__lxstat, stat, AT_SYMLINK_NOFOLLOW);
 FSTAT_WRAPPER(__fxstat, stat);
 //FSTATAT_WRAPPER(__fxstatat, stat);
-//FSTATAT_WRAPPER(__fxstatat64, stat64);
 
 #ifdef _LARGEFILE64_SOURCE
 STAT_WRAPPER(__xstat64, stat64, 0);
 STAT_WRAPPER(__lxstat64, stat64, AT_SYMLINK_NOFOLLOW);
 FSTAT_WRAPPER(__fxstat64, stat64);
+//FSTATAT_WRAPPER(__fxstatat64, stat64);
 #endif
 
 /*

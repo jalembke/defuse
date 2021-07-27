@@ -33,6 +33,7 @@ struct glibc_ops {
     int (*ftruncate)(int fd, off_t length);
     int (*fallocate)(int fd, off_t offset, off_t length);
     int (*close)(int fd);
+	off_t (*lseek)(int fd, off_t offset, int whence);
 	int (*__xstat)(int vers, const char *name, struct stat *buf);
     int (*__fxstat)(int vers, int fd, struct stat *buf);
 	int (*__fxstatat)(int vers, int dirfd, const char *pathname, struct stat *buf, int flags);
