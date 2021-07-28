@@ -15,6 +15,7 @@ struct mount_point_data
 	char* library_path;
 
 	void (*init) (const char*, const char*);
+	void (*finalize) (void);
 	int (*access) (const char*, int);
 	int (*close) (uint64_t);
 	int (*getattr) (const char*, struct stat*, int);
@@ -24,8 +25,11 @@ struct mount_point_data
 	int (*fgetattr) (uint64_t, struct stat*);
 	int (*open) (const char *, int, mode_t, uint64_t*);
 	int (*read) (uint64_t, char*, size_t, off_t, size_t*);
-	int (*unlink) (const char*);
 	int (*write) (uint64_t, const char*, size_t, off_t, size_t*);
+	int (*unlink) (const char*);
+	int (*readlink) (const char*, char*, size_t, size_t*);
+	int (*save) (uint64_t);
+	int (*restore) (uint64_t);
 };
 
 struct file_handle_data 
@@ -86,6 +90,7 @@ int defuse_access(const struct mount_point_data* mp, const char* cpath, const ch
 int defuse_open(const struct mount_point_data* mp, const char* cpath, const char* filename, int flags, mode_t mode);
 int defuse_close(const struct file_handle_data* fhd, int fd);
 int defuse_getattr(const struct mount_point_data* mp, const char* cpath, const char* pathname, struct stat* statbuf, int flags);
+ssize_t defuse_readlink(const struct mount_point_data* mp, const char* cpath, const char* pathname, char* buf, size_t bufsiz);
 ssize_t defuse_read(const struct file_handle_data* fhd, int fd, void* buf, size_t count);
 ssize_t defuse_write(const struct file_handle_data* fhd, int fd, const void* buf, size_t count);
 int defuse_fgetattr(const struct file_handle_data* fhd, int fd, struct stat* statbuf);

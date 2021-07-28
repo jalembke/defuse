@@ -236,6 +236,12 @@ int save_file_handles_to_shared_space()
 			copy_offset += copy_with_offset(shared_space_ptr, &file_count, sizeof(file_count), copy_offset);
 			for(int i = 0; i < fht->used_file_descriptor_pos; i++) {
 				struct file_handle_data* fhd = &fht->file_handles[fht->used_file_descriptors[i]]->f_data;
+
+				// Call client library save routine if defined
+				if(fhd->mount->save) {
+					fhd->mount->save(fhd->file_handle);
+				}
+
 				f_data.file_handle = fhd->file_handle;
 				f_data.file_descriptor = fht->used_file_descriptors[i];
 				f_data.mount_point_index = fhd->mount->index;
@@ -288,6 +294,12 @@ int restore_file_handles_from_shared_space()
 					// Don't add it if it already exists
 					if(!file_handle_exists(real_fd)) {
 						uint64_t fh = f_data->file_handle;
+
+						// Call client library restore routine if defined
+						if(mount_point->restore) {
+							mount_point->restore(fh);
+						}
+
 						struct file_handle_data fhd;
 						fhd.file_handle = fh;
 						fhd.mount = mount_point;

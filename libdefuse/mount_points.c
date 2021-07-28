@@ -11,11 +11,6 @@
 #define DEFUSE_MOUNT_TYPE "defuse"
 #define DEFUSE_MOUNT_TYPE_SIZE (sizeof(DEFUSE_MOUNT_TYPE) - 1)
 
-#define TEST_MOUNT_PATH "/tmp/defuse"
-#define TEST_MOUNT_BACKEND "/"
-#define TEST_MOUNT_LIBRARY "/home/lembke/defuse/usfs_wrap/libusfs_wrap.so"
-// #define TEST_MOUNT_LIBRARY "/users/lembkej/Projects/defuse/usfs_wrap/libavfs_wrap.so"
-
 struct mount_point_array {
 	size_t length;
 	struct mount_point_data* mounts[MAX_MOUNTS];
@@ -82,6 +77,7 @@ load_mount(const char* mount_path, const char* backend_path, const char* library
 	void* handle = dlopen(library_path, RTLD_LAZY);
 	if(handle != NULL) {
 		LOAD_TARGET(handle, "usfs_init", rv, init, false);
+		LOAD_TARGET(handle, "usfs_finalize", rv, finalize, false);
 		LOAD_TARGET(handle, "usfs_open", rv, open, true);
 		LOAD_TARGET(handle, "usfs_close", rv, close, true);
 		LOAD_TARGET(handle, "usfs_read", rv, read, true);
@@ -91,7 +87,10 @@ load_mount(const char* mount_path, const char* backend_path, const char* library
 		LOAD_TARGET(handle, "usfs_truncate", rv, truncate, true);
 		LOAD_TARGET(handle, "usfs_fgetattr", rv, fgetattr, true);
 		LOAD_TARGET(handle, "usfs_getattr", rv, getattr, true);
+		LOAD_TARGET(handle, "usfs_readlink", rv, readlink, true);
 		LOAD_TARGET(handle, "usfs_unlink", rv, unlink, true);
+		LOAD_TARGET(handle, "usfs_save", rv, save, false);
+		LOAD_TARGET(handle, "usfs_restore", rv, restore, false);
 		LOAD_TARGET(handle, "usfs_access", rv, access, true);
 		if (rv != NULL && rv->init != NULL) {
 			rv->init(mount_path, backend_path);
@@ -135,7 +134,7 @@ load_mounts_from_file(const char* file, struct mount_point_array* mount_points)
 				print_error_and_exit("Unable to retrieve library from: %s\n", buffer);
 			}
 
-			struct mount_point_data* mp = load_mount(TEST_MOUNT_PATH, TEST_MOUNT_BACKEND, TEST_MOUNT_LIBRARY);
+			struct mount_point_data* mp = load_mount(mount_point, backend, library);
 			if (mp == NULL) {
 				print_error_and_exit("Error loading mount MP NULL: %s %s %s\n", mount_point, backend, library);
 			}

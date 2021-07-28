@@ -1,0 +1,39 @@
+#!/bin/bash
+
+DEFUSE_HOME=$HOME/defuse
+FUSE_MOUNT=/tmp/fuse
+DEFUSE_MOUNT=/tmp/defuse
+TEST_PATH=/tmp/test
+
+TC_PATH=$DEFUSE_HOME/lddefuse/test
+LIBPATH=$DEFUSE_HOME/lddefuse/liblddefuse.so
+FUSE_PATH=$DEFUSE_HOME/fuse/fusexmp
+
+if [ $# -ne 1 ]; then
+    echo "Test required"
+    exit 1
+fi
+
+echo "DIRECT"
+for i in {1..50}
+do
+	$TC_PATH/mytime $TC_PATH/test$1 $TEST_PATH
+done
+
+echo "DEFUSE"
+mkdir -p $DEFUSE_MOUNT
+for i in {1..50}
+do
+	LD_PRELOAD=${LIBPATH} $TC_PATH/mytime $TC_PATH/test$1 $DEFUSE_MOUNT$TEST_PATH
+done
+
+echo "FUSE"
+fusermount -u $FUSE_MOUNT
+mkdir -p $FUSE_MOUNT
+for i in {1..50}
+do
+	fusermount -u $FUSE_MOUNT
+	$FUSE_PATH $FUSE_MOUNT
+	$TC_PATH/mytime $TC_PATH/test$1 $FUSE_MOUNT$TEST_PATH
+done
+fusermount -u $FUSE_MOUNT

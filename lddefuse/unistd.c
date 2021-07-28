@@ -102,6 +102,12 @@ ssize_t read(int fd, void *buf, size_t count)
 	return real_ops.read(fd, buf, count);
 }
 
+ssize_t readlink(const char *path, char *buf, size_t bufsiz)
+{
+	DEFUSE_OP(readlink, path, path, buf, bufsiz);
+	return real_ops.readlink(path, buf, bufsiz);
+}
+
 int truncate(const char *path, off_t length)
 {
 	DEFUSE_OP(truncate, path, path, length);

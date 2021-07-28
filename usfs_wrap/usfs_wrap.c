@@ -145,3 +145,19 @@ int usfs_close(uint64_t ret_fh)
 {
 	return syscall(SYS_close, (int)ret_fh);
 }
+
+int usfs_readlink(const char* path, char* buf, size_t bufsize, size_t* bytes_written)
+{
+	int ret = 0;
+	char path_to_readlink[PATH_MAX];
+	snprintf(path_to_readlink, PATH_MAX, "%s/%s", backend, path);
+	ret = syscall(SYS_readlink, path_to_readlink, buf, bufsize);
+	if(-1 == ret) {
+		ret = errno;
+		*bytes_written = 0;
+	} else {
+		*bytes_written = ret;
+		ret = 0;
+	}
+	return ret;
+}
