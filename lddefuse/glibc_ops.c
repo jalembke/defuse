@@ -27,7 +27,6 @@ int real_open(const char *filename, int flags, ...)
 	return real_ops.open(filename, flags, mode);
 }
 
-
 void* real_mmap(void *start, size_t len, int prot, int flags, int fd, off_t off)
 {
 	return real_ops.mmap(start, len, prot, flags, fd, off);
@@ -72,6 +71,12 @@ dlsym_exit_on_error(void* handle, const char* name)
 	}
 	
 	return sym;
+}
+
+void* 
+load_real_op(const char* name)
+{
+	return dlsym_exit_on_error(RTLD_NEXT, name);
 }
 
 void 
@@ -171,7 +176,7 @@ load_glibc_ops(void)
 		real_ops.execl = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execl");
 		real_ops.execlp = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execlp");
 		real_ops.execle = (int (*)(const char*, const char*, ...))dlsym_exit_on_error(RTLD_NEXT, "execle");
-		real_ops.execv = (int (*)(const char*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execv");
+		real_ops.execv = (int (*)(const char*, char *const[]))dlsym_exit_on_error(RTLD_NEXT, "execv");
 		real_ops.execve = (int (*)(const char*, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execve");
 		real_ops.execvp = (int (*)(const char*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvp");
 		real_ops.execvpe = (int (*)(const char*, char *const*, char *const*))dlsym_exit_on_error(RTLD_NEXT, "execvpe");

@@ -15,6 +15,18 @@ void* memdup(void* ptr, size_t size)
 	return ptr_cpy;
 }
 
+void dfprintf(const char* format, ...)
+{
+	char msg_buf[1024];
+	va_list args;
+	va_start(args, format);
+	int msg_size = vsnprintf(msg_buf, sizeof(msg_buf), format, args);
+	if(msg_size > 0) {
+		syscall(SYS_write, STDERR_FILENO, msg_buf, msg_size);
+	}
+	va_end(args);
+}
+
 void print_error_and_exit(const char* format, ...)
 {
 	char msg_buf[512];

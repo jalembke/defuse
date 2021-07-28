@@ -136,6 +136,7 @@ struct glibc_ops {
 
 extern struct glibc_ops real_ops;
 
+void* load_real_op(const char* name);
 void load_glibc_ops(void);
 
 #endif // _GLIBC_OPS_H

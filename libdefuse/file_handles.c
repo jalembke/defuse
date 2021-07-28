@@ -130,7 +130,6 @@ struct file_handle_data*
 find_file_handle(int fd)
 {
 	struct file_handle_data* rv = NULL;
-	DEBUG_ENTER;
 	if (fd >= MAX_FILES) {
 		goto out;
 	}
@@ -139,9 +138,10 @@ find_file_handle(int fd)
 	if (file_handle_use_count_internal(fht->file_handles[fd]) == 0) {
 		goto out;
 	}
+	DEBUG_ENTER;
 	rv = &(fht->file_handles[fd]->f_data);
-out:
 	DEBUG_EXIT(rv ? rv->file_handle : 0);
+out:
     return rv;
 }
 

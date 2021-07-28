@@ -19,6 +19,7 @@ cleanobjs:
 clean:
 	rm -f $(OBJS)
 	rm -f liblddefuse.so
+	$(MAKE) -C $(LIBDEFUSE) clean
 
 .PHONY: libdefuse.a
 libdefuse.a:

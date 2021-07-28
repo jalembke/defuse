@@ -1,5 +1,10 @@
+#include <unistd.h>
+#
+
 #include "libdefuse.h"
 #include "glibc_ops.h"
+
+extern char **environ;
 
 int access(const char *path, int mode) 
 {   
@@ -15,32 +20,56 @@ int close(int fd)
 
 int execv(const char *path, char *const argv[])
 {
+	DEBUG_PRINT(path);
 	save_file_handles_to_shared_space();
-	return real_ops.execv(path, argv);
+
+	// vfork may have been called - retrieve correct address to real execv
+	int (*real_execv)(const char*, char *const[]) = (int (*)(const char*, char *const[]))load_real_op("execv");
+	
+	return real_execv(path, argv);
 }
 
 int execve(const char *filename, char *const argv[], char *const envp[])
 {
+	DEBUG_PRINT(filename);
 	save_file_handles_to_shared_space();
-	return real_ops.execve(filename, argv, envp);
+	
+	// vfork may have been called - retrieve correct address to real execv
+	int (*real_execve)(const char*, char *const[], char *const[]) = (int (*)(const char*, char *const[], char *const[]))load_real_op("execve");
+	
+	return real_execve(filename, argv, envp);
 }
 
 int execvp(const char *file, char *const argv[])
 {
+	DEBUG_PRINT(file);
 	save_file_handles_to_shared_space();
-	return real_ops.execvp(file, argv);
+
+	// vfork may have been called - retrieve correct address to real execv
+	int (*real_execvp)(const char*, char *const[]) = (int (*)(const char*, char *const[]))load_real_op("execvp");
+
+	return real_execvp(file, argv);
 }
 
 int execvpe(const char *file, char *const argv[], char *const envp[])
 {
+	DEBUG_PRINT(file);
 	save_file_handles_to_shared_space();
-	return real_ops.execvpe(file, argv, envp);
+
+	// vfork may have been called - retrieve correct address to real execv
+	int (*real_execvpe)(const char*, char *const[], char *const[]) = (int (*)(const char*, char *const[], char *const[]))load_real_op("execvep");
+
+	return real_execvpe(file, argv, envp);
 }
 
 int fexecve(int fd, char *const argv[], char *const envp[])
 {
 	save_file_handles_to_shared_space();
-	return real_ops.fexecve(fd, argv, envp);
+
+	// vfork may have been called - retrieve correct address to real execv
+	int (*real_fexecve)(int, char *const[], char *const[]) = (int (*)(int, char *const[], char *const[]))load_real_op("fexecve");
+
+	return real_fexecve(fd, argv, envp);
 }
 
 int fdatasync(int fd) 

@@ -127,6 +127,7 @@ dir_handle_data* find_dir_handle(DIR* dirp);
 // Utility Functions
 void* memdup(void* ptr, size_t size);
 char* resolve_path(const char *path);
+void dfprintf(const char* format, ...);
 void print_error_and_exit(const char* format, ...);
 
 #endif // __DEFUSE_H
